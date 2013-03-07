@@ -1,0 +1,121 @@
+ENV['RACK_ENV'] = 'test'
+
+require 'sinatra_app'
+require 'rspec'
+require 'rack/test'
+require 'json'
+
+$LOAD_PATH.unshift('.')
+
+RSpec.configure do |conf|
+  conf.include Rack::Test::Methods
+  conf.before(:all) { DataMapper.finalize.auto_migrate! }
+end
+
+describe 'Grokit' do
+  include Rack::Test::Methods
+
+  def app
+    Sinatra::Application
+  end
+  
+  it "accepts a new product" do
+    product_json = IO.read("spec/product.json")
+
+    post '/api/products', product_json
+
+    last_response.should be_ok
+
+    actual = JSON.parse(last_response.body)
+    
+    puts last_response.body
+    
+    actual.should have_key('created_at')
+    actual.should have_key('updated_at')
+  end
+  
+  it "accepts a new model" do
+    model_json = IO.read("spec/model.json")
+
+    post '/api/models', model_json
+
+    last_response.should be_ok
+
+    actual = JSON.parse(last_response.body)
+    
+    puts last_response.body
+    
+    actual.should have_key('created_at')
+    actual.should have_key('updated_at')
+  end
+  
+  it "accepts a new aspect" do
+    aspect_json = IO.read("spec/aspect.json")
+
+    post '/api/products/1/aspects', aspect_json
+
+    last_response.should be_ok
+
+    actual = JSON.parse(last_response.body)
+    
+    puts last_response.body
+    
+    actual.should have_key('created_at')
+    actual.should have_key('updated_at')
+    
+    get '/api/products/1/aspects'
+    
+    last_response.should be_ok
+    
+    puts last_response.body
+    
+    actual2 = JSON.parse(last_response.body)
+    
+    actual2.should have_key('aspects')
+    
+    actual2['aspects'][0]['product_id'].should equal(1)
+    
+  end
+  
+  it "accepts a new review" do
+    review_json = IO.read("spec/review.json")
+
+    post '/api/reviews', review_json
+
+    last_response.should be_ok
+
+    actual = JSON.parse(last_response.body)
+    
+    puts last_response.body
+    
+    actual.should have_key('created_at')
+    actual.should have_key('updated_at')
+    
+    get '/api/models/1/reviews'
+    
+    last_response.should be_ok
+    
+    puts last_response.body
+    
+    actual2 = JSON.parse(last_response.body)
+
+    actual2[0]['sentences'][0]['review_id'].should equal(1)
+    actual2[0]['sentences'][0].should have_key('text')
+    actual2[0]['sentences'][0].should have_key('created_at')
+    actual2[0]['sentences'][0].should have_key('updated_at')
+  end
+  
+  it "can get all opinion words for a product" do
+  
+    get '/api/products/1/opinionwords/manual'
+    
+    last_response.should be_ok
+    
+    puts last_response.body
+    
+  end
+  
+  it "accepts a new opinion" do
+    #TODO
+  end  
+end

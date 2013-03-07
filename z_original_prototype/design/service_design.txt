@@ -1,0 +1,53 @@
+Service responsibilities:
+- User registration
+- User achievements
+- User rank
+- Match creation
+- Match deletion
+- Report upcoming public matches based on distance from player, the app can use this to show the player upcoming public matches.
+- Game rule application. Determines who is killed, who is each players' target, when a player becomes a "ghost".
+- Achievement awards
+- Rank advancement
+- Authentication
+- Game timeout (after a week of no activity)
+
+
+Operations:
+
+Game:
+- Player report position
+- Player attack opponent
+- Player collect health object
+- Query all player locations
+- Query match state
+- Query player state (to know who target is)
+
+
+Match:
+- Create
+- Update
+- Delete
+- Find upcoming matches in local area
+- Find upcoming private matches that a player has been invited to.
+- Player join
+- Player join a private match
+- Player leave
+- Invite players
+
+
+Profile:
+- Create
+- Update
+- Delete
+
+
+
+Social (Facebook/twitter/G+/Email/Game Center/OpenFeint) integration:
+- Invite specific friends
+- Create a match with friends
+- Post a public match
+- Post achievements (aka trophies)
+- Post rank advancements
+- Post match kills
+
+

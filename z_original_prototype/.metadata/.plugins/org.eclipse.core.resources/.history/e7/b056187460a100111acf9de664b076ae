@@ -1,0 +1,177 @@
+package assassins.ui.prototypes;
+
+import java.util.List;
+
+import org.bson.types.ObjectId;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+
+public class MatchMapView extends MapView {
+	
+	LocationUpdater locUpdater;
+	ObjectId id;
+
+	private static final int HUNTMODE_RANGE_IN_METERS = 30;
+	private static final int ATTACK_RANGE_IN_METERS = 5;
+	
+	public MatchMapView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+
+		// TODO Auto-generated constructor stub
+	}
+	
+	public MatchMapView(Context context, AttributeSet attrs, int defStyle) 
+	{
+		super(context, attrs, defStyle);
+		
+	}
+	
+	public MatchMapView(Context context, String apiKey) 
+	{
+		super(context, apiKey);
+	}
+	
+	public LocationUpdater initLocationUpdates(ObjectId profileId)
+	{
+	     locUpdater = new LocationUpdater(this, profileId, 10, 10);
+	     locUpdater.startUpdating();
+	     return locUpdater;
+	}
+	
+	@Override
+	protected void dispatchDraw(Canvas c)
+	{
+		Log.d("Project Assassins","DISPATCH_DRAW");
+		getOverlays().clear();
+		
+		GeoPoint targetLoc = locUpdater.getTargetLocation();
+		GeoPoint myLoc = locUpdater.getMyLocation();
+		int health = locUpdater.getMyLife();
+		int targetHealth = locUpdater.getTargetLife();
+		
+		Log.d("Project Assassins", "DISPATCH_DRAW::my loc "+myLoc+", my health "+health);
+		
+		float bearingInDegrees = locUpdater.getBearingToTarget();
+		Log.d("Project Assassins", "DISPATCH_DRAW::Bearing in degrees: "+bearingInDegrees);
+		
+		float distanceInMeters = 10000000; //Arbitrarily high distance
+		
+		if(targetLoc != null)
+		{
+			distanceInMeters = PlayerLocation.getMetersBetween(myLoc, targetLoc);
+			Log.d("Project Assassins", "DISPATCH_DRAW::Distance in Meters: "+distanceInMeters);
+		}
+		
+		Drawable myIcon = this.getResources().getDrawable(R.drawable.icon);
+		Drawable targetIcon = this.getResources().getDrawable(R.drawable.icon);
+		
+		//Handle my status display
+		
+		if (health == 0)
+		{
+			Toast.makeText(getContext(), "you've been slain.", 3);
+			myIcon = this.getResources().getDrawable(R.drawable.x_mark);
+		}
+		else if(locUpdater.wasAttacked())
+		{	
+			Toast.makeText(getContext(), "you've been attacked.", 3);
+			myIcon = this.getResources().getDrawable(R.drawable.assassin_icon);
+			myIcon.setAlpha(255/health);
+		}
+		
+
+		//Handle target status display
+		if (targetHealth == 0)
+		{
+			Toast.makeText(getContext(), "target is slain.", 3);
+			targetIcon = this.getResources().getDrawable(R.drawable.x_mark);
+		}
+		else if(locUpdater.attackSucceeded())
+		{	
+			Toast.makeText(getContext(), "your enemy has taken damage.", 3);
+			targetIcon = this.getResources().getDrawable(R.drawable.guard);
+			targetIcon.setAlpha(255/targetHealth);
+		}
+
+		//In range for attack or not
+		//Discrepancies between server and self?
+		if(locUpdater.getPlayerProximityToEnemy() == Proximity.ATTACK_RANGE)
+		{
+			Button attack = (Button)findViewById(R.id.attack_button);
+			if(attack != null)
+				attack.setEnabled(true);
+		}
+		else
+		{
+			Button attack = (Button)findViewById(R.id.attack_button);
+			if(attack != null)
+				attack.setEnabled(false);			
+		}
+		
+		//Hunt Mode or Search Mode
+		
+		if(locUpdater.getPlayerProximityToEnemy() == Proximity.HUNT_RANGE ||
+		   locUpdater.getPlayerProximityToEnemy() == Proximity.ATTACK_RANGE)
+		{
+			EditText title = (EditText) findViewById(R.id.textView1);
+			if(title != null)
+				title.setText("Hunt Mode");
+			addLocationToOverlays(targetLoc, "Target Location", "", targetIcon);
+		}
+		else
+		{
+			EditText title = (EditText) findViewById(R.id.textView1);
+			if(title != null)
+				title.setText("Search Mode");
+			//draw compass using bearingInMeters
+			ImageView arrow = (ImageView)findViewById(R.id.compass_arrow);
+			ImageView compass = (ImageView)findViewById(R.id.compass);
+			
+			//place the arrow in the middle of the compass
+			if(compass != null)
+			{
+				arrow.setX(compass.getX());
+				arrow.setY(compass.getY());
+			}
+			
+			//point the arrow to the target's posistion
+			if(arrow != null)
+				arrow.setRotation(bearingInDegrees);
+		}
+		
+		addLocationToOverlays(myLoc, "My Location", "", myIcon);
+	}
+	
+	private void addLocationToOverlays(GeoPoint point, String title, String snippet, Drawable drawable)
+	{
+		if(point != null)
+		{
+			 List<Overlay> mapOverlays = getOverlays();
+		     
+		     CustomItemizedOverlay itemizedOverlay = new CustomItemizedOverlay(drawable, this.getContext());
+		     OverlayItem overlayitem = new OverlayItem(point, title, snippet);
+		     
+		     itemizedOverlay.addOverlay(overlayitem);
+		     mapOverlays.add(itemizedOverlay); 
+		}
+		else
+		{
+			 Log.d("Project Assassins", "DISPATCH_DRAW: "+title+" is null"); 
+		}
+	}
+
+}

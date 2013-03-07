@@ -1,0 +1,282 @@
+package assassins.ui.prototypes;
+
+import java.lang.String;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import com.google.android.maps.GeoPoint;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+import assassins.ui.prototypes.Player;
+
+public class Conspiracy extends MyParcelable {
+	
+	private Player creator;
+	private String name;
+	private String password;
+	private MatchType type;
+	
+	GeoPoint corner1;
+	GeoPoint corner2;
+
+	private Calendar start; 
+
+	private ArrayList<Player> players;
+	private int maxPlayers;
+	
+	private boolean isPublic;
+	
+	public Conspiracy()
+	{
+		creator = new Player("MyPlayerID");
+		isPublic = false;
+		type = MatchType.ASSASSINS;
+		players = new ArrayList<Player>();
+		maxPlayers = 10;
+	}
+	
+	public Conspiracy(Parcel in)
+	{
+		creator = new Player("");
+		players = new ArrayList<Player>();
+		readFromParcel(in);
+	}
+	
+	public int describeContents() {
+		return 0;
+	}
+
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(creator.getName());
+        dest.writeString(name);
+        dest.writeString(password); //very secure :)
+        dest.writeInt(matchTypeToInt(type));
+        dest.writeInt(corner1.getLatitudeE6());
+        dest.writeInt(corner1.getLongitudeE6());
+        dest.writeInt(corner2.getLatitudeE6());
+        dest.writeInt(corner2.getLongitudeE6());
+        dest.writeLong(start.getTimeInMillis());
+        dest.writeInt(maxPlayers);
+        boolean[] temp = new boolean[1]; //parcelable doesn't have a write boolean, just writeBooleanArray :(
+        temp[0] = isPublic;
+        dest.writeBooleanArray(temp);
+        
+    }
+ 
+    private int matchTypeToInt(MatchType t) {
+    	
+    	switch(t)
+    	{
+    		case ASSASSINS: return 0;
+    		case BOUNTY: return 1;
+    		case SCOURGE: return 2;
+    		case THIEVES: return 3;
+    	}
+    	return -1;
+	}
+
+	public void readFromParcel(Parcel in) {
+		  	
+			creator.setName(in.readString());
+			name = in.readString();
+			password = in.readString(); //very secure :)
+	        type = intToMatchType(in.readInt());
+	        corner1 = new GeoPoint(in.readInt(), in.readInt());
+	        corner2 = new GeoPoint(in.readInt(), in.readInt());
+	        start = new GregorianCalendar();
+	        start.setTimeInMillis(in.readLong());
+	        maxPlayers = in.readInt();
+	        boolean[] temp = new boolean[1]; //work around
+	        in.readBooleanArray(temp);
+	        isPublic = temp[0];
+    }
+
+	private MatchType intToMatchType(int t) {
+		
+		switch(t)
+    	{
+    		case 0: return MatchType.ASSASSINS;
+    		case 1: return MatchType.BOUNTY;
+    		case 2: return MatchType.SCOURGE;
+    		case 3: return MatchType.THIEVES;
+    	}
+    	return null;
+	}
+
+	public static final Parcelable.Creator<Conspiracy> CREATOR = new Parcelable.Creator<Conspiracy>() {
+	        public Conspiracy createFromParcel(Parcel in) {
+	            return new Conspiracy(in);
+	        }
+	 
+	        public Conspiracy[] newArray(int size) {
+	            return new Conspiracy[size];
+	        }
+	    };
+	
+	
+	public void setPublic(boolean privacy) {
+		isPublic = privacy;
+	}
+	
+	public boolean isPublic() {
+		return isPublic;
+	}
+	public int getPrivacy() {
+		if(isPublic)
+			return 1;
+		
+		return 0;
+	}
+	
+	public void setCorners(GeoPoint a, GeoPoint b) {
+		corner1 = a;
+		corner2 = b;
+	}
+	
+	public GeoPoint getCorner1() {
+		return corner1;
+	}
+	
+	public GeoPoint getCorner2()
+	{
+		return corner2;
+	}
+	
+	public Player getOwner() {
+		return creator;
+	}
+
+	public void setOwner(Player owner) {
+		this.creator = owner;
+	}
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getLoc() {
+		return corner1.toString() + " " + corner2.toString();
+	}
+
+	public MatchType getType() {
+		return type;
+	}
+	
+	public int getTypeInt() {
+		
+		int intType = -1;
+		
+		switch(type)
+	      {
+	      	case ASSASSINS:
+	      		intType=0;
+    		break;
+	      	case BOUNTY:
+	      		intType=1;
+    		break;
+	      	case SCOURGE:
+	      		intType=2;
+    		break;
+	      	case THIEVES:
+	      		intType=3;
+    		break;
+	      	default:
+	      	break;
+	      }
+		return intType;
+	}
+
+	public void setType(MatchType type) {
+		this.type = type;
+	}
+
+	public void setStartTime(Calendar c) {
+		start = c;
+	}
+	
+	public Calendar getStart() {
+		
+		return start;
+	}
+	
+	public long getStartUTC() {
+		return start.getTimeInMillis()/1000;
+	}
+	
+	public boolean addPlayer(Player newPlayer) {
+		if (players.size() < maxPlayers-1){
+			players.add(newPlayer);
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public void removePlayer(Player newPlayer) {
+		players.remove(newPlayer);
+	}
+
+	public int getMaxPlayers() {
+		return maxPlayers;
+	}
+
+	public void setMaxPlayers(int maxPlayers) {
+		this.maxPlayers = maxPlayers;
+	}
+	
+	public boolean isComplete()
+	{
+		
+		if((( !isPublic() && password != null && password.length() > 0 ) || isPublic() ) &&
+			 start != null &&
+			 corner1 !=null && 
+			 name !=null && 
+			 name.length() > 0)
+		{
+			return true;
+		}	
+		
+		return false;
+	}
+	public String getNotCompletedString()
+	{
+		String notComplete = new String();
+		notComplete+="Please Set:\n\n";
+		if(name == null || name.length() == 0)
+			notComplete += "Match Name\n";
+		if(!isPublic() && (password == null || password.length() == 0))
+			notComplete += "Password (if private)\n";
+		if(corner1 == null || corner2 == null)
+			notComplete += "Boundaries\n";
+		if(start == null)
+			notComplete += "Start Time\n";
+
+		return notComplete;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "Creator: "+getOwner().getName() + "\n" +
+				"Match Name: "+getName() + "\n" +
+				"Match Type: "+getType() + "\n" +
+				"Location: "+getLoc() + "\n" +
+				"Start Time: "+getStart().toString() + "\n";
+		
+	}
+
+}
+

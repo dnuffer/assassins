@@ -1,0 +1,15 @@
+{ "achievements_completed" : [ "a 1",
+      "a 2",
+      "a 3"
+    ],
+  "current_match" : null,
+  "email" : "pA@gmail.com",
+  "game_state" : null,
+  "id" : "one",
+  "install_id" : "1",
+  "username" : "my_user_name",
+  "name" : "pA",
+  "password" : "pA",
+  "rank" : "rank A",
+  "score" : 12345
+}

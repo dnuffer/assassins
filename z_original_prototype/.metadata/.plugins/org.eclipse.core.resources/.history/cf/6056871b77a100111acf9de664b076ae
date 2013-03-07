@@ -1,0 +1,291 @@
+package assassins.ui.prototypes;
+
+import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.bson.types.ObjectId;
+
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapView;
+
+import android.content.Context;
+import android.util.Log;
+
+public class LocationUpdater {
+
+	private final ScheduledExecutorService locScheduler;
+	private static final int NUM_THREADS = 1;
+	private static final int MAX_SNAPSHOTS = 20;
+	private long initialDelay;
+	private long delayBtwnUpdates;
+	private ObjectId id;
+	private ArrayList<GameSnapshot> snapshots;
+	private boolean newTarget;
+	private boolean attackWasSuccessful;
+	private MapView matchView;
+	private boolean wasAttacked;
+	private Proximity myProximityToTarget;
+	private Proximity enemyProximityToMe;
+	
+	LocationUpdater(MapView m, ObjectId id, long initialDelay, long delayBtwnUpdates)
+	{
+		this.matchView = m;
+		this.initialDelay = initialDelay;
+		this.delayBtwnUpdates = delayBtwnUpdates;
+		this.id = id;
+		
+		newTarget = false;
+		attackWasSuccessful = false;
+		myProximityToTarget = Proximity.UNKNOWN_RANGE;
+		enemyProximityToMe = Proximity.UNKNOWN_RANGE;
+		
+		snapshots = new ArrayList<GameSnapshot>();
+		
+		locScheduler = Executors.newScheduledThreadPool(NUM_THREADS);
+	}
+	
+	public void startUpdating()
+	{
+	    Runnable locUpdater = new UpdateLocationTask(matchView.getContext(), id);
+	    /*ScheduledFuture<?> locUpdateFuture = */
+	    locScheduler.scheduleAtFixedRate(
+	    		locUpdater, initialDelay, delayBtwnUpdates, TimeUnit.SECONDS
+	    );
+	}
+	
+	public void updateSnapshot(GameSnapshot attackResults) {
+		snapshots.add(attackResults);
+		
+		registerPlayerStateChanges();
+		
+		//keep a buffer of snapshots
+		if(snapshots.size() > MAX_SNAPSHOTS)
+		{
+			snapshots.remove(0);
+		}
+		
+		matchView.postInvalidate();
+	}
+	
+	private void registerPlayerStateChanges() {
+		
+		if(snapshots.size() == 1 && snapshots.get(0).getBearingToTarget() > 0)
+		{
+			newTarget = true;
+		}	
+		else if(snapshots.size() > 1)
+		{
+			GameSnapshot curr = snapshots.get(snapshots.size()-1);
+			GameSnapshot prev = snapshots.get(snapshots.size()-2);
+			
+			if(curr != null && prev != null)
+			{
+				PlayerState currTarget = curr.getTargetState();
+				PlayerState prevTarget = prev.getTargetState();
+				
+				if(currTarget.hasDifferentUserName(prevTarget))
+				{
+					newTarget = true;
+				}
+				
+				if(currTarget.compareLife(prevTarget) == -1)
+				{
+					attackWasSuccessful = true;
+				}
+				
+				PlayerState myCurrState = curr.getMyState();
+				PlayerState myPrevState = prev.getMyState();
+				
+				if(myCurrState.compareLife(myPrevState) == -1)
+				{
+					wasAttacked = true;
+				}
+				
+				enemyProximityToMe = myCurrState.getEnemyProximityToMe();
+				myProximityToTarget = myCurrState.getMyProximityToTarget();
+			}
+		}
+	}
+	
+	public Proximity getPlayerProximityToEnemy()
+	{
+		return myProximityToTarget;
+	}
+	
+	public Proximity getEnemyProximityToPlayer()
+	{
+		return enemyProximityToMe;
+	}
+	
+	//Destructive
+	public boolean targetChanged() {
+		
+		if(newTarget)
+		{
+			newTarget = false;
+			return true;
+		}
+		return false;
+	}
+
+	//Destructive
+	public boolean attackSucceeded()
+	{
+		if(attackWasSuccessful)
+		{
+			attackWasSuccessful = false;
+			return true;
+		}
+		return false;
+	}
+
+	
+	public boolean wasAttacked()
+	{
+		if(wasAttacked)
+		{
+			wasAttacked = false;
+			return true;
+		}
+		return false;
+	}
+	
+	public String getTargetUsername()
+	{
+		PlayerState targetState = null;
+		String name = null;
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			targetState = snapshots.get(snapshots.size()-1).getTargetState();
+			if(targetState != null)
+			{
+				name = targetState.getUsername();
+			}
+		}
+		
+		return name;
+	}
+	
+	public float getBearingToTarget() {
+		PlayerState targetState = null;
+		float bearingToTarget = -1;
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			bearingToTarget = snapshots.get(snapshots.size()-1).getBearingToTarget();
+		}
+		
+		return bearingToTarget;
+	}
+	
+	public GeoPoint getTargetLocation()
+	{
+		PlayerState targetState = null;
+		GeoPoint location = null;
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			targetState = snapshots.get(snapshots.size()-1).getTargetState();
+			if(targetState != null)
+			{
+				location = targetState.getLocation();
+			}
+		}
+		
+		return location;
+	}
+
+	public GeoPoint getMyLocation()
+	{
+		PlayerState myState = null;
+		GeoPoint location = null;
+		
+		Log.d("Project Assassins", "LocationUpdater.getMyLocation()");
+		
+		Log.d("Project Assassins", "Snapshots: "+snapshots.toString());
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			myState = snapshots.get(snapshots.size()-1).getMyState();
+			Log.d("Project Assassins", "Snapshots: "+myState);
+			if(myState != null)
+			{
+				location = myState.getLocation();
+			}
+		}
+		
+		return location;
+	}
+	
+	public int getTargetLife()
+	{
+		PlayerState targetState = null;
+		int life = -1;
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			targetState = snapshots.get(snapshots.size()-1).getTargetState();
+			if(targetState != null)
+			{
+				life = targetState.getLife();	
+			}
+		}
+		
+		return life;
+	}
+	
+	public int getMyLife() {
+		PlayerState myState = null;
+		int life = -1;
+		
+		if(snapshots.size() > 0 && snapshots.get(snapshots.size()-1) != null)
+		{
+			myState = snapshots.get(snapshots.size()-1).getMyState();
+			if(myState != null)
+			{
+				life = myState.getLife();	
+			}
+		}
+		
+		return life;
+	}	
+	
+	public class UpdateLocationTask implements Runnable {
+		
+		Context context;
+		ObjectId id;
+		
+		UpdateLocationTask(Context c, ObjectId id)
+		{
+			context =c;
+			this.id = id;
+			
+		}
+		
+		public void run() {
+			AssassinsHttpClient httpC = new AssassinsHttpClient(context.getString(R.string.serviceUrl), context);
+			try {
+				
+				Log.d("Project Assassins", "Updating location with id: "+id);
+				
+				GameSnapshot newSnapshot = httpC.updateLocation(id);
+				
+				updateSnapshot(newSnapshot);
+				
+				Log.d("Project Assassins", "FINISHED updating location");
+				
+			} catch (AssassinsHttpException e) {
+				Log.d("Project Assasins", e.getMessage(), e.getCause());
+			}	
+		}
+  }
+
+
+
+
+
+
+} 

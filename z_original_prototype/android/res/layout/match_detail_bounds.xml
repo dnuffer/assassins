@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assassins.ui.prototypes.MatchInfoBoundsFrameLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+			android:id="@+id/matchDetailBoundsFrame"  
+			android:layout_width="fill_parent" 
+			android:layout_height="fill_parent">
+
+	<com.google.android.maps.MapView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+			android:id="@+id/matchDetailMapView" 
+    	    android:layout_width="fill_parent"
+        	android:layout_height="fill_parent" 
+			android:enabled="true" 
+			android:clickable="true"             
+			android:apiKey="0BaOKzvqL6scVBofeBtdARPHhW6Ne_pKs063esg"/>
+
+
+		<assassins.ui.prototypes.TransparentPanel
+				android:id="@+id/matchDetailBounds" 
+	    	    android:layout_width="fill_parent"
+	        	android:layout_height="fill_parent">
+	        
+		</assassins.ui.prototypes.TransparentPanel>
+
+</assassins.ui.prototypes.MatchInfoBoundsFrameLayout>

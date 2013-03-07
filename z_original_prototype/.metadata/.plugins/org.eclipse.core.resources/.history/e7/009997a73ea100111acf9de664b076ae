@@ -1,0 +1,113 @@
+package assassins.ui.prototypes;
+
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.text.Editable;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class SecretConspiracyAccess extends Activity {
+	
+	private static final String TAG = "SecretConspiracyAccess";
+	
+	private ArrayList<Conspiracy> privateGames;
+	
+	private Button viewGame;
+	
+	private EditText name;
+	private EditText password;
+	private TextView conspiracySummary;
+	private String installId;
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+     setContentView(R.layout.secret_conspiracy);
+     
+     installId = Installation.id(this);
+     
+     name = (EditText) findViewById(R.id.private_name);
+     password = (EditText) findViewById(R.id.private_name);
+     conspiracySummary = (TextView) findViewById(R.id.conspiracySummary);
+     
+     privateGames = new ArrayList<Conspiracy>();
+     
+     privateGames = getIntent().getParcelableArrayListExtra("private_games");
+     
+     int size = privateGames.size();
+     
+     Log.d(TAG, "private games length: " + size);
+     
+     viewGame = (Button)findViewById(R.id.viewPrivateGames);
+     viewGame.setOnClickListener(new View.OnClickListener() {
+	    	public void onClick(View arg0) {
+	    		 
+	    		AssassinsHttpClient service = new AssassinsHttpClient(getString(R.string.serviceUrl),SecretConspiracyAccess.this);
+	    		String match = null;
+	    		try {
+					match = service.joinMatch(installId, name.getText().toString());
+					Log.d("Project Assassins", "Successfully found match:"+name.getText().toString());
+					if(match != null)
+						Toast.makeText(getApplicationContext(), "Joined match: "+name.getText().toString(), Toast.LENGTH_SHORT).show();
+					else
+						Toast.makeText(getApplicationContext(), "Could not find match.", Toast.LENGTH_SHORT).show();
+					
+	    		} catch (AssassinsHttpException e) {
+					// TODO Auto-generated catch block
+					Log.d("Project Assassins", "Failed to join match.");
+					Log.d("Project Assassins", e.getMessage(), e.getCause());
+					Toast.makeText(getApplicationContext(), "Failed to join match", Toast.LENGTH_SHORT).show();
+				}
+	    		
+	    		//find match with name 
+	    		/*
+	    		Conspiracy temp = findMatch(name.getText().toString());
+	    		
+	    		Log.d(TAG, temp.getName() + " " + temp.getPassword());
+	    		if(temp != null && 0 == password.getText().toString().compareTo(temp.getPassword()))
+	    		{
+	    			Log.d(TAG, temp.getName() + " " + name.getText().toString());
+	    			Log.d(TAG, temp.toString());
+	    			conspiracySummary.setText(temp.toString());
+	    			conspiracySummary.invalidate();
+	    		}*/
+	    		
+	    		//check password
+	    		
+	    		//Bundle b = new Bundle();
+	    		 
+	    		 //b.putParcelable(findMatchWithName(...));
+	    	     //Intent i = new Intent(SecretConspiracyAccess.this, MatchView.class);
+	    		
+	    		
+	    		
+	    		
+	    	     //i.putExtras(b);
+	    	     //startActivity(i);
+	    	}
+
+			private Conspiracy findMatch(String enteredName) {
+				
+				for(Conspiracy c : privateGames)
+				{
+					Log.d(TAG, "-"+c.getName() + "-"+ enteredName+"-");
+					if(enteredName.compareTo(c.getName()) == 0)
+					{
+						Log.d(TAG, "-"+c.getName() + "-"+ enteredName+"-");
+						return c;
+					}
+				}
+				return null;
+				
+			}
+	    });
+     
+	}
+}

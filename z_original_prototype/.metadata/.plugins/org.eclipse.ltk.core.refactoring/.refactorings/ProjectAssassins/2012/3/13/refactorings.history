@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename compilation unit &apos;assassins.ui.prototypes.AssassinsHTTPClient.java&apos; to &apos;AssassinsHttpClient.java&apos;&#x0A;- Original project: &apos;ProjectAssassins&apos;&#x0A;- Original element: &apos;assassins.ui.prototypes.AssassinsHTTPClient.java&apos;&#x0A;- Renamed element: &apos;assassins.ui.prototypes.AssassinsHttpClient.java&apos;" description="Rename compilation unit &apos;AssassinsHTTPClient.java&apos;" flags="2" id="org.eclipse.jdt.ui.rename.compilationunit" input="/src&lt;assassins.ui.prototypes{AssassinsHTTPClient.java" name="AssassinsHttpClient.java" references="false" stamp="1332995591368" version="1.0"/>
+</session>

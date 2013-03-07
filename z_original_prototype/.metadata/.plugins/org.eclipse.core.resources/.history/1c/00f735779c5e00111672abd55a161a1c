@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="assassins.ui.prototypes"
+      android:versionCode="1"
+      android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="14" />
+
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+        <activity android:name=".ProjectAssassins"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name=".SearchMode"
+            android:label="@string/app_name">
+        </activity>
+        
+        <activity android:name=".HuntMode"
+            android:label="@string/app_name">
+        </activity>
+        
+        <activity android:name=".ConspireMenu"
+            android:label="@string/app_name">
+        </activity>
+        
+        <activity android:name=".HonorsMenu"
+            android:label="@string/app_name">
+        </activity>
+            
+        <activity android:name=".BookOfHassanMenu"
+			android:label="@string/app_name">
+		</activity>
+		
+		 <activity android:name=".SecretConspiracyAccess"
+			android:label="@string/app_name">
+		</activity>
+		
+		 <activity android:name=".NewConspiracyMenu"
+					android:label="@string/app_name">
+		</activity>
+		
+   		 <activity android:name=".AccessibleMatchesView"
+					android:label="@string/app_name">
+		</activity>
+		
+ 		     <activity android:name=".MatchSettingsView"
+					android:label="@string/app_name">
+		</activity>
+		 <activity android:name=".MatchBoundariesView"
+					android:label="@string/app_name">
+		</activity>
+		 <activity android:name=".AdjustBoundaryLayout"
+					android:label="@string/app_name">
+		</activity>
+		 <activity android:name=".MyParcelable"
+					android:label="@string/app_name">
+		</activity>
+		
+   		 <activity android:name=".MatchDetailView"
+					android:label="@string/app_name">
+		</activity>
+		
+		<uses-library android:name="com.google.android.maps" /> 
+        
+        <activity android:name="AchievementScreen"></activity>
+
+    </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
+</manifest>

@@ -1,0 +1,13 @@
+require 'data_mapper'
+
+class Product
+  include DataMapper::Resource
+  property :id, DataMapper::Property::Serial
+  property :name, String
+  
+  has n, :aspects
+  has n, :models
+  
+  property :created_at, DateTime
+  property :updated_at, DateTime 
+end

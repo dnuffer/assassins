@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assassins.ui.prototypes.MatchLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/active_match"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <com.google.android.maps.MapView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/map_view"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:clickable="true"
+        android:enabled="true"
+        android:apiKey="@string/mapKey" />
+    <ImageSwitcher
+        android:id="@+id/ImageSwitcherMapBorder"
+        android:layout_width="fill_parent"
+        android:layout_centerInParent="true"
+        android:layout_height="fill_parent"
+        android:background="@drawable/leather_background_android">
+    </ImageSwitcher>
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ 			android:id="@+id/match_controls"
+ 			android:gravity="center" 
+ 			android:layout_alignParentBottom="true"
+			android:layout_width="match_parent" 
+	    	android:layout_height="wrap_content">
+				
+			<LinearLayout  	xmlns:android="http://schemas.android.com/apk/res/android"
+	 			android:id="@+id/attack_controls"
+	 			android:orientation="vertical" 
+				android:layout_width="fill_parent" 
+				android:gravity="center"
+				android:layout_weight="0.33"
+		    	android:layout_height="wrap_content">
+			    <Button
+			        android:id="@+id/attack_button"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:clickable="false"
+			        android:layout_weight="0.5"
+			        android:text="Attack"
+			        android:background="@drawable/burnt_paper_button" />
+			    <TextView
+			        android:id="@+id/attack_delay"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			    	android:editable="true"
+			    	android:layout_weight="0.5"
+			        android:textSize="12sp"
+			        android:textStyle="bold" />     
+			</LinearLayout>
+		    <FrameLayout
+		       	android:layout_width="fill_parent"
+		       	android:layout_height="wrap_content"
+		       	android:layout_weight="0.33">
+		        
+			     <ImageView
+			        android:id="@+id/compass"
+			        android:layout_width="wrap_content"
+		        	android:layout_height="wrap_content" 
+		        	android:layout_gravity="center"
+			        android:visibility="invisible"
+			        android:src="@drawable/compass_small" />
+		
+			     <ImageView
+			        android:id="@+id/compass_arrow"
+			        android:layout_width="wrap_content"
+		        	android:layout_height="wrap_content"
+			        android:layout_gravity="center"
+			        android:visibility="gone"
+			        android:src="@drawable/arrow_small" />
+			</FrameLayout>
+			<LinearLayout  	xmlns:android="http://schemas.android.com/apk/res/android"
+	 			android:id="@+id/player_status_linear_layout"
+	 			android:orientation="vertical" 
+				android:layout_width="fill_parent" 
+				android:layout_weight="0.33"
+		    	android:layout_height="wrap_content">
+	  		    <TextView
+			        android:id="@+id/match_header"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			    	android:editable="true"
+			    	android:layout_weight="0.33"
+			        android:textSize="15sp"
+			        android:textStyle="bold" />
+
+	  		   <FrameLayout
+		       	android:layout_width="fill_parent"
+		       	android:layout_height="wrap_content"
+		       	android:layout_weight="0.33">
+		  		    <ProgressBar 
+		  		        android:max="3"
+		  		        android:id="@+id/life_remaining"
+		  		        style="@android:style/Widget.ProgressBar.Horizontal"
+		  		        android:layout_width="match_parent" 
+			    		android:layout_height="wrap_content"
+			    		android:layout_gravity="center"
+		  		        android:clickable="false"/>
+	  		        <TextView
+				        android:id="@+id/life_label"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				    	android:editable="true"
+				    	android:layout_gravity="center"
+				    	android:text="health"
+				    	android:textColor="@color/white"
+				        android:textSize="10sp" />
+	  		    </FrameLayout>
+	  		    	 <FrameLayout
+		       	android:layout_width="fill_parent"
+		       	android:layout_height="wrap_content"
+		       	android:layout_weight="0.33">
+		  		    <ProgressBar 
+		  		        android:max="3"
+		  		        android:id="@+id/target_life_remaining"
+		  		        style="@android:style/Widget.ProgressBar.Horizontal"
+		  		        android:layout_width="match_parent" 
+			    		android:layout_height="wrap_content"
+			    		android:layout_gravity="center"
+		  		        android:clickable="false"/>
+	  		        <TextView
+				        android:id="@+id/target_life_label"
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				    	android:editable="true"
+				    	android:layout_gravity="center"
+				    	android:text="target health"
+				    	android:textColor="@color/white"
+				        android:textSize="10sp" />
+	  		    </FrameLayout>
+  		    </LinearLayout>
+
+    </LinearLayout>
+</assassins.ui.prototypes.MatchLayout>

@@ -1,0 +1,48 @@
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/boundariesMapFrame"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+           
+
+        <assassins.ui.prototypes.AdjustBoundaryLayout
+        android:id="@+id/draw_boundary_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+     
+ 
+
+  
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="66dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:orientation="horizontal"
+        android:background="#666" >
+
+        <Button
+            android:id="@+id/boundaries_done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|center_vertical"
+			android:layout_marginLeft="8dp"
+			android:layout_marginRight="4dp"
+            android:layout_weight="0.5"
+            android:text="Done"
+            android:background="@drawable/burnt_paper_button" />
+
+        <Button
+            android:id="@+id/boundaries_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|center_vertical"
+			android:layout_marginLeft="4dp"
+			android:layout_marginRight="8dp"
+            android:layout_weight="0.5"
+            android:text="Cancel"
+            android:background="@drawable/burnt_paper_button" />
+    </LinearLayout>
+        
+    </FrameLayout>

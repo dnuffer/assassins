@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, ProjectAssassins!</string>
+    <string name="app_name">Project Assassins</string>
+    <string name="main_title">Order of the Assassin</string>
+    <string name="main_conspire">Conspire</string>
+    <string name="alert_dialog_login_name">Name</string>
+    <string name="alert_dialog_login_email">E-mail</string>
+    <string name="alert_dialog_login_entry">Login</string>
+    <string name="alert_dialog_login_username">Username</string>
+    <string name="alert_dialog_login_password">Password</string>
+    <string name="alert_dialog_login_confirm_password">Confirm Password</string>
+    <string name="alert_dialog_login_create_profile">Create a Profile</string>
+    <string name="alert_dialog_submit">Submit</string>
+    <string name="alert_dialog_cancel">Cancel</string>
+    <string name="create_profile_string">Create a new Profile</string>
+    <string name="import_profile_string">Import an existing profile</string>
+    <string name="create_new_import_alert_title">No profile exists for you yet.\nWhat would you like to do?</string>
+    <string name="main_honors">Honors</string>
+    <string name="main_book_of_hassan">Book Of Hassan</string>
+    <string name="main_assassinations">Assassinations</string>
+    <string name="boh_title">Book of Hassan</string>
+    <string name="honors_title">Honors</string>
+    <string name="honors_rank_label">Rank: [goes here]</string>
+    <string name="honors_points_label">Points: [goes here]</string>
+    <string name="honors_achievements_label">Achievements:</string>
+    <string name="conspire_title">Conspire</string>
+    <string name="search_mode_title">Search Mode</string>
+    <string name="hunt_mode_title">Hunt Mode</string>
+     <string name="assassins">Assassins</string>
+        <string name="bounty">Bounty</string>
+        <string name="scourge">Scourge</string>
+        <string name="thieves">Thieves</string>
+         <string name="priv">Private</string>
+        <string name="pub">Public</string>
+        <string name="alert_dialog_match_name">match name</string>
+            <string name="alert_dialog_password">password</string>
+          <string-array name="privacy_array">
+        <item>@string/priv</item>
+        <item>@string/pub</item>
+    </string-array>          
+    <string-array name="matchtype_array">
+        <item>@string/assassins</item>
+        <item>@string/bounty</item>
+        <item>@string/scourge</item>
+        <item>@string/thieves</item>
+    </string-array>
+    <string-array name="match_settings_strings">
+        <item>Conspiracy Name</item>
+        <item>Secrecy</item>
+        <item>Password</item>
+        <item>Match Type</item>
+        <item>Match Bounds</item>
+        <item>Start Time</item>
+        <item>End Time</item>
+    </string-array>
+    <string-array name="boh_topics">
+        <item>Hello</item>
+        <item>World</item>
+        <item>This</item>
+        <item>Is</item>
+        <item>A</item>
+        <item>Test</item>
+        <item>For</item>
+        <item>Using</item>
+        <item>The</item>
+        <item>BOH</item>
+        <item>Menu</item>
+        <item>as</item>
+        <item>a</item>
+        <item>string array</item>
+    </string-array>
+    <string-array name="boh_explanations">
+        <item>THis would be the first explanation associated with the first topic.</item>
+        <item>And there will be one of these for each topic.</item>
+        <item>Is this strategy a good idea?</item>
+        <item>I sure hope so...</item>
+    </string-array>    
+    <string name="achievement_screen_title">Achievement</string>
+    <string name="achievement_screen_description_label">Description:</string>
+    <string-array name="achievements_array">
+        <item>Meet Your Maker</item>
+        <item>Achieve 5 Assassinations</item>
+        <item>Achieve 10 Assassinations</item>
+        <item>Achieve 20 Assassinations</item>
+    </string-array>
+    <string-array name="achievement_icons">
+        <item>@drawable/sun</item>
+        <item>@drawable/five</item>
+        <item>@drawable/ten</item>
+        <item>@drawable/twenty</item>
+    </string-array>
+    <string-array name="descriptions">
+        <item>Assassinate the Assassin who created the Conspiracy you are playing in.</item>
+        <item>Get a total of 5 assassinations.</item>
+        <item>Get a total of 10 assassinations.</item>
+        <item>Get a total of 20 assassinations.</item>
+    </string-array>
+</resources>

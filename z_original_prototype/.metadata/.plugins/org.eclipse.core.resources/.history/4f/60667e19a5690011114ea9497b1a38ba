@@ -1,0 +1,361 @@
+package assassins.ui.prototypes;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationProvider;
+import android.util.Log;
+
+import com.google.android.maps.GeoPoint;
+import com.google.gson.*;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.*;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.bson.types.ObjectId;
+
+
+public class AssassinsHttpClient {
+
+	private String serviceURL;
+	private Context context;
+	
+	public AssassinsHttpClient(String url, Context c) {
+		
+		serviceURL = url;
+		context = c;
+	}
+	
+	public Profile authenticatePlayer(Context c) throws AssassinsHttpException {
+		
+		String installId = Installation.id(c);
+		//send installId to service to see if this device has a profile
+		String response = get("/protected/authenticate/", installId);
+		
+		Log.d("Project Assassins", response);
+		
+		if(response.equals("null"))
+			throw new AssassinsHttpException("Profile not found");
+		
+		Gson g = new GsonBuilder().registerTypeAdapter(ObjectId.class, new ObjectIdDeserializer()).setPrettyPrinting().create();
+		ObjectId myProfile = g.fromJson(response, ObjectId.class);
+		
+		Log.d(tag, msg)
+		
+		return myProfileId;
+	}
+	
+	/*
+	 * FUNCTION: updateLocation
+	 * PARAMS: ObjectId id - the local player's ObjectId (NOT installId)
+	 * RETURNS: GeoPoint - target's location
+	 */
+	
+	public GeoPoint updateLocation(ObjectId id) throws AssassinsHttpException {
+		LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+		
+		String locationProvider = LocationManager.GPS_PROVIDER;
+		
+		Location l = locationManager.getLastKnownLocation(locationProvider);
+		
+		Log.d("Project Assassins", "my location in degrees: "+ l.getLatitude() +" "+ l.getLongitude());
+		
+		GeoPoint geo = PlayerLocation.locationToGeoPoint(l);
+		
+		Log.d("Project Assassins", "my location in microdegrees: "+geo.getLatitudeE6()+" "+geo.getLongitudeE6());
+		
+		Gson g = new GsonBuilder()
+					.registerTypeAdapter(GeoPoint.class, new GeoPointSerializer())
+					.create();
+		
+		String json = g.toJson(geo);
+		
+		Log.d("ProjectAssassins", "my location serialized: "+json);
+		
+		String  response = get("/update/location/", id.toString() + "/" + json);
+		
+		Gson targetLocGson = new GsonBuilder().registerTypeAdapter(GeoPoint.class,new GeoPointDeserializer())
+												.create();
+		
+		Log.d("ProjectAssassins", "target location json: "+response);
+		
+		return targetLocGson.fromJson(response, GeoPoint.class);
+		
+	}
+	
+	/*
+	public String getTargetLocation(ObjectId id) throws AssassinsHttpException {
+		String response = get("target/location/", id.toString());
+		//deserialize location here
+		return response;
+	}*/
+	
+	public Conspiracy getCurrentMatch(ObjectId id) throws AssassinsHttpException {
+				
+		String response = get("current/match/", id.toString());
+		
+		Gson g = new Gson();
+		Conspiracy c = g.fromJson(response, Conspiracy.class);
+		return c;
+		
+	}
+	
+	
+	public void importProfile(String phoneId) throws AssassinsHttpException {
+		//UNIMPLEMENTED
+	}
+	
+	
+	public String joinMatch(String installId, String matchName) throws AssassinsHttpException {
+		
+		String response = get("/protected/join/match/", matchName +"/"+installId);
+
+		if(response.equals("null"))
+			throw new AssassinsHttpException("Match not found");
+		
+		return response;
+	}
+	
+	public void createProfile(Player p) throws AssassinsHttpException {
+		
+		Gson g = new Gson();
+		String jsonPlayer = g.toJson(p);
+		post("/protected/profile", jsonPlayer);
+	}
+	
+	public void createMatch(Conspiracy c) throws AssassinsHttpException {
+		
+		Gson g = new GsonBuilder().registerTypeAdapter(Player.class, new PlayerSerializer())
+								  .registerTypeAdapter(GeoPoint.class, new GeoPointSerializer())
+								  .create();
+		
+		String jsonMatch = g.toJson(c);
+		post("/protected/match", jsonMatch);
+	}
+	
+	public void getMatchesNearPlayer(Player p) throws AssassinsHttpException {		
+		
+	}
+	
+	private void post(String route, String json) throws AssassinsHttpException {
+		 
+		// Create a new HttpClient and Post Header
+	    HttpClient httpclient = new DefaultHttpClient();
+	    HttpResponse response = null;
+	    
+	    Log.d("Project Assassins", serviceURL+route);
+	    HttpPost httppost= new HttpPost(serviceURL+route);
+	    
+	    try {
+	        // Add data
+	        httppost.setEntity(new StringEntity(json));
+	        Log.d("Project Assassins", httppost.toString());
+	        // Execute HTTP Put Request
+	        response = httpclient.execute(httppost);
+	        
+	        if(response.getStatusLine().getStatusCode() != 200) {
+	        	String reasonPhrase = response.getStatusLine().getReasonPhrase();
+	        	throw new AssassinsHttpException(reasonPhrase);
+	        }
+	    } 
+	    catch (ClientProtocolException e) {
+	    	throw new AssassinsHttpException("ClientProtocolException", e);
+	    } 
+	    catch (IOException e) {
+	    	throw new AssassinsHttpException("IO Exception", e);
+	    }
+	    catch (Exception e) {
+	    	throw new AssassinsHttpException("Unknown Exception", e);
+	    }
+	}
+	
+	
+	private void put(String route, String json) throws AssassinsHttpException {
+		 
+		// Create a new HttpClient and Post Header
+	    HttpClient httpclient = new DefaultHttpClient();
+	    HttpResponse response = null;
+	    
+	    Log.d("Project Assassins", serviceURL+route+json);
+	    HttpPut httpput= new HttpPut(serviceURL+route);
+	    
+	    try {
+	        // Add data
+	    	httpput.setEntity(new StringEntity(json));
+	        Log.d("Project Assassins", httpput.toString());
+	        // Execute HTTP Put Request
+	        response = httpclient.execute(httpput);
+	        
+	        if(response.getStatusLine().getStatusCode() != 200) {
+	        	String reasonPhrase = response.getStatusLine().getReasonPhrase();
+	        	throw new AssassinsHttpException(reasonPhrase);
+	        }
+	    } 
+	    catch (ClientProtocolException e) {
+	    	throw new AssassinsHttpException("ClientProtocolException", e);
+	    } 
+	    catch (IOException e) {
+	    	throw new AssassinsHttpException("IO Exception", e);
+	    }
+	    catch (Exception e) {
+	    	throw new AssassinsHttpException("Unknown Exception", e);
+	    }
+	}
+	
+	
+	
+	private String get(String route, String params) throws AssassinsHttpException {
+		 
+	    HttpClient httpclient = new DefaultHttpClient();
+	    HttpResponse response = null;
+	    
+	    BufferedReader in = null;
+	    
+	    Log.d("Project Assassins", "HTTP GET: "+serviceURL+route+params);
+	    HttpGet httpget= new HttpGet(serviceURL+route+params);
+	    
+	    try {
+	        // Add data
+
+	        Log.d("Project Assassins", httpget.toString());
+	        // Execute HTTP Put Request
+	        response = httpclient.execute(httpget);
+	        
+	        if(response.getStatusLine().getStatusCode() != 200){
+	        	String reasonPhrase = response.getStatusLine().getReasonPhrase();
+	        	throw new AssassinsHttpException(reasonPhrase);
+	        }
+	        else{
+	    	    
+				 
+	        	 in = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+				 StringBuffer sb = new StringBuffer("");
+				 String line = "";
+				 
+				 while ((line = in.readLine()) != null) {
+				     Log.d("Project Assassins", "Line: "+line);
+					 sb.append(line);
+				 }
+				 
+				 in.close();
+				 String content = sb.toString();
+				 return content;
+             } 
+
+	    } 
+	    catch (ClientProtocolException e) {
+	    	throw new AssassinsHttpException("ClientProtocolException", e);
+	    } 
+	    catch (IOException e) {
+	    	throw new AssassinsHttpException("IO Exception", e);
+	    }
+	    catch (Exception e) {
+	    	throw new AssassinsHttpException("Unknown Exception", e);
+	    }
+	    finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } 
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+	}
+	
+
+}
+
+
+class LocationSerializer implements JsonSerializer<Location>
+{
+
+	public JsonElement serialize(Location arg0, Type arg1,
+			JsonSerializationContext arg2) {
+
+		JsonPrimitive lat = new JsonPrimitive(arg0.getLatitude());
+		JsonPrimitive lon = new JsonPrimitive(arg0.getLongitude());
+		
+		JsonArray location = new JsonArray();
+		
+		location.add(lat);
+		location.add(lon);
+		
+		JsonObject jo = new JsonObject();
+		
+		jo.add("location", location);
+		
+		return jo;
+	}
+}
+
+
+class GeoPointSerializer implements JsonSerializer<GeoPoint>
+{
+	public JsonElement serialize(GeoPoint arg0, Type arg1,
+			JsonSerializationContext arg2) {
+
+		JsonPrimitive lat = new JsonPrimitive(arg0.getLatitudeE6());
+		JsonPrimitive lon = new JsonPrimitive(arg0.getLongitudeE6());
+		
+		JsonArray loc = new JsonArray();
+		
+		loc.add(lat);
+		loc.add(lon);
+		
+		JsonObject jo = new JsonObject();
+		
+		jo.add("Point", loc);
+		
+		return jo;
+	}
+}
+
+class PlayerSerializer implements JsonSerializer<Player>{
+
+	public JsonElement serialize(Player p, Type t,
+			JsonSerializationContext c) {
+
+		JsonObject jo = new JsonObject();
+		   jo.addProperty("name", p.getName());
+		   jo.addProperty("id", p.getObjectId().toString());
+		   //jo.addProperty("install_id", p.getInstallId());
+		   return jo;
+	}
+}
+
+class GeoPointDeserializer implements JsonDeserializer<GeoPoint> {
+
+	public GeoPoint deserialize(JsonElement arg0, Type arg1,
+			JsonDeserializationContext arg2) throws JsonParseException {
+		
+		//json array containing two ints - lat and lon
+		JsonArray locationArray = arg0.getAsJsonArray();
+
+		return new GeoPoint(locationArray.get(0).getAsInt(), locationArray.get(1).getAsInt());
+	}
+
+}
+
+
+
+class ObjectIdDeserializer implements JsonDeserializer<ObjectId> {
+
+	public ObjectId deserialize(JsonElement arg0, Type arg1,
+			JsonDeserializationContext arg2) throws JsonParseException {
+		return ObjectId.massageToObjectId(arg0.getAsString());
+	}
+
+}
+
+
+
+

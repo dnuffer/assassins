@@ -1,0 +1,97 @@
+{
+	"profile" : {
+		"id" : 12345
+		"name" : "name",
+		"password" : "password",
+		"canCreate" : true,
+		"phoneId" : "123456abcdef",
+		"rank" : "rank 1",
+		"score" : 12345,
+		"achievements completed" : [ "a 1", "a 2", "a 3" ],
+		"current match" : 12345,
+		"billing information" : { "credit card number" : "1234", "expiration date": "12/12" }
+		"game state" : 12345
+	},
+	
+	"book of hasan" : {
+		"topics" : [
+			{ "title" : "text" },
+			{ "title" : "text" },
+			{ "title" : "text" }
+		]
+	},
+
+	"ranks" : [
+		{
+			"name" : "rank 1",
+			"icon" : "rank1.ico"
+			"accomplishments" : [ "a 1", "a 2", "a 3" ]
+		},
+		{
+			"name" : "rank 2",
+			"icon" : "rank2.ico"
+			"accomplishments" : [ "a 4", "a 5", "a 6" ]
+		}
+	],
+
+	"achievements" : [
+		{
+			"name" : "a 1",
+			"description" : "description"
+		},
+		{
+			"name" : "a 2",
+			"description" : "description"
+		}
+	]
+
+	"match" : {
+		"profiles" : [ 12345, 2, 3, 4, 5 ],
+		"name" : "my match",
+		"public" : true,
+		"password" : "password hash",
+		"area" : [40.123456, 111.123456, 40.234567, 111.234567],
+		"match start time" : 0613162785,
+		"type" : "assassins",
+		"rules" : {
+			"grace period" : 12345,
+			"regeneration rule" : "foo",
+			"health objects" : [
+				{
+					"location" : [ 40.123456, 111.123456 ],
+					"collector id" : 12345,
+					"time appears" : 0613162785,
+					"when collected" : 0613162785
+				},
+				{
+					"location" : [ 40.123456, 111.123456 ],
+					"collector id" : null,
+					"time appears" : 0613162785,
+					"when collected" : null
+				},
+			]
+		},
+		"player states" : [
+			{
+				"id" : 12345,
+				"location" : [ 40.123456, 111.123456 ],
+				"last location reporting time": 0613162785,
+				"life meter" : 3,
+				"time killed" : 0613162785,
+				"players killed" : 1,
+				"target id" : 23456,
+				"time till attack" : 90
+			},
+			{
+				"id" : 23456,
+				"location" : [ 40.123456, 111.123456 ],
+				"last location reporting time": 0613162785,
+				"life meter" : 2,
+				"time killed" : null,
+				"players killed" : 0,
+				"target id" : null,
+				"time till attack" : null
+			}
+		]
+	}
+}

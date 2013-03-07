@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageSwitcher
+        android:id="@+id/ImageSwitcherHonorsBG"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_height="fill_parent"
+        android:background="@drawable/assassin_background"/>
+
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/honors_title"
+                android:textColor="#FFFFFF"
+        android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <QuickContactBadge
+        android:id="@+id/user_picture"
+        android:layout_width="95dp"
+        android:layout_height="95dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="70dp"
+        android:src="@drawable/no_contact" />
+
+    <TextView
+        android:id="@+id/rank_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/user_picture"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_toRightOf="@+id/user_picture"
+        android:text="@string/honors_rank_label"
+                android:textColor="#FFFFFF"
+        android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    
+    <TextView
+        android:id="@+id/points_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rank_label"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_toRightOf="@+id/user_picture"
+        android:text="@string/honors_points_label"
+                android:textColor="#FFFFFF"
+        android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/achievements_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/user_picture"
+        android:layout_marginTop="10dp"
+        android:text="@string/honors_achievements_label"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="#FFFFFF"
+        android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2" />
+
+    <ListView
+        android:id="@+id/achievements_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:cacheColorHint="#00000000"
+        android:layout_below="@+id/achievements_label" >
+    </ListView>
+
+</RelativeLayout>

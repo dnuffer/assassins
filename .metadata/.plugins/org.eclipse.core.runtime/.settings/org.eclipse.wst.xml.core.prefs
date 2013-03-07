@@ -1,0 +1,7 @@
+cleanupEOLCode=EOL_Windows
+compressEmptyElementTags=false
+eclipse.preferences.version=1
+fixXMLDeclaration=false
+insertMissingTags=false
+insertRequiredAttrs=false
+quoteAttrValues=false

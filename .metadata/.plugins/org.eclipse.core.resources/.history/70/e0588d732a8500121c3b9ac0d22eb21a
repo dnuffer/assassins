@@ -1,0 +1,61 @@
+package com.nbs.client.assassins;
+
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+
+import com.google.android.gcm.GCMBaseIntentService;
+import com.googlecode.androidannotations.annotations.EService;
+import com.googlecode.androidannotations.annotations.rest.RestService;
+
+import android.os.Bundle;
+
+@EService
+public class GCMIntentService extends GCMBaseIntentService {
+
+	@RestService
+	HuntedRestClient restClient;
+	
+	
+	
+	public GCMIntentService() {
+
+		
+	}
+
+	public GCMIntentService(String... senderIds) {
+		super(GCMUtilities.SENDER_ID);
+		
+	}
+
+	@Override
+	protected void onError(Context arg0, String errorId) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected void onMessage(Context arg0, Intent intent) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected void onRegistered(Context arg0, String registrationId) {
+		User user = new User();
+		user.setGcmRegId(registrationId);
+		restClient.registerGCMDevice(user);
+
+	}
+
+	@Override
+	protected void onUnregistered(Context arg0, String registrationId) {
+		// TODO Auto-generated method stub
+
+	}
+
+
+	
+}

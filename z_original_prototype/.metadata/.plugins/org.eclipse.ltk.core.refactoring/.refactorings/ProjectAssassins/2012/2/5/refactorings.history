@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename field &apos;owner&apos; in &apos;assassins.ui.prototypes.Conspiracy&apos; to &apos;creator&apos;&#x0A;- Original project: &apos;ProjectAssassins&apos;&#x0A;- Original element: &apos;assassins.ui.prototypes.Conspiracy.owner&apos;&#x0A;- Renamed element: &apos;assassins.ui.prototypes.Conspiracy.creator&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename field &apos;owner&apos;" flags="589826" getter="false" id="org.eclipse.jdt.ui.rename.field" input="/src&lt;assassins.ui.prototypes{Conspiracy.java[Conspiracy^owner" name="creator" references="true" setter="false" stamp="1328073533375" textual="false" version="1.0"/>
+</session>

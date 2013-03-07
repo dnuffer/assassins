@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollview"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">  
+    
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="top" >
+    
+    <TextView
+        android:id="@+id/newConspiracyTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:text="Start a Conspiracy"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/conspiracyName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/newConspiracyTitle"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:text="Conspiracy Name:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+id/editConspiracyName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/conspiracyName"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
+        android:singleLine="true" >
+    </EditText>
+
+    <TextView
+        android:id="@+id/labelConspiracyVisibilty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editConspiracyName"
+        android:layout_below="@+id/editConspiracyName"
+        android:layout_marginTop="15dp"
+        android:text="Conspiracy Visibilty:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/labelConspiracyVisibilty"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp" >
+
+        <RadioButton
+            android:id="@+id/radio0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Secret" />
+
+        <RadioButton
+            android:id="@+id/radio1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Public" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/editTextCreateConspiracyPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/editConspiracyName"
+        android:layout_alignTop="@+id/radioGroup2"
+        android:singleLine="true"
+        android:maxLength="14"
+        android:minWidth="155dp"
+        android:text="enter password" />
+
+    <Spinner
+        android:id="@+id/spinnerMatchType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/editTextCreateConspiracyPassword"
+        android:layout_below="@+id/radioGroup2"
+        android:layout_toRightOf="@+id/conspiracyName" />
+
+    <TextView
+        android:id="@+id/labelSelectMatchType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/radioGroup2"
+        android:layout_alignTop="@+id/spinnerMatchType"
+        android:text="Conspiracy Type:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/labelConspiracyStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelSelectMatchType"
+        android:layout_below="@+id/spinnerMatchType"
+        android:layout_marginTop="10dp" 
+        android:text="Conspiracy Start Time:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <DatePicker
+        android:id="@+id/datePicker1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/labelConspiracyStart"
+        android:layout_marginTop="10dp" 
+        android:layout_centerHorizontal="true" />
+
+    <TimePicker
+        android:id="@+id/timePicker1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/datePicker1"
+        android:layout_marginTop="10dp" 
+  		android:layout_centerHorizontal="true"/>
+        
+        <TextView
+        android:id="@+id/labelConspiracyEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelSelectMatchType"
+        android:layout_below="@+id/timePicker1"
+        android:layout_marginTop="10dp" 
+        android:text="Conspiracy End Time:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+        <DatePicker
+        android:id="@+id/datePicker2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/labelConspiracyEnd"
+        android:layout_marginTop="10dp" 
+        android:layout_centerHorizontal="true" />
+
+    <TimePicker
+        android:id="@+id/timePicker2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/datePicker2"
+        android:layout_marginTop="10dp" 
+  		android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelConspiracyEnd"
+        android:layout_below="@+id/timePicker2"
+        android:layout_marginTop="15dp" 
+        android:layout_alignRight="@+id/labelSelectMatchType"
+        android:text="Set Bounds" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/spinnerMatchType"
+        android:layout_below="@+id/timePicker2"
+        android:layout_marginTop="15dp" 
+        android:layout_alignRight="@+id/spinnerMatchType"
+        android:text="Create Conspiracy" />
+	
+</RelativeLayout>
+</ScrollView>

@@ -1,0 +1,180 @@
+package assassins.ui.prototypes;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+public class ProjectAssassins extends Activity {
+	
+	private static final int IMPORT_ALERT = 1;
+	private static final int DIALOG_LOGIN_ENTRY = 2;
+	private static final int CREATE_PROFILE_ALERT = 3;
+	
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        
+        Dialog accountWindow = onCreateDialog(IMPORT_ALERT);
+        accountWindow.show();
+        
+        Button a = (Button)findViewById(R.id.assassinate_button);
+        a.setOnClickListener(new View.OnClickListener() {
+        	public void onClick(View arg0) {
+        		Intent i = new Intent(ProjectAssassins.this, MatchDetailView.class);
+        		startActivity(i);
+        	}
+        });
+        
+        Button b = (Button)findViewById(R.id.conspire_button);
+        b.setOnClickListener(new View.OnClickListener() {
+        	public void onClick(View arg0) {
+        		Intent i = new Intent(ProjectAssassins.this, ConspireMenu.class);
+        		startActivity(i);
+        	}
+        });
+        
+        Button c = (Button)findViewById(R.id.honors_button);
+        c.setOnClickListener(new View.OnClickListener() {
+        	public void onClick(View arg0) {
+        		Intent i = new Intent(ProjectAssassins.this, HonorsMenu.class);
+        		startActivity(i);
+        	}
+        });
+        
+        Button d = (Button)findViewById(R.id.book_of_hassan);
+        d.setOnClickListener(new View.OnClickListener() {
+           public void onClick(View arg0) {
+           Intent i = new Intent(ProjectAssassins.this, BookOfHassanMenu.class);
+           startActivity(i);
+           } 
+        });
+    }
+	
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		switch(id) {
+		
+		case IMPORT_ALERT:
+            return new AlertDialog.Builder(ProjectAssassins.this)
+            	//.setIconAttribute(android.R.attr.alertDialogIcon)
+            	.setTitle(R.string.create_new_import_alert_title)
+            	.setPositiveButton(R.string.create_profile_string, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    	 Dialog createUserWindwow = onCreateDialog(CREATE_PROFILE_ALERT);
+                    	 createUserWindwow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                    	 createUserWindwow.show();
+                    	
+                    }  
+                })
+            	.setNegativeButton(R.string.import_profile_string, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    	//Tell the user to login
+                        //loginDialogue();
+                        Dialog loginWindow = onCreateDialog(DIALOG_LOGIN_ENTRY);
+                        loginWindow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                        loginWindow.show();
+                    	
+                    }  
+                })
+            	.create();
+			
+        case DIALOG_LOGIN_ENTRY:
+            // This example shows how to add a custom layout to an AlertDialog
+            LayoutInflater factory = LayoutInflater.from(this);
+            final View textEntryView = factory.inflate(R.layout.alert_dialog_login_entry, null);
+            return new AlertDialog.Builder(this)
+                //.setIconAttribute(android.R.attr.alertDialogIcon)
+                .setTitle(R.string.alert_dialog_login_entry)
+                .setView(textEntryView)
+                .setPositiveButton(R.string.alert_dialog_submit, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    	
+                    	final EditText username = (EditText) textEntryView.findViewById(R.id.usernameText);
+                    	final EditText password = (EditText) textEntryView.findViewById(R.id.passwordText);
+                    	String usernameString = username.getText().toString();
+                    	String passwordString = password.getText().toString();
+                    	String value = "Username: " + usernameString + "\nPassword: " + passwordString;
+                    	Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
+                    	
+                    }
+                })
+                .setNegativeButton(R.string.alert_dialog_cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    	Toast.makeText(getApplicationContext(), "No Login Info Entered", Toast.LENGTH_SHORT).show();
+                    	
+                    }
+                })
+                .create();
+            
+        case CREATE_PROFILE_ALERT:
+            // This example shows how to add a custom layout to an AlertDialog
+            LayoutInflater factory2 = LayoutInflater.from(this);
+            final View textEntryView2 = factory2.inflate(R.layout.create_profile_window, null);
+            return new AlertDialog.Builder(this)
+                //.setIconAttribute(android.R.attr.alertDialogIcon)
+                .setTitle(R.string.alert_dialog_login_create_profile)
+                .setView(textEntryView2)
+                .setPositiveButton(R.string.alert_dialog_submit, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    	
+                    	//extract profile info from text boxes
+                    	final EditText username = (EditText) textEntryView2.findViewById(R.id.usernameText);
+                    	final EditText password = (EditText) textEntryView2.findViewById(R.id.passwordText);
+                    	final EditText name = (EditText) textEntryView2.findViewById(R.id.nameText);
+                    	final EditText email = (EditText) textEntryView2.findViewById(R.id.emailText);
+                    	final EditText confirmPass = (EditText) textEntryView2.findViewById(R.id.confirmText);
+                    	
+                    	String usernameStr = username.getText().toString();
+                    	String passwordStr = password.getText().toString();
+                    	String nameStr = name.getText().toString();
+                    	String emailStr = email.getText().toString();
+                    	String confirmPassStr = confirmPass.getText().toString();
+                    	Log.d("Project Assassins", usernameStr+passwordStr+nameStr+emailStr+confirmPassStr);
+
+	            		//put new player profile on server
+	            		Player newPlayer = new Player(nameStr, usernameStr, passwordStr, emailStr);
+	            		AssassinsHTTPClient service = new AssassinsHTTPClient("http://vegasdev.cloudfoundry.com");
+	            		try {
+							service.createProfile(newPlayer);
+							Log.d("Project Assassins", "Created Profile");
+							//somehow need to get back the players generated id
+						} catch (AssassinsHttpException e) {
+							Log.d("Project Assassins", e.getMessage(), e.getCause());
+							
+						}
+	            		
+                    	
+                    	
+                    	//String value = "Username: " + usernameStr + "\nPassword: " + passwordStr;
+                    	//Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
+                    	
+                    }
+                })
+                .setNegativeButton(R.string.alert_dialog_cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    	Toast.makeText(getApplicationContext(), "Invalid Profile", Toast.LENGTH_SHORT).show();
+                    	
+                    }
+                })
+                .create();
+            
+        }
+        return null;
+	}
+}

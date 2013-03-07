@@ -1,0 +1,81 @@
+package assassins.ui.prototypes;
+
+import com.google.android.maps.GeoPoint;
+
+public class PlayerState {
+	
+	private int life;
+	private GeoPoint location;
+	private String username;
+	private Proximity myProximityToTarget;
+	private Proximity enemyProximityToMe;
+	
+	public PlayerState(String username, int life, GeoPoint location) {
+		this.setUsername(username);
+		this.life =  life;
+		this.location = location;
+	}
+	
+	public int getLife() {
+		return life;
+	}
+	
+	public GeoPoint getLocation() {
+		return location;
+	}
+
+	public void setLife(int i) {
+		life = i;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	
+	public boolean hasDifferentUserName(PlayerState other)
+	{
+		if(other == null)
+			return false;
+		
+		return (this.getUsername() == other.getUsername());
+	}
+	
+	public int compareLife(PlayerState other)
+	{
+		if(other != null)
+		{
+			if(other.getLife() > this.getLife())
+			{
+				return -1;
+			}
+			else if(other.getLife() < this.getLife())
+			{
+				return 1;
+		}
+		}
+		return 0;
+	}
+
+	public Proximity getMyProximityToTarget() {
+		return myProximityToTarget;
+	}
+
+	public void setMyProximityToTarget(Proximity myProximityToTarget) {
+		this.myProximityToTarget = myProximityToTarget;
+	}
+
+	public Proximity getEnemyProximityToMe() {
+		return enemyProximityToMe;
+	}
+
+	public void setEnemyProximityToMe(Proximity enemyProximityToMe) {
+		this.enemyProximityToMe = enemyProximityToMe;
+	}
+	
+	
+	
+}

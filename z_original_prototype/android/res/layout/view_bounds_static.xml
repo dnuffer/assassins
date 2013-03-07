@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assassins.ui.prototypes.MatchInfoBoundsFrameLayout 
+     xmlns:android="http://schemas.android.com/apk/res/android" 
+			android:id="@+id/view_bounds_static_frame"  
+			android:layout_width="fill_parent" 
+			android:layout_height="fill_parent">
+
+	<com.google.android.maps.MapView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+			android:id="@+id/view_bounds_static_mapview" 
+    	    android:layout_width="fill_parent"
+        	android:layout_height="fill_parent" 
+			android:enabled="true" 
+			android:clickable="true"
+			android:apiKey="@string/mapKey" />            
+			<!--android:apiKey="0ddcL7AHLc_4OEsXoMaAXNzy1UwEs37HAggxogg" Dave's Key -->
+			<!-- android:apiKey="0BaOKzvqL6scVBofeBtdARPHhW6Ne_pKs063esg" Cam's Key -->
+
+	<LinearLayout  	xmlns:android="http://schemas.android.com/apk/res/android"
+	    			android:id="@+id/view_bounds_static_llayout" 
+    			    android:layout_width="fill_parent" 
+        			android:layout_height="fill_parent">
+
+		<assassins.ui.prototypes.TransparentPanelStatic
+				android:id="@+id/view_bounds_transparent_panel_static" 
+	    	    android:layout_width="fill_parent"
+	        	android:layout_height="fill_parent"/>
+
+	</LinearLayout>
+</assassins.ui.prototypes.MatchInfoBoundsFrameLayout >

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;eventScreenCoordX&apos; in &apos;assassins.ui.prototypes.MatchBoundariesView.getPoint(...)&apos; to &apos;screenX&apos;&#x0A;- Original project: &apos;ProjectAssassins&apos;&#x0A;- Original element: &apos;assassins.ui.prototypes.MatchBoundariesView.getPoint(float, float).eventScreenCoordX&apos;&#x0A;- Renamed element: &apos;eventScreenCoordX&apos;&#x0A;- Update references to refactored element" description="Rename local variable &apos;eventScreenCoordX&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;assassins.ui.prototypes{MatchBoundariesView.java[MatchBoundariesView~getPoint~F~F@eventScreenCoordX!3796!3826!3800!3816!I!0!false" name="screenX" references="true" stamp="1322888655686" version="1.0"/>
+</session>

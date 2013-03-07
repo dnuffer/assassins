@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+        
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" 
+    android:gravity="top">
+           <ImageSwitcher
+        android:id="@+id/ImageSwitcher01"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_height="fill_parent"
+        android:background="@drawable/assassin_background">
+
+    </ImageSwitcher>
+              
+   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/profileErrorLayout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" 
+    android:orientation="vertical"
+    android:gravity="center">
+    
+	    <TextView
+	        android:id="@+id/profileErrorText"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:gravity="center_horizontal"
+	        android:layout_marginTop="10dp"
+	        android:paddingBottom="15dp"
+	        android:shadowColor="#111111"
+	        android:shadowDx="2"
+	        android:shadowDy="2"
+	        android:shadowRadius="2.5"
+	        android:text="There was a network problem.  Please try again."
+	        android:textColor="#FFFFFF"
+	        android:textSize="17sp"
+	        android:textStyle="bold" />  
+	                  
+	   <Button
+	       android:id="@+id/profileErrorRetryButton"
+	       android:layout_width="wrap_content"
+	       android:layout_height="wrap_content"
+	       android:gravity="center"
+	       android:layout_below="@+id/profileErrorText"
+	       android:background="@drawable/burnt_paper_button"
+	       android:text="Retry" />
+	</LinearLayout>
+          </RelativeLayout>

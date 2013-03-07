@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" android:gravity="top">
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_name" 
+    	android:layout_alignParentTop="true" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/nameLabel">
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:layout_alignParentLeft="true"
+    	android:layout_below="@+id/nameLabel"
+    	android:singleLine="true" 
+    	android:id="@+id/nameText">
+    		<requestFocus/>
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_email" 
+    	android:layout_below="@+id/nameText" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/emailLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textEmailAddress" 
+    	android:layout_below="@+id/emailLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/emailText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_username" 
+    	android:layout_below="@+id/emailText" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/usernameLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textEmailAddress" 
+    	android:layout_below="@+id/usernameLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/usernameText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_password" 
+    	android:layout_below="@+id/usernameText" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/passwordLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textPassword" 
+    	android:layout_below="@+id/passwordLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/passwordText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_confirm_password" 
+    	android:layout_below="@+id/passwordText" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/confirmLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textPassword" 
+    	android:layout_below="@+id/confirmLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/confirmText">
+    </EditText>
+</RelativeLayout>

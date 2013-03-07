@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+    
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true" 
+    	android:layout_centerHorizontal="true"
+        android:text="@string/hunt_mode_title"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <com.google.android.maps.MapView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/map_view"
+        android:layout_width="match_parent"
+        android:layout_height="222dp"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/textView1"
+        android:clickable="true"
+        android:enabled="true"
+        android:apiKey="0ddcL7AHLc_4OEsXoMaAXNzy1UwEs37HAggxogg" />
+        <!-- android:apiKey="0RsFYPG_6BqF92LxDH0sG2M0i0X4rH4EIwYBiAw" -->
+    
+</RelativeLayout>

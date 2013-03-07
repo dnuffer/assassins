@@ -1,0 +1,93 @@
+package assassins.ui.prototypes;
+
+import java.util.ArrayList;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Player implements Parcelable{
+	
+	
+	private int id;
+	private String name;
+	private String username;
+	private String password;
+	private String email;
+	private String phone_id;
+	private int rank;
+	private int score;
+	private ArrayList<Achievement> achievements_completed;
+	private int current_match;
+	private int game_state;
+	
+	public Player(){}
+	
+	public Player(String username){ this.username = username; }
+	
+	
+	//creating a new player
+	public Player(String name, String username, String password, String email)
+	{
+		this.name = name;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+	}
+	
+	//an authenticated player
+	public Player(String name, String username, String password, String email, 
+					int id, String phoneId, int rank, int score, ArrayList<Achievement> achievements, 
+					int currentMatch, int gameState)
+	{
+		this.id = id;
+		this.name = name;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+		this.phone_id = phoneId;
+		this.rank = rank;
+		this.score = score;
+		this.achievements_completed = achievements;
+		this.current_match = currentMatch;
+		this.game_state = gameState;
+	}
+	
+	public Player(Parcel in)
+	{
+		readFromParcel(in);
+	}
+	
+	private void readFromParcel(Parcel in) {
+		name = in.readString();
+		//FIX ME! add other members
+	}
+
+	public ArrayList<Achievement> getHonors()
+	{
+		return achievements_completed;
+	}
+	
+	public int getRank()
+	{
+		return rank;
+	}
+	
+	public String getName()
+	{
+		return name;
+	}
+	//need to add getters and setters for other members
+	public void setName(String newName) {
+		name = newName;
+	}
+
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(name);
+		//FIX ME! add other members
+	}
+}

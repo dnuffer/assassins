@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring accessors="true" comment="Delete 5 elements from project &apos;ProjectAssassins&apos;&#x0A;- Original project: &apos;ProjectAssassins&apos;&#x0A;- Original elements:&#x0A;     match_detail_bounds.xml&#x0A;     match_detail_countdown.xml&#x0A;     match_detail_player.xml&#x0A;     match_detail_summary.xml&#x0A;     match_detail_title.xml" description="Delete elements" element1="res/drawable/match_detail_bounds.xml" element2="res/drawable/match_detail_summary.xml" element3="res/drawable/match_detail_countdown.xml" element4="res/drawable/match_detail_player.xml" element5="res/drawable/match_detail_title.xml" elements="0" flags="589830" id="org.eclipse.jdt.ui.delete" resources="5" stamp="1323562199297" subPackages="false" version="1.0"/>
+</session>

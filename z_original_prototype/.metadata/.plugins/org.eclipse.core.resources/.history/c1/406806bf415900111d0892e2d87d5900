@@ -1,0 +1,12 @@
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+
+public class Driver
+{ 
+	public static void main(String [] args)
+	{
+		Gson g = new GsonBuilder().registerTypeAdapter(MyType.class, new MySerializer())
+	}
+
+}

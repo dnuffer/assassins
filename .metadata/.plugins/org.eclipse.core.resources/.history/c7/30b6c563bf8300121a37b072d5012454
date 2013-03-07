@@ -1,0 +1,12 @@
+/**
+ * 
+ */
+package com.nbs.client.assassins;
+
+/**
+ * @author cam
+ *
+ */
+public class GCMBroadcastReceiverImpl {
+
+}

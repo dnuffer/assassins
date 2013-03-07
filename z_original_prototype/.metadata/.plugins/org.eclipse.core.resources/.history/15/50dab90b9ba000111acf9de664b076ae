@@ -1,0 +1,8 @@
+package assassins.ui.prototypes;
+
+public enum Proximity {
+	SEARCH_RANGE,
+	ALERT_RANGE,
+	HUNT_RANGE,
+	ATTACK_RANGE
+}

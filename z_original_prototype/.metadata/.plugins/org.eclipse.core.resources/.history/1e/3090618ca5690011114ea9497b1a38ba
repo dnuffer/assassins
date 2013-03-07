@@ -1,0 +1,198 @@
+package assassins.ui.prototypes;
+
+import java.util.ArrayList;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+import org.bson.types.ObjectId;
+
+public class Profile implements Parcelable{
+	
+	/*
+	 * Enforce: unique username
+	 * 
+	 * phone_id and username are both unique.
+	 * phone_id is a uniquely generated UUID at installation.
+	 * 
+	 * If a player installs the app on a new phone, a new UUID is generated.
+	 * On app launch, the UUID is sent to the web service to verify the user's ID.
+	 * In the case of a new install, the UUID is not recognized, so the player must authenticate
+	 * with name and password.
+	 * 
+	 * The new UUID replaces the old UUID and an e-mail should be sent to the user indicating that
+	 * their account is now bound to a new installation.
+	 * 
+	 */
+	private ObjectId objectId;
+	private String name;
+	private String username;
+	private String password;
+	private String email;
+	private String installId;
+	private int rank;
+	private int score;
+	private ArrayList<Achievement> achievements_completed;
+	private int current_match;
+	private int game_state;
+	
+	public Profile(){}
+	
+	public Profile(String username){ this.username = username; }
+
+	//creating a new player
+	public Profile(String name, String username, String password, String email)
+	{
+		this.name = name;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+	}
+	
+	//an authenticated player
+	public Profile(String name, String username, String password, String email, 
+					String phoneId, int rank, int score, ArrayList<Achievement> achievements, 
+					int currentMatch, int gameState)
+	{
+		this.name = name;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+		this.installId = phoneId;
+		this.rank = rank;
+		this.score = score;
+		this.achievements_completed = achievements;
+		this.current_match = currentMatch;
+		this.game_state = gameState;
+	}
+	
+	public Profile(Parcel in){
+		readFromParcel(in);
+	}
+	
+	private void readFromParcel(Parcel in) {
+		name = in.readString();
+		username = in.readString();
+		password= in.readString();
+		email = in.readString();
+		installId = in.readString();
+		rank = in.readInt();
+		score = in.readInt();
+		//FIX ME! how to pass the array of achievements?
+		achievements_completed = new ArrayList<Achievement>();
+		current_match = in.readInt();
+		game_state = in.readInt();
+	}
+
+	public ObjectId getObjectId()
+	{
+		return objectId;
+	}
+	
+	public void setObjectId(ObjectId id)
+	{
+		objectId = id;
+	}
+	
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getInstallId() {
+		return installId;
+	}
+
+	public void setPhoneId(String phone_id) {
+		this.installId = phone_id;
+	}
+
+	public int getScore() {
+		return score;
+	}
+
+	public void setScore(int score) {
+		this.score = score;
+	}
+
+	public ArrayList<Achievement> getAchievementsCompleted() {
+		return achievements_completed;
+	}
+
+	public void setAchievementsCompleted(
+			ArrayList<Achievement> achievements_completed) {
+		this.achievements_completed = achievements_completed;
+	}
+
+	public int getCurrentMatch() {
+		return current_match;
+	}
+
+	public void setCurrentMatch(int current_match) {
+		this.current_match = current_match;
+	}
+
+	public int getGameState() {
+		return game_state;
+	}
+
+	public void setGameState(int game_state) {
+		this.game_state = game_state;
+	}
+
+	public ArrayList<Achievement> getHonors(){
+		return achievements_completed;
+	}
+	
+	public int getRank(){
+		return rank;
+	}
+	
+	public void setRank(int newRank){
+		rank = newRank;
+	}
+	
+	public String getName(){
+		return name;
+	}
+
+	public void setName(String newName) {
+		name = newName;
+	}
+
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(name);
+		dest.writeString(username);
+		dest.writeString(password);
+		dest.writeString(email);
+		dest.writeString(installId);
+		dest.writeInt(rank);
+		dest.writeInt(score);
+		//FIX ME! how to pass the array of achievements?
+		dest.writeInt(current_match);
+		dest.writeInt(game_state);
+	}
+}

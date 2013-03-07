@@ -1,0 +1,7 @@
+package assassins.ui.prototypes;
+
+import android.widget.ArrayAdapter;
+
+public class AccessibleMatchesAdapter extends ArrayAdapter<Conspiracy> {
+
+}

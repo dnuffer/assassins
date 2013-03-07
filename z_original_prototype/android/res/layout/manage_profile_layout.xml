@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" 
+    android:gravity="top">
+    <ImageSwitcher
+        android:id="@+id/ImageSwitcher01"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_height="fill_parent"
+        android:background="@drawable/assassin_background">
+
+    </ImageSwitcher>
+
+    <TextView
+        android:id="@+id/manageProfileTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:paddingBottom="15dp"
+        android:shadowColor="#111111"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="2.5"
+        android:text="A mysterious assassin indeed...  Please create a profile."
+        android:textColor="#FFFFFF"
+        android:textSize="17sp"
+        android:textStyle="bold" >
+
+    </TextView>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_name" 
+    	android:layout_below="@+id/manageProfileTitle"
+    	android:layout_alignParentLeft="true"
+    	    	android:textSize="15sp"
+    	android:textColor="#FFFFFF"
+    	android:textStyle="bold"
+    	android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+    	android:id="@+id/nameLabel">
+    </TextView>
+
+    <EditText
+        android:id="@+id/nameText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/nameLabel"
+        android:singleLine="true" >
+
+    		<requestFocus/>
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_email" 
+    	android:layout_below="@+id/nameText" 
+    	android:layout_alignParentLeft="true"
+    	    	android:textSize="15sp"
+    	android:textColor="#FFFFFF"
+    	android:textStyle="bold"
+    	android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+    	android:id="@+id/emailLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textEmailAddress" 
+    	android:layout_below="@+id/emailLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/emailText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_username" 
+    	android:layout_below="@+id/emailText" 
+    	    	android:textSize="15sp"
+    	android:textColor="#FFFFFF"
+    	android:textStyle="bold"
+    	android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2"
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/usernameLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textEmailAddress" 
+    	android:layout_below="@+id/usernameLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/usernameText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_password" 
+    	android:layout_below="@+id/usernameText"
+    	    	android:textSize="15sp"
+    	android:textColor="#FFFFFF"
+    	android:textStyle="bold"
+    	android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/passwordLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textPassword" 
+    	android:layout_below="@+id/passwordLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/passwordText">
+    </EditText>
+    <TextView 
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/alert_dialog_login_confirm_password" 
+    	android:layout_below="@+id/passwordText"
+    	    	android:textSize="15sp"
+    	android:textColor="#FFFFFF"
+    	android:textStyle="bold"
+    	android:shadowColor="#111111"
+        android:shadowRadius="2.5"  
+        android:shadowDx="2"  
+        android:shadowDy="2" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/confirmLabel" >
+    </TextView>
+    <EditText 
+    	android:layout_width="match_parent" 
+    	android:layout_height="wrap_content" 
+    	android:inputType="textPassword" 
+    	android:layout_below="@+id/confirmLabel" 
+    	android:layout_alignParentLeft="true"
+    	android:id="@+id/confirmText">
+    </EditText>
+
+            <Button
+                android:id="@+id/createProfileButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/confirmText"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/burnt_paper_button"
+                android:text="Create Profile" />
+
+</RelativeLayout>

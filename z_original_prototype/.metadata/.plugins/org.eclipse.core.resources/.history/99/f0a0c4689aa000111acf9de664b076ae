@@ -1,5 +1,0 @@
-package assassins.ui.prototypes;
-
-public enum Proximity {
-	
-}

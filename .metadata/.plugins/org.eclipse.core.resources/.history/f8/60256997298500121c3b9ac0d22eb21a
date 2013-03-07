@@ -1,7 +1,0 @@
-package com.nbs.client.assassins;
-
-import android.support.v4.app.ServiceCompat;
-
-public class LocationService extends ServiceCompat {
-
-}

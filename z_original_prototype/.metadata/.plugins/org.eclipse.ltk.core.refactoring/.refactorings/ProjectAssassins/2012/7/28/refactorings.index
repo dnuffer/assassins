@@ -1,9 +1,0 @@
-1342129007255	Extract method 'notifyOfDeath'
-1342129206059	Extract method 'notifyOfWin'
-1342134259064	Move file
-1342211208372	Rename resource 'assassins_gameplay_params.xml'
-1342211583037	Encapsulate field 'huntRange'
-1342211588633	Encapsulate field 'attackRange'
-1342211594328	Encapsulate field 'attackDelay'
-1342235821483	Rename type 'GameplayParamsView'
-1342282604234	Rename method 'startSendingLocationToWebService'

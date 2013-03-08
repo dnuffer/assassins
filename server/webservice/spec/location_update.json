@@ -1,0 +1,8 @@
+{
+  "id" : 1,
+  "install_id" : "installabc",
+  "location" : {
+    "lat" : 2,
+    "lng" : 2
+  }
+}

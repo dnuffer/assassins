@@ -18,12 +18,11 @@ class AssassinsWebService
     mongo = services[mongoKey].first['credentials']
     
     # build mongoDB connection string (uri) 
-    # Ruby/Mongo uri format: "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]"
+    # Ruby/Mongo uri format: 
+    # "mongodb://[username:password@]host1[:port1][,host2[:port2],
+    #            ...[,hostN[:portN]]][/[database][?options]]"
     uri = "mongodb://#{mongo['username']}:#{mongo['password']}@#{mongo['host']}:#{mongo['port']}/#{mongo['db']}"
     
-    # plug mongomapper into the provisioned mongoDB service
-    # this allows the user to use ruby classes including MongoMoapper::Document as flexible "schema" for mongoDB documents
-    # MongoMapper also adds dynamic querying
     MongoMapper.connection = Mongo::Connection.from_uri(uri)
     MongoMapper.database = mongo['db']
    end
@@ -32,7 +31,7 @@ class AssassinsWebService
   def self.authenticate install_id
     p = Profile.find_by_install_id install_id
     
-    if p != nil && p.current_match != nil
+    unless p.nil? or p.current_match.nil?
       match = Match.find_by_id p.current_match
       match.players = get_playerstates_array match
       p.current_match = match  
@@ -45,15 +44,15 @@ class AssassinsWebService
     Profile.create profile
   end
 
-  def self.get_profile profile_o_id
-    p = Profile.find_by_id(profile_o_id)
+  def self.get_profile profile_id
+    p = Profile.find_by_id(profile_id)
   end
   
-  def self.get_current_match profile_o_id
-    p = Profile.find_by_id(profile_o_id)
+  def self.get_current_match profile_id
+    p = Profile.find_by_id(profile_id)
     match = nil
     
-    if p != nil && p.in_match?
+    unless p.nil? or not p.in_match?
       match = Match.find_by_id(p.current_match)
       match.players = get_playerstates_array match
     end
@@ -65,9 +64,9 @@ class AssassinsWebService
     p = Profile.find_by_id(profile_id)
     match = nil
 
-    if p != nil
+    unless p.nil?
       match = Match.find_by_name_and_password(name, pw)
-      if match != nil
+      unless match.nil?
         match.players = get_playerstates_array match
       end
     end
@@ -96,7 +95,7 @@ class AssassinsWebService
     p = Profile.find_by_install_id(install_id)    
     s = nil
 
-    if m != nil && p != nil 
+    unless m.nil? or p.nil? 
     
       if p.current_match != m._id
         s = PlayerState.create(:username => p.username)
@@ -113,15 +112,15 @@ class AssassinsWebService
     m
   end
 
-  def self.update_game_snapshot profile_o_id, location
+  def self.update_game_snapshot profile_id, location
     
-    p = Profile.find_by_id(profile_o_id)
+    p = Profile.find_by_id(profile_id)
 
     game_snapshot = GameSnapshot.new
 
     if p != nil && p.in_match?
         
-        #get match and playerstate
+        # get match and playerstate
         m = Match.find_by_id(p.current_match)
         my_state = PlayerState.find_by_id(p.playerstate_id)
         
@@ -135,30 +134,31 @@ class AssassinsWebService
             
             if target_state != nil
             
-                #miles
+                # miles
                 distance = Location.dist_btwn     my_state.location, target_state.location
                 bearing  = Location.bearing_btwn  my_state.location, target_state.location
                 
-                #changes document in db
+                # updates target's playerstate!
                 target_state = inform_of_enemy_proximity target_state, distance, m
-                #does not change document in db - only returned to user
-                my_state     = inform_of_proximity_to_target my_state, distance, m
+                # does not update document in db - only returned to user
+                my_state = inform_of_proximity_to_target my_state, distance, m
                 
                 game_snapshot.bearing_to_target = bearing
                 game_snapshot.target_state = target_state
            else
+                # we have a winner, folks!
                 my_state.enemy_proximity = :no_assassin
-                my_state.proximity_to_target  = :no_target
+                my_state.proximity_to_target = :no_target
                 
                 #clear match id and playerstate id from all players profiles
                 #cleanup_match_references m
                 #m.delete
            end
-        end # END - alive
+        end # alive?
     
         game_snapshot.my_state = my_state
     
-    end # END - in match
+    end # in match?
     
     game_snapshot
   end
@@ -167,12 +167,12 @@ class AssassinsWebService
  
     match.players.each do |state_id|
         
-        state = PlayerState.find_by_id(state_id)
-        
-        curr_profile = Profile.find_by_username(state.username)
-        
-        curr_profile.current_match = nil
-        curr_profile.playerstate_id = nil
+      state = PlayerState.find_by_id(state_id)
+
+      curr_profile = Profile.find_by_username(state.username)
+
+      curr_profile.current_match = nil
+      curr_profile.playerstate_id = nil
         
     end
     
@@ -181,20 +181,20 @@ class AssassinsWebService
   def self.inform_of_enemy_proximity playerstate, distance, match
     
     if distance < match.hunt_range
-        #next time the target updates, 
-        #they will receive a message that their assassin is near
+        # next time the target updates, 
+        # they will receive a message that their assassin is near
         playerstate.enemy_proximity = :hunt_range
         playerstate.save
     elsif distance < match.hunt_range * 2
         playerstate.enemy_proximity = :alert_range
         playerstate.save
     else
-        #don't disclose target location and health if not in range
-        #clear location in copy, but do not save to document
+        # don't disclose target location and health if not in range
+        # clear location in copy, but do not save to document
         playerstate.enemy_proximity = :search_range
         playerstate.save
-        #playerstate.location.clear
-        #playerstate.life = -1
+        # playerstate.location.clear
+        # playerstate.life = -1
     end
     
     playerstate
@@ -217,24 +217,24 @@ class AssassinsWebService
 
   
   def self.get_target profile, match
-    #find the player's state index in the array of playerstates
+    # find the player's state index in the array of playerstates
     i = match.players.index(profile.playerstate_id)
     tmp = Array.new(match.players)
     
-    #prepare the array of player_states to find target
-    #make attacker the first in list
+    # prepare the array of player_states to find target
+    # make attacker the first in list
     player_states = tmp[i..-1]+tmp[0...i]
-    #and then drop the attacker (can't assassinate self!)
+    # and then drop the attacker (can't assassinate self!)
     player_states.shift
 
     my_target = nil
     
-    #search for the next player who is alive and kicking in the array  
+    # search for the next player who is alive and kicking in the array  
     player_states.each do |state_id|
         
         potential_target = PlayerState.find_by_id(state_id)
         
-        #if found a living target to assign
+        # if found a living target to assign
         if potential_target.is_alive? && potential_target.has_location?
             my_target =  potential_target
             break
@@ -264,13 +264,17 @@ class AssassinsWebService
   end
   
   def self.attack_legal? game_snapshot, attack_range
-      return ( game_snapshot.attacker_alive? && game_snapshot.target_alive? && game_snapshot.in_attack_range?(attack_range) )
+    game_snapshot.attacker_alive? && 
+    game_snapshot.target_alive?   && 
+    game_snapshot.in_attack_range?(attack_range)
   end
 
 
-  def self.get_public_matches_near_user profile_o_id, location
+  def self.get_public_matches_near_user profile_id, location
   
-    #MappableMixin.midpoint_between nw_corner, se_corner
+    #TODO: limit proximity - for now just show ALL public matches
+    # MappableMixin.midpoint_between nw_corner, se_corner
+      
     matches = Match.find_all_by_is_public true
     
     matches_with_states = matches.map do |match|
@@ -282,19 +286,19 @@ class AssassinsWebService
   end
   
   def self.get_playerstates_array match
-   #get each playerstate id and look up the actual document 
-   states = []
-   
-   if match != nil && match.players != nil && match.players.length > 0
-     states = match.players.map do |state| 
+    # get each playerstate id and look up the actual document 
+    states = []
+
+    if not match.nil? && not match.players.nil? && match.players.length > 0
+      states = match.players.map do |state| 
         state = PlayerState.find_by_id state
-        if state != nil
+        unless state.nil?
           state.location = []
         end
         state
       end
-   end
-   states
+    end
+    states
   end
   
 end

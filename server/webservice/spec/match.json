@@ -1,3 +1,7 @@
 {
-  "id" : 3
+  "token" : "token1",
+  "match" : {
+    "id" : 3,
+    "name" : "a test match"
+  }
 }

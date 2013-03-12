@@ -7,7 +7,7 @@ class Match
   #has_one :creator, class_name: "User"
   #has_one :winner,  class_name: "User"
   
-  #field :name, String
+  field :name, type: String
   
   has_many :users
   

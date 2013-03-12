@@ -4,6 +4,7 @@
 package com.nbs.client.assassins;
 
 import org.codehaus.jackson.annotate.*;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 
 /**
@@ -12,10 +13,8 @@ import org.codehaus.jackson.annotate.*;
  */
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class User {
-
-	@JsonProperty("gcm_reg_id")
-	String gcmRegId;
+@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+public class LocationMessage {
 	
 	@JsonProperty("install_id")
 	String installId;
@@ -25,10 +24,4 @@ public class User {
 	
 	@JsonProperty("longitude")
 	Double longitude = 0.0;
-	
-	@Override
-	public String toString() {
-		return "User [gcmRegId=" + gcmRegId + ", installId=" + installId
-				+ ", latitude=" + latitude + ", longitude=" + longitude + "]";
-	}
 }

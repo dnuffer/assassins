@@ -12,11 +12,13 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 @EService
@@ -34,7 +36,7 @@ public class LocationService extends Service {
 	Location current;
 
 	@AfterInject
-	public void doSomethingAfterInjection() {
+	public void afterInjection() {
 		//subvert a bug in HttpUrlConnection
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
@@ -49,11 +51,11 @@ public class LocationService extends Service {
 	}
 
 	@Background
-	public void updateLocation(Location l)
+	public void updateLocation(Location newLocation)
 	{
-		if(isBetterLocation(l, current))
+		if(UserModel.hasToken(this) && isBetterLocation(newLocation, current))
 		{
-			current = l;
+			current = newLocation;
 
 			final String regId = GCMRegistrar.getRegistrationId(this);
 			if (regId.equals("")) {
@@ -61,15 +63,25 @@ public class LocationService extends Service {
 			} else {
 				Log.v(TAG, "Already registered");
 
-				User u = new User(); 
-				u.gcmRegId  = regId;
-				u.latitude  = l.getLatitude();
-				u.longitude = l.getLongitude();
-				u.installId = Installation.id(this);
+				LocationMessage msg = new LocationMessage(); 
+				msg.latitude  = current.getLatitude();
+				msg.longitude = current.getLongitude();
+				msg.installId = UserModel.getInstallId(this);
 				
-				Log.v(TAG, u.toString());
+				Log.v(TAG, msg.toString());
 				
-				restClient.updateLocation(u);
+				LocationResponse response = restClient.updateLocation(
+												UserModel.getToken(this), msg);
+				
+				if(response != null && response.type != Response.ERROR) {
+					Log.i(TAG,"location successfully sent to server.");
+		            Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		            editor.putString("my_lat", Double.toString(response.latitude));
+		            editor.putString("my_lng", Double.toString(response.longitude));
+		            editor.commit();
+				}
+				
+				
 			}
 		}
 

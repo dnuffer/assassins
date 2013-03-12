@@ -20,7 +20,7 @@ public final class LocationService_
     private void init_() {
         locationManager = ((LocationManager) this.getSystemService(Context.LOCATION_SERVICE));
         restClient = new HuntedRestClient_();
-        doSomethingAfterInjection();
+        afterInjection();
     }
 
     @Override
@@ -34,14 +34,14 @@ public final class LocationService_
     }
 
     @Override
-    public void updateLocation(final Location l) {
+    public void updateLocation(final Location newLocation) {
         BackgroundExecutor.execute(new Runnable() {
 
 
             @Override
             public void run() {
                 try {
-                    LocationService_.super.updateLocation(l);
+                    LocationService_.super.updateLocation(newLocation);
                 } catch (RuntimeException e) {
                     Log.e("LocationService_", "A runtime exception was thrown while executing code in a runnable", e);
                 }

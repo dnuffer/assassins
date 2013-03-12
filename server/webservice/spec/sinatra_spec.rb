@@ -24,8 +24,33 @@ describe 'Hunted Game' do
   def app
     Sinatra::Application
   end
+
+
+  it "accepts a provisional user" do
+    SecureRandom.stub(:hex).and_return('provisionaltoken1')
+    
+    usr_json = IO.read("spec/provisional_user.json")
+    post '/api/provisional-users', usr_json
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+    
+  end
+
+  
+  it "upgrades a provisional user" do
+    
+    usr_json = IO.read("spec/provisional_user_upgrade.json")
+    post '/api/users/provisionaltoken1', usr_json
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+  end
+  
   
   it "accepts a new user" do
+    SecureRandom.stub(:hex).and_return('token1', 'token2')
+    
     usr_json = IO.read("spec/user.json")
     post '/api/users', usr_json
     last_response.should be_ok
@@ -37,6 +62,7 @@ describe 'Hunted Game' do
     last_response.should be_ok
     actual = JSON.parse(last_response.body)    
     puts last_response.body
+    
   end
   
   it "accepts a new match" do
@@ -51,13 +77,13 @@ describe 'Hunted Game' do
     match_id=3
     
     user_json = IO.read("spec/user.json")
-    post '/api/matches/3/players', user_json
+    post "/api/matches/#{match_id}/users", JSON.dump({ :token => "token1" })
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
     user_json = IO.read("spec/user2.json")
-    post '/api/matches/3/players', user_json
+    post "/api/matches/#{match_id}/users", JSON.dump({ :token => "token2" })
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
@@ -66,18 +92,46 @@ describe 'Hunted Game' do
   it "accepts a user location update" do
     
     GCM.should_receive(:send_notification).twice
+    token="token1"
     
     player_json = IO.read("spec/player.json")        
-  
-    user_id=1
-    
-    post '/api/users/1/location', player_json
-    
-    last_response.should be_ok
 
+    post "/api/users/#{token}/location", player_json
+    last_response.should be_ok
     actual = JSON.parse(last_response.body)
-    
     puts last_response.body
+    
+  end
+  
+  it "accepts an attack" do
+    GCM.should_receive(:send_notification).once
+    token="token1"
+    
+    player_json = IO.read("spec/player.json")        
+
+    post "/api/users/#{token}/attack", player_json 
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+  end
+  
+  it "accepts an attack" do
+    GCM.should_receive(:send_notification).exactly(4).times
+    token="token1"
+    
+    player_json = IO.read("spec/player.json")        
+
+    post "/api/users/#{token}/attack", player_json
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+    
+    post "/api/users/#{token}/attack", player_json
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+    
+    sleep 0.4
     
   end
   

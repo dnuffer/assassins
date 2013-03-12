@@ -1,0 +1,49 @@
+
+//when app is launched, verify that the token is present and valid
+//if the token is invalid or absent, prompt the user to login
+
+//on login, get current match, user information, etc. information
+//store relevant info in shared preferences
+
+//when received, write key,value to shared preferences
+//if an aspect of the new state does not match the current state, update it (and post notification)
+//register a onSharedPreferenceChangeListener to update the UI when these elements change
+
+{
+  "type" : "player_event",
+  "time" : UTC_TIME,
+  "my_life" : 1,
+  "my_lat" : 2,
+  "my_lng" : 3,
+  "enemy_proximity" : "search",
+  "target_proximity" : "hunt",
+  "target_life" : 2,
+  "target_bearing" : 183.2,
+  "target_lat" : 1,
+  "target_lng" : 2
+}
+
+
+{
+  "type" : "user_event",
+  "time" : UTC_TIME,
+  "username" : "<username>",
+  "event_type" : "achievement", 
+  "detail" : "Meet Your Maker"
+}
+
+{
+  "type" : "match_event",
+  "time" : UTC_TIME,
+  "event_type" : "player_elimination", 
+  "detail" : "<username>"
+}
+
+{
+  "type" : "match_event",
+  "time" : UTC_TIME,
+  "event_type" : "winner", 
+  "detail" : "<username>"
+}
+
+

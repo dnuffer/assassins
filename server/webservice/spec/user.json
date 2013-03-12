@@ -1,5 +1,6 @@
 {
-  "id" : 1,
-  "install_id" : "installabc",
-  "push_id" : "pushdef"
+  "username" : "p1",
+  "password" : "secret1",
+  "install_id" : "install1",
+  "push_id" : "push2"
 }

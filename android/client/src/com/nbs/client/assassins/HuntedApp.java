@@ -6,5 +6,5 @@ import android.app.Application;
 
 @EApplication
 public class HuntedApp extends Application {
-	User u;	
+	LocationMessage u;	
 }

@@ -15,7 +15,7 @@ public final class GCMIntentService_
 
     private void init_() {
         restClient = new HuntedRestClient_();
-        doSomethingAfterInjection();
+        afterInjection();
     }
 
     @Override

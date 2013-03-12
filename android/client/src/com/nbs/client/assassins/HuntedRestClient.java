@@ -4,23 +4,58 @@ import org.springframework.http.converter.json.MappingJacksonHttpMessageConverte
 import org.springframework.web.client.RestTemplate;
 
 import com.googlecode.androidannotations.annotations.rest.Accept;
+import com.googlecode.androidannotations.annotations.rest.Get;
 import com.googlecode.androidannotations.annotations.rest.Rest;
 import com.googlecode.androidannotations.annotations.rest.Post;
 import com.googlecode.androidannotations.api.rest.MediaType;
 
-@Rest(rootUrl = "http://hunted.cloudfoundry.com/services", converters = { MappingJacksonHttpMessageConverter.class })
+@Rest(rootUrl = "https://hunted.cloudfoundry.com/api", converters = { MappingJacksonHttpMessageConverter.class })
 public interface HuntedRestClient {
-	
-	@Post("/location")
-	@Accept(MediaType.APPLICATION_JSON)
-	User updateLocation(User userWithLocation);	
 
+	@Post("/provisional-users")
+	UserLoginResponse registerProvisionalUser(UserLoginMessage loginMsg);
+		
 	@Post("/users")
 	@Accept(MediaType.APPLICATION_JSON)
-	User registerUser(User u);
+	UserLoginResponse registerUser(UserLoginMessage loginMsg);
+	
+	@Post("/users/{token}")
+	UserLoginResponse registerUser(String token, UserLoginMessage loginMsg);
+	
+	@Post("/login")
+	@Accept(MediaType.APPLICATION_JSON)
+	UserLoginResponse login(UserLoginMessage loginMsg);
+	
+	@Post("/users/{token}/gcm")
+	@Accept(MediaType.APPLICATION_JSON)
+	UserLoginResponse updateGCMRegId(String token, GCMRegistrationMessage msg);
+	
+	@Post("/users/{token}/gcm/unregister")
+	@Accept(MediaType.APPLICATION_JSON)
+	void unregisterGCMRegId(String token, GCMRegistrationMessage msg);
+	
+	@Post("/matches")
+	@Accept(MediaType.APPLICATION_JSON)
+	MatchResponse createMatch(CreateMatchMessage msg);	
+	
+	@Post("/matches/{matchId}/users")
+	@Accept(MediaType.APPLICATION_JSON)
+	MatchResponse joinMatch(String matchId, JoinMatchMessage msg);
+	
+	@Post("/users/{token}/location")
+	@Accept(MediaType.APPLICATION_JSON)
+	LocationResponse updateLocation(String token, LocationMessage msg);	
+	
+	@Post("users/{token}/attack")
+	@Accept(MediaType.APPLICATION_JSON)
+	AttackResponse attack(String token, LocationMessage msg);
 	
 	//need access to RestTemplate to subvert a bug in HttpUrlConnection
 	//See: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 	public RestTemplate getRestTemplate();
+
+	
+
+	
 }
 

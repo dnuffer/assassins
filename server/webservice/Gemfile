@@ -12,4 +12,6 @@ gem 'bson'
 gem 'geokit'
 gem 'mongoid_spacial'
 gem 'pushmeup'
+gem 'bcrypt-ruby'
+
 

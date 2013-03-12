@@ -12,7 +12,7 @@ public class MenuAdapter extends BaseAdapter {
     private List<MenuListItem> rows;
 
 	public MenuAdapter(List<MenuListItem> items) {
-        rows = new ArrayList<MenuListItem>(items);//member variable
+        rows = new ArrayList<MenuListItem>(items);
 	}
 
     @Override

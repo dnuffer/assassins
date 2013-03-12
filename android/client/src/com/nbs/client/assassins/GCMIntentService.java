@@ -2,9 +2,14 @@ package com.nbs.client.assassins;
 
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gcm.GCMBaseIntentService;
@@ -21,7 +26,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	HuntedRestClient restClient;
 
 	@AfterInject
-	public void doSomethingAfterInjection() {
+	public void afterInjection() {
 		//subvert a bug in HttpUrlConnection
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
@@ -38,69 +43,155 @@ public class GCMIntentService extends GCMBaseIntentService {
 	}
 
 	@Override
-	protected void onError(Context arg0, String errorId) {
-		// TODO Auto-generated method stub
-
+	protected void onError(Context context, String errorId) {
+		Log.e(TAG, "ERROR: " + errorId);
 	}
 
 	@Override
 	protected void onMessage(Context c, Intent intent) {
 		Log.i(TAG, "received a GCM message.");
-		
+		Log.i(TAG, "  action: " + intent.getAction());
 		Bundle b = intent.getExtras();
 		
 		for(String key : b.keySet())
 		{
 			Object o = b.get(key);
-			Log.i(TAG, key + " : " + o.getClass() + " " + b.getString(key));
+			Log.i(TAG, "  " + key + " : " + b.getString(key));
+			
+            Editor editor = PreferenceManager.getDefaultSharedPreferences(c).edit();
+            editor.putString(key, b.getString(key));
+            editor.commit();
 		}
-
-		User u = new User();
-		u.installId = intent.getStringExtra("install_id");
-		u.latitude = Double.parseDouble(intent.getStringExtra("latitude"));
-		u.longitude = Double.parseDouble(intent.getStringExtra("longitude"));
 		
-
-		sendPlayerStateChangedIntent(c, u);
-
-	}
-
-	@Override
-	protected void onRegistered(Context c, String registrationId) {
-		Log.i(TAG, registrationId);
+		/*
+		intent.setAction(MainActivity.ACTION);
 		
-		User user = new User();
-		user.gcmRegId = registrationId;
-		user.installId = Installation.id(c);
-		
-		
-		restClient.registerUser(user);
-	}
-
-	@Override
-	protected void onUnregistered(Context arg0, String registrationId) {
-        
-		//TODO: just for testing!
-		GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
-	}
-	
-    private void sendPlayerStateChangedIntent(Context c, User u) 
-    {
-        Intent stateChangedIntent = new Intent();
-        stateChangedIntent.setAction("PLAYER_STATE_CHANGED");
-        stateChangedIntent.putExtra("installId", u.installId);
-        stateChangedIntent.putExtra("latitude", u.latitude);
-        stateChangedIntent.putExtra("longitude", u.longitude);
-        
 		try {
-			c.sendBroadcast(stateChangedIntent);
+			c.sendBroadcast(intent);
+			
+			//the intent to launch when the notification is touched
+		    Intent notificationIntent = new Intent(this, MainActivity.class);
+		    notificationIntent.putExtras(intent);
+			
+		    NotificationCompat.Builder builder = 
+		    		new NotificationCompat.Builder(this)  
+		            .setSmallIcon(R.drawable.ic_launcher)  
+		            .setContentTitle(intent.getStringExtra("collapse_key"))  
+		            .setContentText(intent.getStringExtra("message"))
+		        	.setAutoCancel(true)
+	        		.setContentIntent(PendingIntent.getActivity(
+	        				this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+
+	        // Add as notification  
+	        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);  
+	        manager.notify(MainActivity.ACTION.hashCode(), builder.build());  
 		}
 		catch (IllegalArgumentException e) {
 			Log.v(TAG, e.getMessage());
+		}*/
+		
+		
+		
+		
+/*		if(type != null)
+		{
+			if(type == ATTACKED) {
+				
+			} else if(type == TARGET_STATE_CHANGED) {
+				String targetUsername = intent.getStringExtra("target_username");
+				String targetProximity = intent.getStringExtra("target_proximity");
+				int targetLife = Integer.parseInt(intent.getStringExtra("target_life"));
+				
+				
+				if(targetProximity == Proximity.SEARCH) {
+						
+					
+				} else if(targetProximity == Proximity.HUNT) {
+					double lat = Double.parseDouble(intent.getStringExtra("latitude"));
+					double lng = Double.parseDouble(intent.getStringExtra("longitude"));
+				}
+				
+
+				
+			} else if(type == ENEMY_STATE_CHANGED) {
+				
+			} else if(type == MY_STATE_CHANGED) {
+				
+			} else if(type == MATCH_START) {
+				
+			} else if(type == MATCH_END) {
+				
+			} else if(type == MATCH_REMINDER) {
+				
+			} else if(type == INVITATION) {
+				
+			} else if(type == MATCH_EVENT) {
+				
+			}
+		}*/
+
+	}
+
+
+	
+	@Override
+	protected void onRegistered(Context context, String registrationId) {
+		Log.i(TAG, registrationId);
+		
+		//only send the new id if the user already has created an account
+		if(UserModel.hasToken(this)) {
+			GCMRegistrationMessage msg = new GCMRegistrationMessage();
+			msg.installId = UserModel.getInstallId(context);
+			msg.gcmRegId = registrationId;
+			
+			try {
+				UserLoginResponse response = 
+					restClient.updateGCMRegId(UserModel.getToken(context), msg);
+				if(response != null && response.type != Response.ERROR) {
+					Log.i(TAG, response.toString());
+					UserModel.setToken(context, response.token);
+					GCMRegistrar.setRegisteredOnServer(context, true);
+				}
+			} catch(Exception e) {
+				Log.e(TAG, e.getMessage());
+				GCMRegistrar.setRegisteredOnServer(context, false);
+			}
 		}
+		else if(!UserModel.hasUsername(context))
+		{
+			UserLoginMessage msg = new UserLoginMessage();
+			msg.installId = UserModel.getInstallId(context);
+			msg.gcmRegId = registrationId;
+			
+			try {
+				UserLoginResponse response = 
+					restClient.registerProvisionalUser(msg);
+				if(response != null && response.type != Response.ERROR) {
+					Log.i(TAG, response.toString());
+					UserModel.setToken(context, response.token);
+					GCMRegistrar.setRegisteredOnServer(context, true);
+				}
+			} catch(Exception e) {
+				Log.e(TAG, e.getMessage());
+				GCMRegistrar.setRegisteredOnServer(context, false);
+			}
+		}
+		//else has account, but not logged in -> do nothing
+	}
+
+	@Override
+	protected void onUnregistered(Context context, String registrationId) {
         
-    }
-
-
+		if(UserModel.hasToken(context))
+		{
+			GCMRegistrationMessage msg = new GCMRegistrationMessage();
+			msg.installId = UserModel.getInstallId(context);
+			msg.gcmRegId = registrationId;
+			restClient.unregisterGCMRegId(UserModel.getToken(context), msg);
+			
+			//TODO handle response for unregister and make sure it was successful
+			GCMRegistrar.setRegisteredOnServer(context, false);
+		}
+	}
 	
 }

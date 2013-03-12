@@ -24,21 +24,21 @@ public class MenuNavItem implements MenuListItem {
 	
 	@Override
 	public View getView(View convertView) {
-        ViewHolder holder;
+        MenuNavItem.ViewHolder holder;
         View view;
-        //we have a don't have a convertView so we'll have to create a new one
-        if (convertView == null) {
+        //we don't have a convertView so we'll have to create a new one
+        if (convertView == null || !(convertView.getTag() instanceof MenuNavItem.ViewHolder)) {
             ViewGroup viewGroup = (ViewGroup)inflater.inflate(R.layout.menu_nav_item, null);
 
             //use the view holder pattern to save already looked up subviews
-            holder = new ViewHolder((ImageView)viewGroup.findViewById(R.id.icon),
+            holder = new MenuNavItem.ViewHolder((ImageView)viewGroup.findViewById(R.id.icon),
                     (TextView)viewGroup.findViewById(R.id.text));
             viewGroup.setTag(holder);
 
             view = viewGroup;
         } else {
             //get the holder back out
-            holder = (ViewHolder)convertView.getTag();
+            holder = (MenuNavItem.ViewHolder)convertView.getTag();
 
             view = convertView;
         }
@@ -52,8 +52,10 @@ public class MenuNavItem implements MenuListItem {
 
 	@Override
 	public int getViewType() {
-		return MenuItemType.MENU_NOTIFICATION.ordinal();
+		return MenuItemType.MENU_NAV.ordinal();
 	}
+	
+	
 
     private static class ViewHolder {
         final ImageView imageView;
@@ -64,4 +66,11 @@ public class MenuNavItem implements MenuListItem {
             this.textView = titleView;
         }
     }
+
+
+
+	@Override
+	public int getId() {
+		return row.getId();
+	}
 }

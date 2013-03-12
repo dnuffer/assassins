@@ -95,13 +95,11 @@ public class MapFragment extends SherlockMapFragment {
     
     @Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    	
-        MenuItem createAccountItem = menu.add(Menu.NONE, CREATE_ACCOUNT_ID, 0, "Create Account");
+
+    	/*MenuItem createAccountItem = menu.add(Menu.NONE, CREATE_ACCOUNT_ID, 0, "Create Account");
         createAccountItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        
         MenuItem signInItem = menu.add(Menu.NONE, SIGN_IN_ID, 0, "Sign In");
-        signInItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        
+        signInItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);*/
 		super.onCreateOptionsMenu(menu, inflater);
 	}
 

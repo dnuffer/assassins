@@ -59,8 +59,7 @@
             android:value="AIzaSyCzJhxBvjao1Ij6IqNcuhxd5JfTef5cRlM" />
 
         <activity
-            android:name=".MainActivity_"
-            android:label="@string/title_activity_main" >
+            android:name=".MainActivity_">         
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

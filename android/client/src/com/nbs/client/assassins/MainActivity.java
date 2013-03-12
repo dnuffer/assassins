@@ -3,6 +3,9 @@
  */
 package com.nbs.client.assassins;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,14 +16,14 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
-import net.simonvt.menudrawer.MenuDrawer;
+import com.actionbarsherlock.view.SubMenu;
+
 
 import com.google.android.gcm.GCMRegistrar;
 
@@ -31,20 +34,25 @@ import com.googlecode.androidannotations.annotations.FragmentById;
 //import com.slidingmenu.lib.SlidingMenu;
 //import com.slidingmenu.lib.app.SlidingFragmentActivity;
 
+/* other info that may be relevant
+String serial = android.os.Build.SERIAL;
+TelephonyManager.getDeviceId();
+WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+WifiInfo wInfo = wifiManager.getConnectionInfo();
+String macAddress = wInfo.getMacAddress(); */
+
 /**
  * @author cam
  *
  */
 
 @EActivity
-public class MainActivity extends SherlockFragmentActivity implements OnItemClickListener {
+public class MainActivity extends SherlockFragmentActivity implements ActionBar.OnNavigationListener {
 	
 	//private MenuFragment menuFragment;
 	
 	@FragmentById(R.id.fragment_map)
 	MapFragment map;
-	
-	private MenuDrawer menuDrawer;
 	
 	private final String TAG = "MainActivity";
 	
@@ -59,6 +67,8 @@ public class MainActivity extends SherlockFragmentActivity implements OnItemClic
 	public static final String ENEMY_STATE_CHANGED = "b";
 	public static final String MY_STATE_CHANGED = "c";
 	
+	
+	MenuAdapter adapter;
 	
 	IntentFilter intentActionFilter;
 
@@ -90,48 +100,52 @@ public class MainActivity extends SherlockFragmentActivity implements OnItemClic
         	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
         }
 
-        
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
-        
-        
+
         intentActionFilter = new IntentFilter();
         intentActionFilter.addAction(ACTION);      
         
         startService(new Intent(this, LocationService_.class));
+		
+		MenuRowData[] data = new MenuRowData[]{
+			new MenuRowData(MenuItemType.MENU_NAV, "Play", R.drawable.ic_menu_mapmode, 0),
+			new MenuRowData(MenuItemType.MENU_HEADER, "Loot", R.drawable.ic_coins_l, 1),
+			new MenuRowData(MenuItemType.MENU_NAV, "Honors", R.drawable.ic_menu_myplaces, 2),
+			new MenuRowData(MenuItemType.MENU_NAV, "Join", R.drawable.ic_menu_allfriends, 3),
+			new MenuRowData(MenuItemType.MENU_HEADER, "Notifications", 4),
+			new MenuRowData(MenuItemType.MENU_EVENT, "Something longer here.", "1/2/13", R.drawable.ic_audio_notification, 5),
+			new MenuRowData(MenuItemType.MENU_EVENT, "Something else even lonnnngeeeeerrr...", "1/3/13", R.drawable.ic_audio_notification, 6),
+		};
         
-		menuDrawer = MenuDrawer.attach(this, MenuDrawer.MENU_DRAG_CONTENT);
-		menuDrawer.setContentView(R.layout.activity_main);
-		menuDrawer.setMenuView(R.layout.menu_list);
-		menuDrawer.setMenuSize(320);
+        adapter = new MenuAdapter(this, data);
 
-		MenuFragment menu = (MenuFragment)getSupportFragmentManager().findFragmentById(R.id.menu_fragment);
+		getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+		getSupportActionBar().setListNavigationCallbacks(adapter, this);
+		getSupportActionBar().setDisplayShowTitleEnabled(false);
+		getSupportActionBar().setDisplayShowHomeEnabled(false);
+		setContentView(R.layout.activity_main);
 		
-		
-		menu.getListView().setOnItemClickListener(this);
-		
-
-		
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        
     }
     
 	
 	@Override
 	public void onBackPressed() {
-        final int drawerState = menuDrawer.getDrawerState();
-        if (drawerState == MenuDrawer.STATE_OPEN || drawerState == MenuDrawer.STATE_OPENING) {
-            menuDrawer.closeMenu();
-            return;
-        }
 
 		super.onBackPressed();
 	}
 
 	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		menuDrawer.setActiveView(view);
-		menuDrawer.closeMenu();
+	public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+		
+		Object selectedItem = adapter.getItem(itemPosition);
+		
+		if(selectedItem instanceof MenuNavItem)
+		{
+			Log.i(TAG, Integer.toString(((MenuNavItem)selectedItem).getId()));
+		}
+		
+		return false;
 	}
     
     @Override
@@ -162,18 +176,22 @@ public class MainActivity extends SherlockFragmentActivity implements OnItemClic
 	    registerReceiver(intentActionReceiver, intentActionFilter);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.actionbarsherlock.app.SherlockFragmentActivity#onCreateOptionsMenu(android.view.Menu)
-	 */
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {		
-        /* other info that may be relevant
-        String serial = android.os.Build.SERIAL;
-        TelephonyManager.getDeviceId();
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		WifiInfo wInfo = wifiManager.getConnectionInfo();
-		String macAddress = wInfo.getMacAddress(); */
-        
+		
+		SubMenu more = menu.addSubMenu(Menu.NONE, 0, 0, "");
+		
+		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
+	    
+		more.add("Create Account");
+		more.add("Sign In");
+	    more.add("Settings");
+	    more.add("About");
+	    more.add("Tutorial");
+
+	    more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -187,7 +205,6 @@ public class MainActivity extends SherlockFragmentActivity implements OnItemClic
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    case android.R.id.home:
-	    	menuDrawer.toggleMenu();
 	        return true;
 	    }
 	    
@@ -230,5 +247,8 @@ public class MainActivity extends SherlockFragmentActivity implements OnItemClic
 
 	        }
 	    };
+
+
+
 
 }

@@ -1,5 +1,5 @@
 <resources>
 
-    <style name="AppTheme" parent="@style/Theme.Sherlock" />
+    <style name="AppTheme" parent="@style/Theme.Nbssherlockdefault" />
 
 </resources>

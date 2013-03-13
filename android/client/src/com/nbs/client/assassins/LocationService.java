@@ -73,7 +73,7 @@ public class LocationService extends Service {
 				LocationResponse response = restClient.updateLocation(
 												UserModel.getToken(this), msg);
 				
-				if(response != null && response.type != Response.ERROR) {
+				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG,"location successfully sent to server.");
 		            Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		            editor.putString("my_lat", Double.toString(response.latitude));

@@ -14,9 +14,9 @@ import android.widget.TextView;
 public class MenuNavItem implements MenuListItem {
 
 	private final LayoutInflater inflater;
-	private final MenuRowData row;
+	private final MenuNavData row;
 	
-	public MenuNavItem(LayoutInflater inflater, MenuRowData row)
+	public MenuNavItem(LayoutInflater inflater, MenuNavData row)
 	{
 		this.inflater = inflater;
 		this.row = row;
@@ -67,10 +67,4 @@ public class MenuNavItem implements MenuListItem {
         }
     }
 
-
-
-	@Override
-	public int getId() {
-		return row.getId();
-	}
 }

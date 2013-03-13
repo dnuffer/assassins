@@ -11,11 +11,16 @@ public class Response {
 
 	@JsonIgnore
 	public static final String ERROR = "error";
+	@JsonIgnore
+	public static final String OK = "ok";
 
 	@JsonProperty("status")
-	String type;
+	String status;
 	
 	@JsonProperty("message")
 	String message;
 	
+	public boolean ok() {
+		return status != null && status.equalsIgnoreCase(Response.OK);
+	}
 }

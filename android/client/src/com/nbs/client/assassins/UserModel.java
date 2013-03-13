@@ -67,5 +67,9 @@ public class UserModel {
     {
     	return getToken(context) != null;
     }
+
+	public static String _toString(Context c) {
+		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c);
+	}
     
 }

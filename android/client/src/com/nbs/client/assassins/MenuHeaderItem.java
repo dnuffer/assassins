@@ -9,9 +9,9 @@ import android.widget.TextView;
 public class MenuHeaderItem implements MenuListItem {
 
 	private final LayoutInflater inflater;
-	private final MenuRowData row;
+	private final MenuHeaderData row;
 	
-	public MenuHeaderItem(LayoutInflater inflater, MenuRowData row)
+	public MenuHeaderItem(LayoutInflater inflater, MenuHeaderData row)
 	{
 		this.inflater = inflater;
 		this.row = row;
@@ -48,8 +48,6 @@ public class MenuHeaderItem implements MenuListItem {
 		return MenuItemType.MENU_HEADER.ordinal();
 	}
 	
-	
-
     private static class ViewHolder {
         final TextView textView;
 
@@ -57,13 +55,5 @@ public class MenuHeaderItem implements MenuListItem {
             this.textView = titleView;
         }
     }
-
-
-
-	@Override
-	public int getId() {
-		// TODO Auto-generated method stub
-		return row.getId();
-	}
 
 }

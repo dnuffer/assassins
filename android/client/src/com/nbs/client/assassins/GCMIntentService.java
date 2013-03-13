@@ -136,7 +136,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	
 	@Override
 	protected void onRegistered(Context context, String registrationId) {
-		Log.i(TAG, registrationId);
+		Log.i(TAG, "OnRegistered() received: " + registrationId);
 		
 		//only send the new id if the user already has created an account
 		if(UserModel.hasToken(this)) {
@@ -147,7 +147,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			try {
 				UserLoginResponse response = 
 					restClient.updateGCMRegId(UserModel.getToken(context), msg);
-				if(response != null && response.type != Response.ERROR) {
+				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
 					UserModel.setToken(context, response.token);
 					GCMRegistrar.setRegisteredOnServer(context, true);
@@ -166,7 +166,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			try {
 				UserLoginResponse response = 
 					restClient.registerProvisionalUser(msg);
-				if(response != null && response.type != Response.ERROR) {
+				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
 					UserModel.setToken(context, response.token);
 					GCMRegistrar.setRegisteredOnServer(context, true);

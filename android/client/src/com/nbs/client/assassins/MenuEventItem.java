@@ -9,9 +9,9 @@ import android.widget.TextView;
 public class MenuEventItem implements MenuListItem {
 
 	private final LayoutInflater inflater;
-	private final MenuRowData row;
+	private final MenuEventData row;
 	
-	public MenuEventItem(LayoutInflater inflater, MenuRowData row)
+	public MenuEventItem(LayoutInflater inflater, MenuEventData row)
 	{
 		this.inflater = inflater;
 		this.row = row;
@@ -66,10 +66,4 @@ public class MenuEventItem implements MenuListItem {
 		}
     }
 
-
-
-	@Override
-	public int getId() {
-		return row.getId();
-	}
 }

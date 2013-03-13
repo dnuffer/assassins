@@ -10,4 +10,10 @@ public class UserLoginResponse extends Response {
 
 	@JsonProperty("token")
 	String token;
+	
+	@Override
+	public String toString() {
+		return "UserLoginResponse [token=" + token + ", status=" + status
+				+ ", message=" + message + "]";
+	}
 }

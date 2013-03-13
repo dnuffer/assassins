@@ -54,11 +54,14 @@ public class MapFragment extends SherlockMapFragment {
             
             if(myLat && myLng)
             {            	
+            	
             	myLat = false;
             	myLng = false;
             	
             	double lat = Double.parseDouble(sharedPreferences.getString("my_lat", ""));
             	double lng = Double.parseDouble(sharedPreferences.getString("my_lng", ""));
+            	
+            	Log.i(TAG, "animating map to: " + lat + ", " + lng);
             	
                 CameraPosition cameraPosition = new CameraPosition.Builder()
         	    .target(new LatLng(lat,lng))
@@ -96,10 +99,6 @@ public class MapFragment extends SherlockMapFragment {
     @Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 
-    	/*MenuItem createAccountItem = menu.add(Menu.NONE, CREATE_ACCOUNT_ID, 0, "Create Account");
-        createAccountItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        MenuItem signInItem = menu.add(Menu.NONE, SIGN_IN_ID, 0, "Sign In");
-        signInItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);*/
 		super.onCreateOptionsMenu(menu, inflater);
 	}
 
@@ -111,19 +110,8 @@ public class MapFragment extends SherlockMapFragment {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		
-		switch(item.getItemId())
-		{
-			case CREATE_ACCOUNT_ID :
-				Log.i(TAG, "create account");
-			break;
-			case SIGN_IN_ID :
-				Log.i(TAG, "sign in");
-			break;
-			default:
-		}
 
-		return true;
+		return false;
 	}
 
 }

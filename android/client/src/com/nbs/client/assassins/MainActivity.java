@@ -3,9 +3,8 @@
  */
 package com.nbs.client.assassins;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import android.support.v4.app.FragmentTransaction;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,8 +16,6 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -29,6 +26,7 @@ import com.google.android.gcm.GCMRegistrar;
 
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.FragmentById;
+import com.nbs.client.assassins.CreateAccoutFragment.OnAccountCreatedListener;
 
 
 //import com.slidingmenu.lib.SlidingMenu;
@@ -47,12 +45,14 @@ String macAddress = wInfo.getMacAddress(); */
  */
 
 @EActivity
-public class MainActivity extends SherlockFragmentActivity implements ActionBar.OnNavigationListener {
+public class MainActivity extends SherlockFragmentActivity implements OnAccountCreatedListener {
 	
 	//private MenuFragment menuFragment;
 	
 	@FragmentById(R.id.fragment_map)
-	MapFragment map;
+	MapFragment mapFragment;
+	
+	CreateAccoutFragment createAccountFragment;
 	
 	private final String TAG = "MainActivity";
 	
@@ -66,21 +66,29 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
 	public static final String TARGET_STATE_CHANGED = "a";
 	public static final String ENEMY_STATE_CHANGED = "b";
 	public static final String MY_STATE_CHANGED = "c";
-	
-	
-	MenuAdapter adapter;
+
+	/*options menu items*/
+	private static final int JOIN_ID = 0;
+	private static final int CREATE_ACCOUNT_ID = 1;
+	private static final int SIGN_IN_ID = 2;
+	private static final int MORE_ID = 3;
+	private static final int SIGN_OUT_ID = 4;
 	
 	IntentFilter intentActionFilter;
 
+	private boolean creatingAccount = false;
+
+	private Menu optionsMenu;
+	
 	private OnSharedPreferenceChangeListener prefChangeListener =  new OnSharedPreferenceChangeListener() {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             Log.i(TAG, "shared preference changed: " + key);
+            
         }
 
 	};
-
 	
 	public MainActivity() {
 	}
@@ -94,7 +102,7 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
         
         if(GCMRegistrar.isRegistered(this))
         {
-        	GCMRegistrar.unregister(this);//TODO: Just for initial testing remove this line!
+        	Log.i(TAG, "registered GCM id.");
         } else
         {
         	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
@@ -108,45 +116,52 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
         
         startService(new Intent(this, LocationService_.class));
 		
-		MenuRowData[] data = new MenuRowData[]{
-			new MenuRowData(MenuItemType.MENU_NAV, "Play", R.drawable.ic_menu_mapmode, 0),
-			new MenuRowData(MenuItemType.MENU_HEADER, "Loot", R.drawable.ic_coins_l, 1),
-			new MenuRowData(MenuItemType.MENU_NAV, "Honors", R.drawable.ic_menu_myplaces, 2),
-			new MenuRowData(MenuItemType.MENU_NAV, "Join", R.drawable.ic_menu_allfriends, 3),
-			new MenuRowData(MenuItemType.MENU_HEADER, "Notifications", 4),
-			new MenuRowData(MenuItemType.MENU_EVENT, "Something longer here.", "1/2/13", R.drawable.ic_audio_notification, 5),
-			new MenuRowData(MenuItemType.MENU_EVENT, "Something else even lonnnngeeeeerrr...", "1/3/13", R.drawable.ic_audio_notification, 6),
-		};
-        
-        adapter = new MenuAdapter(this, data);
-
-		getSupportActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-		getSupportActionBar().setListNavigationCallbacks(adapter, this);
 		getSupportActionBar().setDisplayShowTitleEnabled(false);
 		getSupportActionBar().setDisplayShowHomeEnabled(false);
 		setContentView(R.layout.activity_main);
 		
     }
     
+
+	@Override
+	public void onAccountCreated(boolean wasCreated) {
+		
+		removeCreateAccountFragment();
+		
+		removeNeedsAuthOptionsMenuItems();
+		
+		addLoggedInOptionsMenuItems(optionsMenu);
+		
+		this.supportInvalidateOptionsMenu();
+	}
+
+	private void removeCreateAccountFragment() {
+		
+		Log.i(TAG, "removing CreatAccountFragment");
+		Log.i(TAG, "  creatingAccount: " + creatingAccount);
+		Log.i(TAG, "  creatingAccountFragment: " + createAccountFragment);
+		
+		if(creatingAccount && createAccountFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(createAccountFragment);
+		    ft.commit();   
+		    creatingAccount = false;
+		    createAccountFragment = null;
+		}
+	}
 	
 	@Override
 	public void onBackPressed() {
 
-		super.onBackPressed();
+		if(creatingAccount) {
+			removeCreateAccountFragment();
+		} else {
+			super.onBackPressed();
+		}
 	}
 
-	@Override
-	public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-		
-		Object selectedItem = adapter.getItem(itemPosition);
-		
-		if(selectedItem instanceof MenuNavItem)
-		{
-			Log.i(TAG, Integer.toString(((MenuNavItem)selectedItem).getId()));
-		}
-		
-		return false;
-	}
     
     @Override
     public void onDestroy() 
@@ -180,23 +195,46 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {		
 		
-		SubMenu more = menu.addSubMenu(Menu.NONE, 0, 0, "");
 		
-		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
-	    
-		more.add("Create Account");
-		more.add("Sign In");
-	    more.add("Settings");
-	    more.add("About");
-	    more.add("Tutorial");
-
-	    more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		MenuItem join = menu.add(Menu.NONE, JOIN_ID, 0, "");
+		join.setIcon(R.drawable.ic_menu_allfriends);
+		join.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		
+		if(!UserModel.hasToken(this) && !UserModel.hasUsername(this)) {
+			addNeedsAuthOptionsMenuItems(menu);
+		} else {
+			addLoggedInOptionsMenuItems(menu);
+		}
 		return super.onCreateOptionsMenu(menu);
+	}
+
+	private void addNeedsAuthOptionsMenuItems(Menu menu) {
+		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 1, "");
+		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
+		more.add(Menu.NONE, CREATE_ACCOUNT_ID, 2, "Create Account");
+		more.add(Menu.NONE, SIGN_IN_ID, 3, "Sign In");
+
+		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+	}
+	
+	private void addLoggedInOptionsMenuItems(Menu menu) {
+		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 1, "");
+		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
+		more.add(Menu.NONE, SIGN_OUT_ID, 2, "Sign Out");
+
+		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+	}
+	
+	private void removeNeedsAuthOptionsMenuItems() {
+		optionsMenu.removeItem(SIGN_IN_ID);
+		optionsMenu.removeItem(CREATE_ACCOUNT_ID);
+		optionsMenu.removeItem(MORE_ID);
 	}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
+		
+		this.optionsMenu = menu;
 		
 		return super.onPrepareOptionsMenu(menu);
 	}
@@ -204,8 +242,18 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
-	    case android.R.id.home:
-	        return true;
+	    	case android.R.id.home:
+	    		return true;
+	    	case CREATE_ACCOUNT_ID:
+	    		creatingAccount = true;
+	    		createAccountFragment = new CreateAccoutFragment_();
+	    		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+	    		ft.hide(mapFragment);
+	    		ft.add(R.id.fragment_container, createAccountFragment);
+	    	    //ft.show(createAccountFragment);
+	    	    ft.commit();
+    		break;
+			default:
 	    }
 	    
 		return super.onOptionsItemSelected(item);
@@ -218,9 +266,9 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
 	        @Override
 	        public void onReceive(Context context, Intent intent) 
 	        {
-	    		Log.v(TAG, "map " + map);
+	    		Log.v(TAG, "map " + mapFragment);
 	        	
-	        	if(map != null)
+	        	if(mapFragment != null)
 	    		{
 /*		    		LocationMessage u = new LocationMessage();
 		    		u.installId = intent.getStringExtra("installId");
@@ -247,6 +295,7 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
 
 	        }
 	    };
+
 
 
 

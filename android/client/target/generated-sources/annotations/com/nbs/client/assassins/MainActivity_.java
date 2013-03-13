@@ -31,7 +31,7 @@ public final class MainActivity_
     }
 
     private void afterSetContentView_() {
-        map = ((MapFragment) findSupportFragmentById(com.nbs.client.assassins.R.id.fragment_map));
+        mapFragment = ((MapFragment) findSupportFragmentById(com.nbs.client.assassins.R.id.fragment_map));
     }
 
     @Override

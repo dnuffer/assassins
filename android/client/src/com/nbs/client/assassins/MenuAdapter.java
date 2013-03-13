@@ -16,12 +16,14 @@ public class MenuAdapter extends BaseAdapter {
 	public MenuAdapter(Context context, MenuRowData[] items) {
         rows = new ArrayList<MenuListItem>();
         for (MenuRowData item : items) {
-            if(item.getItemType() == MenuItemType.MENU_NAV)
-            	rows.add(new MenuNavItem(LayoutInflater.from(context), item));
-            else if(item.getItemType() == MenuItemType.MENU_HEADER)
-            	rows.add(new MenuHeaderItem(LayoutInflater.from(context), item));
-            else if(item.getItemType() == MenuItemType.MENU_EVENT)
-            	rows.add(new MenuEventItem(LayoutInflater.from(context), item));
+            if(item instanceof MenuNavData)
+            	rows.add(new MenuNavItem(LayoutInflater.from(context), (MenuNavData)item));
+            else if(item instanceof MenuHeaderData)
+            	rows.add(new MenuHeaderItem(LayoutInflater.from(context), (MenuHeaderData)item));
+            else if(item instanceof MenuEventData)
+            	rows.add(new MenuEventItem(LayoutInflater.from(context), (MenuEventData)item));
+            else if(item instanceof MenuGalleryData)
+            	rows.add(new MenuGalleryItem(LayoutInflater.from(context), (MenuGalleryData)item));
         }
         
         
@@ -47,7 +49,7 @@ public class MenuAdapter extends BaseAdapter {
     }
 
     public long getItemId(int position) {
-        return rows.get(position).getId();
+        return position;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {

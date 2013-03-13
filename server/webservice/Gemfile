@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 
 gem 'sinatra'
+gem 'logger'
+gem 'sinatra-logger'
 gem 'json'
 gem 'mongoid', "<=2.4.0"
 gem 'mongodb'
@@ -13,5 +15,7 @@ gem 'geokit'
 gem 'mongoid_spacial'
 gem 'pushmeup'
 gem 'bcrypt-ruby'
-
+gem 'rack'
+gem 'haml'
+gem 'regex'
 

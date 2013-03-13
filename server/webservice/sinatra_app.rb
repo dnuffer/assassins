@@ -1,16 +1,20 @@
 require 'rubygems'
 require 'sinatra'
+require 'sinatra/logger'
 require 'mongoid'
 require 'json'
 require 'pushmeup'
 require 'bcrypt'
+require 'rack'
+require 'haml'
+require 'regex'
 
 $LOAD_PATH.unshift('.')
 
 require 'models/user'
 require 'models/match'
-require 'models/player' 
-
+require 'models/player'
+ 
 enable :logging
 
 #Android device push notification API KEY for google cloud messaging (GCM)

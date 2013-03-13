@@ -73,15 +73,17 @@ public class LocationService extends Service {
 				LocationResponse response = restClient.updateLocation(
 												UserModel.getToken(this), msg);
 				
-				if(response != null && response.status != Response.ERROR) {
+				Log.i(TAG,  response.toString());
+				
+				if(response != null && response.ok()) {
 					Log.i(TAG,"location successfully sent to server.");
 		            Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		            editor.putString("my_lat", Double.toString(response.latitude));
 		            editor.putString("my_lng", Double.toString(response.longitude));
 		            editor.commit();
+
+		            sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
 				}
-				
-				
 			}
 		}
 

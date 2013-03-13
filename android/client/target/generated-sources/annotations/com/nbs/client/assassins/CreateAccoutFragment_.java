@@ -35,9 +35,9 @@ public final class CreateAccoutFragment_
     }
 
     private void afterSetContentView_() {
-        btnCreate = ((Button) findViewById(com.nbs.client.assassins.R.id.create_account));
         username = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_username));
         password = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_password));
+        btnCreate = ((Button) findViewById(com.nbs.client.assassins.R.id.create_account));
         {
             View view = findViewById(com.nbs.client.assassins.R.id.create_account);
             if (view!= null) {

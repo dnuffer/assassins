@@ -15,13 +15,19 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class LocationMessage {
-	
+
 	@JsonProperty("install_id")
 	String installId;
 	
 	@JsonProperty("latitude")
-	Double latitude = 0.0;
+	Double latitude;
 	
 	@JsonProperty("longitude")
-	Double longitude = 0.0;
+	Double longitude;
+	
+	@Override
+	public String toString() {
+		return "LocationMessage [installId=" + installId + ", latitude="
+				+ latitude + ", longitude=" + longitude + "]";
+	}
 }

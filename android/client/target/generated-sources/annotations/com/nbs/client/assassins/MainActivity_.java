@@ -11,9 +11,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import com.googlecode.androidannotations.api.BackgroundExecutor;
 import com.googlecode.androidannotations.api.SdkVersionHelper;
 
 public final class MainActivity_
@@ -28,6 +30,7 @@ public final class MainActivity_
     }
 
     private void init_(Bundle savedInstanceState) {
+        restClient = new HuntedRestClient_();
     }
 
     private void afterSetContentView_() {
@@ -70,6 +73,24 @@ public final class MainActivity_
         }
         FragmentActivity activity_ = ((FragmentActivity) this);
         return activity_.getSupportFragmentManager().findFragmentById(id);
+    }
+
+    @Override
+    public void registerGCMRegIdOnServerInBackground() {
+        BackgroundExecutor.execute(new Runnable() {
+
+
+            @Override
+            public void run() {
+                try {
+                    MainActivity_.super.registerGCMRegIdOnServerInBackground();
+                } catch (RuntimeException e) {
+                    Log.e("MainActivity_", "A runtime exception was thrown while executing code in a runnable", e);
+                }
+            }
+
+        }
+        );
     }
 
     public static class IntentBuilder_ {

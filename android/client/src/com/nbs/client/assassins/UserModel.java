@@ -1,9 +1,16 @@
 package com.nbs.client.assassins;
 
 import java.util.UUID;
+
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 /* 
  * Inspired by Tim Bray's post @ http://android-developers.blogspot.com/2011/03/identifying-app-installations.html
@@ -19,7 +26,8 @@ public class UserModel {
 
     public synchronized static String getInstallId(Context context) {
         
-        SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
+    	if(context == null) return null;
+    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
         String installId = pref.getString(ID, null);
     	
     	if (installId == null) {
@@ -34,13 +42,15 @@ public class UserModel {
     
     public static String getUsername(Context context)
     {
-	    SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
+    	if(context == null) return null;
+    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
 	    return pref.getString(USERNAME, null);
     }
     
     public synchronized static void setUsername(Context context, String username)
     {
-        Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
+    	if(context == null) return;
+    	Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
         editor.putString(USERNAME, username);
         editor.commit();
     }
@@ -52,12 +62,14 @@ public class UserModel {
     
     public static String getToken(Context context)
     {
-        SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
+    	if(context == null) return null;
+    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
         return pref.getString(TOKEN, null);
     }
     
     public synchronized static void setToken(Context context, String token)
     {
+    	if(context == null) return;
         Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
         editor.putString(TOKEN, token);
         editor.commit();
@@ -69,7 +81,26 @@ public class UserModel {
     }
 
 	public static String _toString(Context c) {
+		
 		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c);
+	}
+
+	public static LatLng getLocation(Context c) {
+		
+		if(c == null) return null;
+		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+		
+		String latStr = prefs.getString("my_lat", "");
+		String lngStr = prefs.getString("my_lng", "");
+		
+		if(latStr != "" && lngStr != "") {
+			double lat = Double.parseDouble(latStr);
+			double lng = Double.parseDouble(lngStr);
+			return new LatLng(lat,lng);
+		}
+		
+		return null;
 	}
     
 }

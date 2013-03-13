@@ -7,11 +7,17 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class LocationResponse extends Response {
-	
+
 	@JsonProperty("latitude")
 	double latitude;
 	
 	@JsonProperty("longitude")
 	double longitude;
 	
+	@Override
+	public String toString() {
+		return "LocationResponse [latitude=" + latitude + ", longitude="
+				+ longitude + ", status=" + status + ", message=" + message
+				+ "]";
+	}
 }

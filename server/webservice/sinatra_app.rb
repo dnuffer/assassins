@@ -72,6 +72,12 @@ post '/api/users/:token' do
   }.to_json
 end
 
+
+# TODO send a push notification to verify the push id
+# Return a temporary limited token (5 mins), but for their token to last,
+# Require an acknowledgment of a push id verification token
+# Otherwise, the sender may not be an authentic client
+
 post '/api/provisional-users' do
   content_type :json  
   data = JSON.parse(request.body.read)  
@@ -183,18 +189,38 @@ post '/api/users/:token/location' do
     :install_id => data['install_id']
   }).first
   
-  unless user.nil? or user.player.nil?
-    user.player.location = { lat: data['latitude'], lng: data['longitude'] }
-    user.player.save
-    user.match.notify_target user.player
-    user.match.notify_enemy  user.player
+  unless user.nil? 
+  
+    # if they are sending their location and are not in a match,
+    # they are in freeplay - look around them for (and possibly generate)
+    # some loot that they can pick up
+    if user.player.nil?
+      # query for loot, traps, etc.
+      return { 
+        status: 'ok', 
+        message: '', 
+        latitude: data['latitude'], 
+        longitude: data['longitude'] 
+        # achievements: [ ] 
+        # nearby_items: [ ]
+        # other_items:  [ ]
+        # strength:     [ ] # (when not in a match, a user has a persistent strength)
+      }.to_json
+    elsif
+      user.player.location = { lat: data['latitude'], lng: data['longitude'] }
+      user.player.save
+      user.match.notify_target user.player
+      user.match.notify_enemy  user.player
     
-    return { 
-      status: 'ok', 
-      message: '', 
-      latitude: user.player.location[:lat], 
-      longitude: user.player.location[:lng]  
-    }.to_json
+      return { 
+        status: 'ok', 
+        message: '', 
+        latitude: user.player.location[:lat], 
+        longitude: user.player.location[:lng]  
+        # items: [ ]
+      }.to_json
+    end
+    
   end
   
   { 

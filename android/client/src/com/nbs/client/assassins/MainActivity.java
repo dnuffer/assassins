@@ -24,8 +24,10 @@ import com.actionbarsherlock.view.SubMenu;
 
 import com.google.android.gcm.GCMRegistrar;
 
+import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.FragmentById;
+import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.CreateAccoutFragment.OnAccountCreatedListener;
 
 
@@ -52,10 +54,14 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	@FragmentById(R.id.fragment_map)
 	MapFragment mapFragment;
 	
+	@RestService
+	HuntedRestClient restClient;
+	
 	CreateAccoutFragment createAccountFragment;
 	
 	private final String TAG = "MainActivity";
 	
+	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
 	public static final String ACTION = "some_action";
 	public static final String ATTACKED = "attacked";
 	public static final String MATCH_START = "match_start";
@@ -75,6 +81,7 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	private static final int SIGN_OUT_ID = 4;
 	
 	IntentFilter intentActionFilter;
+	IntentFilter intentLocationUpdateFilter;
 
 	private boolean creatingAccount = false;
 
@@ -103,6 +110,12 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
         if(GCMRegistrar.isRegistered(this))
         {
         	Log.i(TAG, "registered GCM id.");
+        	
+        	if(!GCMRegistrar.isRegisteredOnServer(this))
+        	{
+        		registerGCMRegIdOnServerInBackground();
+        	}
+        	
         } else
         {
         	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
@@ -114,6 +127,9 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
         intentActionFilter = new IntentFilter();
         intentActionFilter.addAction(ACTION);      
         
+        intentLocationUpdateFilter = new IntentFilter();
+        intentLocationUpdateFilter.addAction(LOCATION_UPDATED);   
+        
         startService(new Intent(this, LocationService_.class));
 		
 		getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -122,6 +138,10 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 		
     }
     
+    @Background
+	public void registerGCMRegIdOnServerInBackground() {
+    	Log.e(TAG, "Gcm Registered with google, but apparently not on server...");
+	}
 
 	@Override
 	public void onAccountCreated(boolean wasCreated) {
@@ -179,6 +199,7 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	protected void onPause() 
 	{
 		unregisterReceiver(intentActionReceiver);
+		unregisterReceiver(locationUpdateReceiver);
 	    super.onPause();
 	}
 	
@@ -189,6 +210,7 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	    super.onResume();
 
 	    registerReceiver(intentActionReceiver, intentActionFilter);
+	    registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
 	}
 
 
@@ -259,7 +281,16 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 		return super.onOptionsItemSelected(item);
 	}
 	
-
+	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) 
+        {
+    		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
+    	
+    		if(mapFragment != null)
+    			mapFragment.updateMapPosition();
+	    }
+	};
 	
 	   private BroadcastReceiver intentActionReceiver = new BroadcastReceiver() 
 	    {

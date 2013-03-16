@@ -26,7 +26,7 @@ public interface HuntedRestClient {
 	@Accept(MediaType.APPLICATION_JSON)
 	UserLoginResponse login(UserLoginMessage loginMsg);
 	
-	@Post("/users/{token}/gcm")
+	@Post("/users/{token}/gcm/register")
 	@Accept(MediaType.APPLICATION_JSON)
 	UserLoginResponse updateGCMRegId(String token, GCMRegistrationMessage msg);
 	
@@ -38,9 +38,13 @@ public interface HuntedRestClient {
 	@Accept(MediaType.APPLICATION_JSON)
 	MatchResponse createMatch(CreateMatchMessage msg);	
 	
-	@Post("/matches/{matchId}/users")
+	@Post("/matches/public/users")
 	@Accept(MediaType.APPLICATION_JSON)
-	MatchResponse joinMatch(String matchId, JoinMatchMessage msg);
+	MatchResponse joinPublicMatch(JoinMatchMessage msg);
+	
+	@Post("/matches/private/users")
+	@Accept(MediaType.APPLICATION_JSON)
+	MatchResponse joinPrivateMatch(JoinMatchMessage msg);
 	
 	@Post("/users/{token}/location")
 	@Accept(MediaType.APPLICATION_JSON)

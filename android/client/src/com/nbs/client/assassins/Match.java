@@ -1,4 +1,6 @@
 package com.nbs.client.assassins;
+import java.util.Arrays;
+
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
@@ -12,12 +14,22 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
 
-	@JsonProperty("id")
-	String id;
+	@JsonProperty("token")
+	String token;
 	
 	@JsonProperty("name")
 	String name;
 	
 	@JsonProperty("players")
 	Player[] players;
+	
+	@JsonProperty("password")
+	String password;
+	
+
+	@Override
+	public String toString() {
+		return "Match [token=" + token + ", name=" + name + ", players="
+				+ Arrays.toString(players) + ", password=" + password + "]";
+	}
 }

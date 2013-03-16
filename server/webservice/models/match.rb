@@ -1,4 +1,5 @@
 require 'mongoid'
+require 'securerandom'
 
 class Match
   include Mongoid::Document
@@ -8,12 +9,15 @@ class Match
   #has_one :winner,  class_name: "User"
   
   field :name, type: String
+  field :password, type: String
+  field :salt, type: String
+  field :token, type: String
   
   has_many :users
   
   # previous element is enemy, next element is target
   # as players are eliminated, they are removed
-  field    :player_ids, type: Array, default: []
+  field :player_ids, type: Array, default: []
   
   #field :type, String
   
@@ -28,6 +32,14 @@ class Match
   #field :attack_delay, Integer
   
   #spacial_index :nw_corner
+  
+  validates_uniqueness_of :name
+  
+  before_create :assign_token
+  
+  def assign_token
+    self.token = SecureRandom.hex
+  end
   
   def add_user user
     unless user.nil? #TODO or past start time

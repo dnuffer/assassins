@@ -2,7 +2,9 @@ package com.nbs.client.assassins;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.util.Log;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -58,7 +60,7 @@ public class CreateAccoutFragment extends SherlockFragment {
 
 	@Click(R.id.create_account)
 	void onCreateAccountClicked() {
-
+		
 		//TODO: validate username and password before allowing button to be enabled
 		//TODO: show dialog if there are validation issues
 		Log.i(TAG, password.getText().toString());
@@ -66,6 +68,10 @@ public class CreateAccoutFragment extends SherlockFragment {
 		if(password.getText().toString().length() > 5 && 
 		   username.getText().toString().length() > 5) {
 			
+			InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
+				      Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
 			btnCreate.setEnabled(false);
 			
 			UserLoginMessage msg = new UserLoginMessage();

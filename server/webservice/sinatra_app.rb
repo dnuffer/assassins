@@ -136,6 +136,14 @@ post '/api/matches' do
   user = User.where( :token => data['token'] ).first
   
   unless user.nil?
+  
+    password = data['match']['password']
+    unless password.nil?
+      salt = BCrypt::Engine.generate_salt
+      data['match']['salt'] = salt
+      data['match']['password'] = BCrypt::Engine.hash_secret(password, salt)
+    end
+  
     match = Match.create(data['match'])
     if match.persisted?
 
@@ -155,20 +163,55 @@ end
 
 #Accepts: JoinMatchRequest
 #Returns: MatchResponse
-post '/api/matches/:id/users' do
+post '/api/matches/public/users' do
   content_type :json
   data = JSON.parse(request.body.read)
   
-  match = Match.find(params[:id].to_i)
+  match = Match.where({ name: data['match_name'], password: nil }).first
   user = User.where(:token => data['token']).first
 
   unless match.nil? or user.nil? or user.provisional?
+    
     match.add_user user
     return {
       status: 'ok',
       message: 'joined match',
-      match: match
+      match: { 
+        token: match.token,
+        name:  match.name
+      }
     }.to_json 
+  end
+  
+  {
+    status: 'error',
+    message: 'failed to join match'
+  }.to_json
+end
+
+#Accepts: JoinMatchRequest
+#Returns: MatchResponse
+post '/api/matches/private/users' do
+  content_type :json
+  data = JSON.parse(request.body.read)
+  
+  match = Match.where(:name => data['match_name']).first
+  user = User.where(:token => data['token']).first
+  
+  unless match.nil? or user.nil? or user.provisional?
+    
+    if match.password.nil? or match.password == BCrypt::Engine.hash_secret(data['password'], match.salt) 
+    
+      match.add_user user
+      return {
+        status: 'ok',
+        message: 'joined match',
+        match: { 
+          token: match.token,
+          name:  match.name
+        }
+      }.to_json
+    end
   end
   
   {
@@ -272,7 +315,7 @@ end
 
 #Accepts: GCMRegistrationMessage
 #Returns: UserLoginResponse 
-post '/api/users/:token/gcm' do
+post '/api/users/:token/gcm/register' do
   content_type :json
   data = JSON.parse(request.body.read)  
   

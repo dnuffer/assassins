@@ -10,6 +10,11 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 public class JoinMatchMessage {
 
 	@JsonProperty("token")
-	String token;
+	String userToken;
+
+	@JsonProperty("match_name")
+	String matchName;
 	
+	@JsonProperty("password")
+	String matchPassword;
 }

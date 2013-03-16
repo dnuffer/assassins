@@ -3,7 +3,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
-
+     
    <fragment
         android:id="@+id/fragment_map"
         android:name="com.nbs.client.assassins.MapFragment_"

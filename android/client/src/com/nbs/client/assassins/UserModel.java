@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.location.Location;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 /* 
@@ -23,6 +25,7 @@ public class UserModel {
     private static final String ID = "install_id";
 	private static final String TOKEN = "token";
 	private static final String USERNAME = "username";
+	private static final String TAG = "UserModel";
 
     public synchronized static String getInstallId(Context context) {
         
@@ -82,7 +85,8 @@ public class UserModel {
 
 	public static String _toString(Context c) {
 		
-		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c);
+		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
+				"match=" + getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
 	}
 
 	public static LatLng getLocation(Context c) {
@@ -94,13 +98,74 @@ public class UserModel {
 		String latStr = prefs.getString("my_lat", "");
 		String lngStr = prefs.getString("my_lng", "");
 		
+		Log.d(TAG, "getting location preference [lat=" + latStr + ", lng=" + lngStr + "]");
+		
 		if(latStr != "" && lngStr != "") {
 			double lat = Double.parseDouble(latStr);
 			double lng = Double.parseDouble(lngStr);
+	
 			return new LatLng(lat,lng);
 		}
 		
 		return null;
 	}
+
+	public synchronized static void setLocation(Context context, Location lastLocation) {
+    	if(context == null || lastLocation == null) return;
+    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+    	editor.putString("my_lat", Double.toString(lastLocation.getLatitude()));
+    	editor.putString("my_lng", Double.toString(lastLocation.getLongitude()));
+        editor.commit();
+		
+	}
+
+	public synchronized static void setMatch(Context context, Match match) {
+		setMatchName(context, match.name);
+		setMatchToken(context, match.token);
+	}
+	
+	private static void setMatchToken(Context context, String matchId) {
+    	if(context == null) return;
+    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+    	editor.putString("match_token", matchId);
+        editor.commit();
+		
+	}
+
+	private synchronized static void setMatchName(Context context, String name) {
+    	if(context == null) return;
+    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+    	editor.putString("match_name", name);
+        editor.commit();
+	}
+
+	public static Match getMatch(Context context) {
+		Match match = new Match();
+		match.name = getMatchName(context);
+		match.token = getMatchToken(context);
+		//TODO: store more of match's properties
+		
+		if(match.token == null) return null;
+		
+		return match;
+	}
+	
+	private static String getMatchToken(Context context) {
+    	if(context == null) return null;
+    	SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+        return pref.getString("match_token", null);
+	}
+
+	private static String getMatchName(Context context) {
+    	if(context == null) return null;
+    	SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+        return pref.getString("match_name", null);
+	}
+
+	public static boolean hasMatch(Context context) {
+		return (getMatch(context) != null);
+	}
+	
+	
     
 }

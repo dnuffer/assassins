@@ -10,4 +10,10 @@ public class MatchResponse extends Response {
 	
 	@JsonProperty("match")
 	Match match;
+
+	@Override
+	public String toString() {
+		return "MatchResponse [match=" + match + ", status=" + status
+				+ ", message=" + message + "]";
+	}
 }

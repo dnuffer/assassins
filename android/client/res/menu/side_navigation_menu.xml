@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/side_navigation_menu_item1"
+        android:icon="@drawable/compass"
+        android:title="1"/>
+    <item
+        android:id="@+id/side_navigation_menu_item2"
+        android:icon="@drawable/compass"
+        android:title="2"/>
+    <item
+        android:id="@+id/side_navigation_menu_item3"
+        android:icon="@drawable/compass"
+        android:title="3"/>
+    <item
+        android:id="@+id/side_navigation_menu_item4"
+        android:icon="@drawable/compass"
+        android:title="4"/>
+    <item
+        android:id="@+id/side_navigation_menu_item5"
+        android:icon="@drawable/compass"
+        android:title="5"/>
+
+</menu>

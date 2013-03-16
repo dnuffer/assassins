@@ -3,8 +3,9 @@
  */
 package com.nbs.client.assassins;
 
+import net.simonvt.menudrawer.MenuDrawer;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +30,14 @@ import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.FragmentById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.CreateAccoutFragment.OnAccountCreatedListener;
-
+import com.nbs.client.assassins.CreateMatchFragment.OnMatchCreatedListener;
+import com.nbs.client.assassins.JoinMatchFragment.OnMatchJoinedListener;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.Animator.AnimatorListener;
+import com.nineoldandroids.animation.AnimatorInflater;
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
 
 //import com.slidingmenu.lib.SlidingMenu;
 //import com.slidingmenu.lib.app.SlidingFragmentActivity;
@@ -47,7 +55,8 @@ String macAddress = wInfo.getMacAddress(); */
  */
 
 @EActivity
-public class MainActivity extends SherlockFragmentActivity implements OnAccountCreatedListener {
+public class MainActivity extends SherlockFragmentActivity 
+	implements OnAccountCreatedListener, OnMatchCreatedListener, OnMatchJoinedListener {
 	
 	//private MenuFragment menuFragment;
 	
@@ -58,6 +67,10 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	HuntedRestClient restClient;
 	
 	CreateAccoutFragment createAccountFragment;
+	CreateMatchFragment createMatchFragment;
+	JoinMatchFragment joinMatchFragment;
+	NotificationFragment notifFrag;
+	Fragment dummyFragment;
 	
 	private final String TAG = "MainActivity";
 	
@@ -79,14 +92,25 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	private static final int SIGN_IN_ID = 2;
 	private static final int MORE_ID = 3;
 	private static final int SIGN_OUT_ID = 4;
-	
+	private static final int CREATE_MATCH_ID = 5;
+	private static final int NOT_IN_MATCH_ITEMS = 6;
+
+	private static final int NEW_USER_ITEMS = 7;
+
+	private static final int NOTIF_ID = 8;
+
 	IntentFilter intentActionFilter;
 	IntentFilter intentLocationUpdateFilter;
 
 	private boolean creatingAccount = false;
-
+	private boolean creatingMatch = false;
+	private boolean joiningMatch = false;
+	private boolean viewingNotifications = false;
+	
 	private Menu optionsMenu;
 	
+	MenuDrawer mDrawer;
+
 	private OnSharedPreferenceChangeListener prefChangeListener =  new OnSharedPreferenceChangeListener() {
 
         @Override
@@ -96,6 +120,7 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
         }
 
 	};
+
 	
 	public MainActivity() {
 	}
@@ -103,6 +128,8 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+    	Log.d(TAG, "onCreate() UserModel" + UserModel._toString(this));
         
         GCMRegistrar.checkDevice(this);
         GCMRegistrar.checkManifest(this);
@@ -120,7 +147,7 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
         {
         	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
         }
-
+        
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
 
@@ -132,9 +159,12 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
         
         startService(new Intent(this, LocationService_.class));
 		
-		getSupportActionBar().setDisplayShowTitleEnabled(false);
-		getSupportActionBar().setDisplayShowHomeEnabled(false);
-		setContentView(R.layout.activity_main);
+
+        mDrawer = MenuDrawer.attach(this, MenuDrawer.MENU_DRAG_WINDOW);
+        mDrawer.setContentView(R.layout.activity_main);
+        mDrawer.setMenuView(R.layout.menu_list);
+
+ 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
     }
     
@@ -147,12 +177,24 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 	public void onAccountCreated(boolean wasCreated) {
 		
 		removeCreateAccountFragment();
+		creatingAccount = false;
+		supportInvalidateOptionsMenu();
+	}
+	
+	@Override
+	public void onMatchCreated(boolean wasCreated) {
 		
-		removeNeedsAuthOptionsMenuItems();
+		removeCreateMatchFragment();
+		creatingMatch = false;
+		supportInvalidateOptionsMenu();
+	}
+	
+	@Override
+	public void onMatchJoined(boolean wasCreated) {
 		
-		addLoggedInOptionsMenuItems(optionsMenu);
-		
-		this.supportInvalidateOptionsMenu();
+		removeJoinMatchFragment();
+		joiningMatch = false;
+		supportInvalidateOptionsMenu();
 	}
 
 	private void removeCreateAccountFragment() {
@@ -172,14 +214,89 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 		}
 	}
 	
+	private void removeNotificationFragment() {
+		
+		if(viewingNotifications && notifFrag != null) {
+		    
+			/*dummyFragment = new Fragment();
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.setCustomAnimations(R.animator.object_slide_in_left, R.animator.object_slide_out_right);
+			ft.replace(R.id.fragment_container, dummyFragment);
+		    ft.commit();  */
+
+
+			
+			AnimatorSet set = new AnimatorSet();
+			set.playTogether(
+					ObjectAnimator.ofFloat(notifFrag.getListView(), 
+							"x", notifFrag.getListView().getLeft(), notifFrag.getListView().getRight()));
+			set.setDuration(500);
+			set.addListener(new AnimatorListener() {
+
+				@Override
+				public void onAnimationStart(Animator animation) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void onAnimationEnd(Animator animation) {
+					FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+					ft.remove(notifFrag);
+				    ft.commit();
+				    viewingNotifications = false;
+				    supportInvalidateOptionsMenu();
+				}
+
+				@Override
+				public void onAnimationCancel(Animator animation) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void onAnimationRepeat(Animator animation) {
+					// TODO Auto-generated method stub
+					
+				} });
+		    set.start();
+		}
+		
+	}
+	
+	private void removeCreateMatchFragment() {
+		
+		if(creatingMatch && createMatchFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(createMatchFragment);
+		    ft.commit();   
+		    creatingMatch = false;
+		    createMatchFragment = null;
+		}
+	}
+	
+	private void removeJoinMatchFragment() {
+
+		if(joiningMatch && joinMatchFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(joinMatchFragment);
+		    ft.commit();   
+		    joiningMatch = false;
+		    joinMatchFragment = null;
+		}
+	}
+	
 	@Override
 	public void onBackPressed() {
 
-		if(creatingAccount) {
-			removeCreateAccountFragment();
-		} else {
-			super.onBackPressed();
-		}
+		if      (creatingAccount) { removeCreateAccountFragment(); } 
+		else if (joiningMatch)    { removeJoinMatchFragment(); } 
+		else if (creatingMatch)   { removeCreateMatchFragment(); }
+		else    { super.onBackPressed(); }
 	}
 
     
@@ -216,25 +333,38 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {		
-		
-		
-		MenuItem join = menu.add(Menu.NONE, JOIN_ID, 0, "");
-		join.setIcon(R.drawable.ic_menu_allfriends);
-		join.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		
-		if(!UserModel.hasToken(this) && !UserModel.hasUsername(this)) {
-			addNeedsAuthOptionsMenuItems(menu);
-		} else {
-			addLoggedInOptionsMenuItems(menu);
-		}
+		optionsMenu = menu;
 		return super.onCreateOptionsMenu(menu);
 	}
+	
+	private void addInMatchOptionsMenuItems(Menu menu) {
+	}
+	
+	private void addNotInMatchOptionsMenuItems(Menu menu) {
+		MenuItem join = menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "");
+		join.setIcon(R.drawable.social_group);
+		join.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		
+		MenuItem createMatch = menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "");
+		createMatch.setIcon(R.drawable.content_new);
+		createMatch.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+	}
+	
+	private void removeInMatchOptionsMenuItems(Menu menu) {
+		
+	}
+	
+	private void removeNotInMatchOptionsMenuItems(Menu menu) {
+		menu.removeGroup(NOT_IN_MATCH_ITEMS);
+	}
+	
+	
 
-	private void addNeedsAuthOptionsMenuItems(Menu menu) {
+	private void addNewUserOptionsMenuItems(Menu menu) {
 		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 1, "");
 		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
-		more.add(Menu.NONE, CREATE_ACCOUNT_ID, 2, "Create Account");
-		more.add(Menu.NONE, SIGN_IN_ID, 3, "Sign In");
+		more.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account");
+		more.add(NEW_USER_ITEMS, SIGN_IN_ID, 3, "Sign In");
 
 		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
@@ -247,34 +377,104 @@ public class MainActivity extends SherlockFragmentActivity implements OnAccountC
 		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
 	
-	private void removeNeedsAuthOptionsMenuItems() {
-		optionsMenu.removeItem(SIGN_IN_ID);
-		optionsMenu.removeItem(CREATE_ACCOUNT_ID);
-		optionsMenu.removeItem(MORE_ID);
+	private void removeNewUserOptionsMenuItems(Menu menu) {
+		menu.removeItem(MORE_ID);
 	}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
-		this.optionsMenu = menu;
+		if(creatingAccount || creatingMatch || joiningMatch || viewingNotifications)
+		{
+    		//on hide in MapFragment is too slow... need to remove earlier
+    		menu.removeGroup(MapFragment.MAP_CONTROL_ITEMS);
+			removeInMatchOptionsMenuItems(menu);
+    		removeNotInMatchOptionsMenuItems(menu);
+    		menu.removeGroup(NEW_USER_ITEMS);
+		} else {
+			if(UserModel.hasToken(this) && UserModel.hasUsername(this)) {
+				addLoggedInOptionsMenuItems(menu);
+				menu.removeGroup(NEW_USER_ITEMS);
+			} else {
+				addNewUserOptionsMenuItems(menu);
+			}
+			
+			if(UserModel.hasMatch(this)) {
+				Log.d(TAG, UserModel.getMatch(this).toString());
+				addInMatchOptionsMenuItems(menu);
+	    		removeNotInMatchOptionsMenuItems(menu);
+			}
+			else {
+				addNotInMatchOptionsMenuItems(menu);
+				removeInMatchOptionsMenuItems(menu);
+			}
+		}
+		
+		menu.add(Menu.NONE, NOTIF_ID, Menu.NONE, "")
+			.setIcon(R.drawable.ic_audio_notification)
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		
 		return super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
+	    
+		FragmentTransaction ft;
+		
+		switch (item.getItemId()) {
 	    	case android.R.id.home:
 	    		return true;
 	    	case CREATE_ACCOUNT_ID:
 	    		creatingAccount = true;
+    			supportInvalidateOptionsMenu();
 	    		createAccountFragment = new CreateAccoutFragment_();
-	    		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+	    		ft = getSupportFragmentManager().beginTransaction();
 	    		ft.hide(mapFragment);
 	    		ft.add(R.id.fragment_container, createAccountFragment);
 	    	    //ft.show(createAccountFragment);
+
 	    	    ft.commit();
-    		break;
+	    	    
+
+	    	    return true;
+	    	case JOIN_ID:
+	    		joiningMatch = true;
+	    		supportInvalidateOptionsMenu();
+	    		joinMatchFragment = new JoinMatchFragment_();
+	    		ft = getSupportFragmentManager().beginTransaction();
+	    		ft.hide(mapFragment);
+	    		ft.add(R.id.fragment_container, joinMatchFragment);
+	    	    //ft.show(createAccountFragment);
+	    	    ft.commit();
+
+	    	    return true;
+	    	case CREATE_MATCH_ID:
+	    		creatingMatch = true;
+	    		supportInvalidateOptionsMenu();
+	    		createMatchFragment = new CreateMatchFragment_();
+	    		ft = getSupportFragmentManager().beginTransaction();
+	    		ft.hide(mapFragment);
+	    		ft.add(R.id.fragment_container, createMatchFragment);
+	    	    //ft.show(createAccountFragment);
+	    	    ft.commit();
+	    		return true;
+	    	case NOTIF_ID:
+	    		
+	    		if(viewingNotifications) {
+	    			removeNotificationFragment();
+	    		} else {
+	    		
+		    		viewingNotifications = true;
+		    		notifFrag = new NotificationFragment();
+		    		ft = getSupportFragmentManager().beginTransaction();
+		    		ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
+		    		ft.replace(R.id.fragment_container, notifFrag);
+		    	    //ft.show(createAccountFragment);
+		    	    ft.commit();
+	    	    
+	    		}
+	    	    return true;
 			default:
 	    }
 	    

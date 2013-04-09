@@ -9,8 +9,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -34,7 +32,6 @@ public final class MainActivity_
     }
 
     private void afterSetContentView_() {
-        mapFragment = ((MapFragment) findSupportFragmentById(com.nbs.client.assassins.R.id.fragment_map));
     }
 
     @Override
@@ -65,14 +62,6 @@ public final class MainActivity_
 
     public static MainActivity_.IntentBuilder_ intent(Context context) {
         return new MainActivity_.IntentBuilder_(context);
-    }
-
-    private Fragment findSupportFragmentById(int id) {
-        if (!(this instanceof FragmentActivity)) {
-            return null;
-        }
-        FragmentActivity activity_ = ((FragmentActivity) this);
-        return activity_.getSupportFragmentManager().findFragmentById(id);
     }
 
     @Override

@@ -9,10 +9,59 @@
         android:name="com.nbs.client.assassins.MapFragment_"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:tag="tag_fragment_map" />
+        android:tag="tag_fragment_map" >
+        </fragment>
    
    <FrameLayout android:id="@+id/fragment_container" 
        android:layout_width="match_parent" 
        android:layout_height="match_parent"/>
+
+<!--    
+      <FrameLayout android:id="@+id/hud_container" 
+       android:layout_width="match_parent" 
+       android:layout_height="match_parent"
+       android:padding="10dp">
+
+       <LinearLayout
+           android:id="@+id/hud"
+           android:layout_width="match_parent"
+           android:layout_height="24dp"
+           android:layout_gravity="bottom"
+           android:background="@android:color/darker_gray"
+           android:orientation="horizontal"
+           android:padding="4dp" >
+
+           <com.nbs.client.assassins.RobotoTextView
+               android:id="@+id/hudLifeLabel"
+               android:layout_width="58dp"
+               android:layout_height="20dp"
+               android:layout_gravity="center_vertical"
+               android:layout_weight="1"
+               android:text="life"
+               android:textAppearance="?android:attr/textAppearanceSmall" />
+
+           <com.nbs.client.assassins.RobotoTextView
+               android:id="@+id/hudLifeLabel"
+               android:layout_width="81dp"
+               android:layout_height="20dp"
+               android:layout_gravity="center_vertical"
+               android:layout_weight="1"
+               android:text="attack"
+               android:textAppearance="?android:attr/textAppearanceSmall" />
+
+           <com.nbs.client.assassins.RobotoTextView
+               android:id="@+id/hudTargetLifeLabel"
+               android:layout_width="66dp"
+               android:layout_height="20dp"
+               android:layout_gravity="center_vertical"
+               android:layout_weight="1"
+               android:text="target life"
+               android:textAppearance="?android:attr/textAppearanceSmall" />
+
+             </LinearLayout>
+     
+
+   </FrameLayout> -->
+   
 
 </RelativeLayout>  

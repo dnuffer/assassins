@@ -3,7 +3,121 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-    
 
+    <HorizontalScrollView
+        android:id="@+id/inventory_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+      <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+         
+      <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="match_parent"
+          android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="item1" />
+          
+    </LinearLayout>  
+        
+        
+          <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+          
+    </LinearLayout>  
+        
+          <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+          
+    </LinearLayout>  
+        
+        
+      
+
+          <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+          
+    </LinearLayout>  
+        
+        
+          <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+          
+    </LinearLayout>  
+        
+   
+          <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_launcher" />
+
+    <com.nbs.client.assassins.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+          
+    </LinearLayout>  
+        
+        </LinearLayout>
+      
+    </HorizontalScrollView>
     
 </LinearLayout>

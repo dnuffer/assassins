@@ -35,9 +35,9 @@ public final class CreateMatchFragment_
     }
 
     private void afterSetContentView_() {
+        password = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_match_password));
         matchName = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_match_name));
         btnCreate = ((Button) findViewById(com.nbs.client.assassins.R.id.create_match));
-        password = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_match_password));
         {
             View view = findViewById(com.nbs.client.assassins.R.id.create_match);
             if (view!= null) {

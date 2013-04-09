@@ -70,12 +70,8 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			stopSensorUpdates();
 		}
 		
-		super.onHiddenChanged(hidden);
-		
-		getSherlockActivity().supportInvalidateOptionsMenu();
+		super.onHiddenChanged(hidden);	
 	}
-	
-	private Menu optionsMenu;
 	
 	private final String MODE_NORTH = "mode_north";
 	private final String MODE_BEARING = "mode_user_direction";
@@ -134,11 +130,9 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		map.getUiSettings().setScrollGesturesEnabled(false);
 		map.getUiSettings().setRotateGesturesEnabled(false);
 		map.getUiSettings().setZoomGesturesEnabled(true);
-		map.getUiSettings().setZoomControlsEnabled(false);
-/*		map.getUiSettings().setTiltGesturesEnabled(false);
-		map.getUiSettings().setZoomGesturesEnabled(false);*/
+		map.getUiSettings().setZoomControlsEnabled(true);
 		
-		setHasOptionsMenu(true);   
+		
 
 		mSensorManager = (SensorManager)getSherlockActivity().getSystemService(Context.SENSOR_SERVICE);
 		accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -166,35 +160,30 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		optionsMenu = menu;
 		super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
-		
-		if(isHidden()) {
-			optionsMenu.removeGroup(MAP_CONTROL_ITEMS);
-		} else {
-			
-			if(MODE == MODE_BEARING) {
-				menu.removeItem(MODE_BEARING_ID);
-				if(menu.findItem(MODE_NORTH_ID) == null) {
-					menu.add(MAP_CONTROL_ITEMS, MODE_NORTH_ID, Menu.NONE, "")
-						.setIcon(R.drawable.north)
-						.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-				}
-	
-			} else if (MODE == MODE_NORTH) {
-				menu.removeItem(MODE_NORTH_ID);
-				if(menu.findItem(MODE_BEARING_ID) == null) {
-					menu.add(MAP_CONTROL_ITEMS, MODE_BEARING_ID, Menu.NONE, "")
-						.setIcon(R.drawable.compass)
-						.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-				}
-				
+
+		if(MODE == MODE_BEARING) {
+			menu.removeItem(MODE_BEARING_ID);
+			if(menu.findItem(MODE_NORTH_ID) == null) {
+				menu.add(MAP_CONTROL_ITEMS, MODE_NORTH_ID, Menu.NONE, "")
+					.setIcon(R.drawable.north)
+					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			}
+
+		} else if (MODE == MODE_NORTH) {
+			menu.removeItem(MODE_NORTH_ID);
+			if(menu.findItem(MODE_BEARING_ID) == null) {
+				menu.add(MAP_CONTROL_ITEMS, MODE_BEARING_ID, Menu.NONE, "")
+					.setIcon(R.drawable.compass)
+					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+			}
+			
 		}
+
 		super.onPrepareOptionsMenu(menu);
 	}
 
@@ -232,8 +221,6 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		else if (MODE == MODE_NORTH) {
 			stopSensorUpdates();
 		}
-		
-		getSherlockActivity().supportInvalidateOptionsMenu();
 	}
 
 	@Override
@@ -241,7 +228,6 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		super.onPause();
 		stopSensorUpdates();
 		
-		optionsMenu.removeGroup(MAP_CONTROL_ITEMS);
 	}
 	
 	@Override

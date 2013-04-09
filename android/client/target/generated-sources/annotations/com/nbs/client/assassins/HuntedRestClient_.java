@@ -33,13 +33,13 @@ public class HuntedRestClient_
     }
 
     @Override
-    public LocationResponse updateLocation(String token, LocationMessage msg) {
+    public void unregisterGCMRegId(String token, GCMRegistrationMessage msg) {
         HashMap<String, Object> urlVariables = new HashMap<String, Object>();
         urlVariables.put("token", token);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<LocationMessage> requestEntity = new HttpEntity<LocationMessage>(msg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("/users/{token}/location"), HttpMethod.POST, requestEntity, LocationResponse.class, urlVariables).getBody();
+        HttpEntity<GCMRegistrationMessage> requestEntity = new HttpEntity<GCMRegistrationMessage>(msg, httpHeaders);
+        restTemplate.exchange(rootUrl.concat("/users/{token}/gcm/unregister"), HttpMethod.POST, requestEntity, null, urlVariables);
     }
 
     @Override
@@ -51,13 +51,34 @@ public class HuntedRestClient_
     }
 
     @Override
-    public AttackResponse attack(String token, LocationMessage msg) {
-        HashMap<String, Object> urlVariables = new HashMap<String, Object>();
-        urlVariables.put("token", token);
+    public MatchResponse joinPublicMatch(JoinMatchMessage msg) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<LocationMessage> requestEntity = new HttpEntity<LocationMessage>(msg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("users/{token}/attack"), HttpMethod.POST, requestEntity, AttackResponse.class, urlVariables).getBody();
+        HttpEntity<JoinMatchMessage> requestEntity = new HttpEntity<JoinMatchMessage>(msg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("/matches/public/users"), HttpMethod.POST, requestEntity, MatchResponse.class).getBody();
+    }
+
+    @Override
+    public UserLoginResponse registerUser(UserLoginMessage loginMsg) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
+        HttpEntity<UserLoginMessage> requestEntity = new HttpEntity<UserLoginMessage>(loginMsg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("/users"), HttpMethod.POST, requestEntity, UserLoginResponse.class).getBody();
+    }
+
+    @Override
+    public UserLoginResponse registerProvisionalUser(UserLoginMessage loginMsg) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        HttpEntity<UserLoginMessage> requestEntity = new HttpEntity<UserLoginMessage>(loginMsg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("/provisional-users"), HttpMethod.POST, requestEntity, UserLoginResponse.class).getBody();
+    }
+
+    @Override
+    public MatchResponse createMatch(CreateMatchMessage msg) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
+        HttpEntity<CreateMatchMessage> requestEntity = new HttpEntity<CreateMatchMessage>(msg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("/matches"), HttpMethod.POST, requestEntity, MatchResponse.class).getBody();
     }
 
     @Override
@@ -80,28 +101,13 @@ public class HuntedRestClient_
     }
 
     @Override
-    public UserLoginResponse registerProvisionalUser(UserLoginMessage loginMsg) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        HttpEntity<UserLoginMessage> requestEntity = new HttpEntity<UserLoginMessage>(loginMsg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("/provisional-users"), HttpMethod.POST, requestEntity, UserLoginResponse.class).getBody();
-    }
-
-    @Override
-    public void unregisterGCMRegId(String token, GCMRegistrationMessage msg) {
+    public LocationResponse updateLocation(String token, LocationMessage msg) {
         HashMap<String, Object> urlVariables = new HashMap<String, Object>();
         urlVariables.put("token", token);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<GCMRegistrationMessage> requestEntity = new HttpEntity<GCMRegistrationMessage>(msg, httpHeaders);
-        restTemplate.exchange(rootUrl.concat("/users/{token}/gcm/unregister"), HttpMethod.POST, requestEntity, null, urlVariables);
-    }
-
-    @Override
-    public UserLoginResponse registerUser(UserLoginMessage loginMsg) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<UserLoginMessage> requestEntity = new HttpEntity<UserLoginMessage>(loginMsg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("/users"), HttpMethod.POST, requestEntity, UserLoginResponse.class).getBody();
+        HttpEntity<LocationMessage> requestEntity = new HttpEntity<LocationMessage>(msg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("/users/{token}/location"), HttpMethod.POST, requestEntity, LocationResponse.class, urlVariables).getBody();
     }
 
     @Override
@@ -113,19 +119,13 @@ public class HuntedRestClient_
     }
 
     @Override
-    public MatchResponse joinPublicMatch(JoinMatchMessage msg) {
+    public AttackResponse attack(String token, LocationMessage msg) {
+        HashMap<String, Object> urlVariables = new HashMap<String, Object>();
+        urlVariables.put("token", token);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<JoinMatchMessage> requestEntity = new HttpEntity<JoinMatchMessage>(msg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("/matches/public/users"), HttpMethod.POST, requestEntity, MatchResponse.class).getBody();
-    }
-
-    @Override
-    public MatchResponse createMatch(CreateMatchMessage msg) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setAccept(Collections.singletonList(MediaType.parseMediaType("application/json")));
-        HttpEntity<CreateMatchMessage> requestEntity = new HttpEntity<CreateMatchMessage>(msg, httpHeaders);
-        return restTemplate.exchange(rootUrl.concat("/matches"), HttpMethod.POST, requestEntity, MatchResponse.class).getBody();
+        HttpEntity<LocationMessage> requestEntity = new HttpEntity<LocationMessage>(msg, httpHeaders);
+        return restTemplate.exchange(rootUrl.concat("users/{token}/attack"), HttpMethod.POST, requestEntity, AttackResponse.class, urlVariables).getBody();
     }
 
 }

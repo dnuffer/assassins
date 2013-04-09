@@ -27,6 +27,7 @@ import com.google.android.gcm.GCMRegistrar;
 
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EActivity;
+import com.googlecode.androidannotations.annotations.EFragment;
 import com.googlecode.androidannotations.annotations.FragmentById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.CreateAccoutFragment.OnAccountCreatedListener;
@@ -60,8 +61,7 @@ public class MainActivity extends SherlockFragmentActivity
 	
 	//private MenuFragment menuFragment;
 	
-	@FragmentById(R.id.fragment_map)
-	MapFragment mapFragment;
+	MapFragment_ mapFragment;
 	
 	@RestService
 	HuntedRestClient restClient;
@@ -70,7 +70,7 @@ public class MainActivity extends SherlockFragmentActivity
 	CreateMatchFragment createMatchFragment;
 	JoinMatchFragment joinMatchFragment;
 	NotificationFragment notifFrag;
-	Fragment dummyFragment;
+	MenuFragment menuFrag;
 	
 	private final String TAG = "MainActivity";
 	
@@ -102,10 +102,10 @@ public class MainActivity extends SherlockFragmentActivity
 	IntentFilter intentActionFilter;
 	IntentFilter intentLocationUpdateFilter;
 
-	private boolean creatingAccount = false;
-	private boolean creatingMatch = false;
-	private boolean joiningMatch = false;
-	private boolean viewingNotifications = false;
+	private boolean createAccountShowing = false;
+	private boolean createMatchShowing = false;
+	private boolean joinMatchShowing = false;
+	private boolean notificationsShowing = false;
 	
 	private Menu optionsMenu;
 	
@@ -120,6 +120,8 @@ public class MainActivity extends SherlockFragmentActivity
         }
 
 	};
+
+	private boolean sideNavMenuShowing;
 
 	
 	public MainActivity() {
@@ -159,11 +161,18 @@ public class MainActivity extends SherlockFragmentActivity
         
         startService(new Intent(this, LocationService_.class));
 		
-
-        mDrawer = MenuDrawer.attach(this, MenuDrawer.MENU_DRAG_WINDOW);
-        mDrawer.setContentView(R.layout.activity_main);
-        mDrawer.setMenuView(R.layout.menu_list);
-
+        //TODO: once google map v2 bug is fixed, use MenuDrawer lib for side menu navigation
+        //mDrawer = MenuDrawer.attach(this, MenuDrawer.MENU_DRAG_WINDOW);
+        //mDrawer.setContentView(R.layout.activity_main);
+        //mDrawer.setMenuView(R.layout.menu_list);
+        setContentView(R.layout.activity_main);
+        
+		FragmentTransaction ft;
+		mapFragment = new MapFragment_();
+		ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.fragment_container, mapFragment);
+		ft.commit();
+        
  		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
     }
@@ -176,127 +185,45 @@ public class MainActivity extends SherlockFragmentActivity
 	@Override
 	public void onAccountCreated(boolean wasCreated) {
 		
-		removeCreateAccountFragment();
-		creatingAccount = false;
+		hideCreateAccountFragment();
+		createAccountShowing = false;
 		supportInvalidateOptionsMenu();
 	}
 	
 	@Override
 	public void onMatchCreated(boolean wasCreated) {
 		
-		removeCreateMatchFragment();
-		creatingMatch = false;
+		hideCreateMatchFragment();
+		createMatchShowing = false;
 		supportInvalidateOptionsMenu();
 	}
 	
 	@Override
 	public void onMatchJoined(boolean wasCreated) {
 		
-		removeJoinMatchFragment();
-		joiningMatch = false;
+		hideJoinMatchFragment();
+		joinMatchShowing = false;
 		supportInvalidateOptionsMenu();
-	}
-
-	private void removeCreateAccountFragment() {
-		
-		Log.i(TAG, "removing CreatAccountFragment");
-		Log.i(TAG, "  creatingAccount: " + creatingAccount);
-		Log.i(TAG, "  creatingAccountFragment: " + createAccountFragment);
-		
-		if(creatingAccount && createAccountFragment != null) {
-		
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.show(mapFragment);
-			ft.remove(createAccountFragment);
-		    ft.commit();   
-		    creatingAccount = false;
-		    createAccountFragment = null;
-		}
-	}
-	
-	private void removeNotificationFragment() {
-		
-		if(viewingNotifications && notifFrag != null) {
-		    
-			/*dummyFragment = new Fragment();
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.setCustomAnimations(R.animator.object_slide_in_left, R.animator.object_slide_out_right);
-			ft.replace(R.id.fragment_container, dummyFragment);
-		    ft.commit();  */
-
-
-			
-			AnimatorSet set = new AnimatorSet();
-			set.playTogether(
-					ObjectAnimator.ofFloat(notifFrag.getListView(), 
-							"x", notifFrag.getListView().getLeft(), notifFrag.getListView().getRight()));
-			set.setDuration(500);
-			set.addListener(new AnimatorListener() {
-
-				@Override
-				public void onAnimationStart(Animator animation) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				@Override
-				public void onAnimationEnd(Animator animation) {
-					FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-					ft.remove(notifFrag);
-				    ft.commit();
-				    viewingNotifications = false;
-				    supportInvalidateOptionsMenu();
-				}
-
-				@Override
-				public void onAnimationCancel(Animator animation) {
-					// TODO Auto-generated method stub
-					
-				}
-
-				@Override
-				public void onAnimationRepeat(Animator animation) {
-					// TODO Auto-generated method stub
-					
-				} });
-		    set.start();
-		}
-		
-	}
-	
-	private void removeCreateMatchFragment() {
-		
-		if(creatingMatch && createMatchFragment != null) {
-		
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.show(mapFragment);
-			ft.remove(createMatchFragment);
-		    ft.commit();   
-		    creatingMatch = false;
-		    createMatchFragment = null;
-		}
-	}
-	
-	private void removeJoinMatchFragment() {
-
-		if(joiningMatch && joinMatchFragment != null) {
-		
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.show(mapFragment);
-			ft.remove(joinMatchFragment);
-		    ft.commit();   
-		    joiningMatch = false;
-		    joinMatchFragment = null;
-		}
 	}
 	
 	@Override
 	public void onBackPressed() {
 
-		if      (creatingAccount) { removeCreateAccountFragment(); } 
-		else if (joiningMatch)    { removeJoinMatchFragment(); } 
-		else if (creatingMatch)   { removeCreateMatchFragment(); }
-		else    { super.onBackPressed(); }
+		if (sideNavMenuShowing) {
+			hideSideNavMenuFragment();
+		}
+		else if (createAccountShowing) { 
+			hideCreateAccountFragment(); 
+		} 
+		else if (joinMatchShowing) { 
+			hideJoinMatchFragment(); 
+		} 
+		else if (createMatchShowing) { 
+			hideCreateMatchFragment(); 
+		}
+		else { 
+			super.onBackPressed(); 
+		}
 	}
 
     
@@ -341,55 +268,40 @@ public class MainActivity extends SherlockFragmentActivity
 	}
 	
 	private void addNotInMatchOptionsMenuItems(Menu menu) {
-		MenuItem join = menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "");
-		join.setIcon(R.drawable.social_group);
-		join.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "Join Game")
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		
-		MenuItem createMatch = menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "");
-		createMatch.setIcon(R.drawable.content_new);
-		createMatch.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "Create Game")
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
 	
 	private void removeInMatchOptionsMenuItems(Menu menu) {
 		
 	}
-	
-	private void removeNotInMatchOptionsMenuItems(Menu menu) {
-		menu.removeGroup(NOT_IN_MATCH_ITEMS);
-	}
-	
-	
 
 	private void addNewUserOptionsMenuItems(Menu menu) {
-		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 1, "");
-		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
-		more.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account");
-		more.add(NEW_USER_ITEMS, SIGN_IN_ID, 3, "Sign In");
-
-		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account")
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(NEW_USER_ITEMS, SIGN_IN_ID, 3, "Sign In")
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
 	
 	private void addLoggedInOptionsMenuItems(Menu menu) {
-		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 1, "");
+		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 2, "");
 		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
 		more.add(Menu.NONE, SIGN_OUT_ID, 2, "Sign Out");
 
 		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
 	
-	private void removeNewUserOptionsMenuItems(Menu menu) {
-		menu.removeItem(MORE_ID);
-	}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
-		if(creatingAccount || creatingMatch || joiningMatch || viewingNotifications)
+		if(createAccountShowing || createMatchShowing || joinMatchShowing || notificationsShowing)
 		{
-    		//on hide in MapFragment is too slow... need to remove earlier
-    		menu.removeGroup(MapFragment.MAP_CONTROL_ITEMS);
 			removeInMatchOptionsMenuItems(menu);
-    		removeNotInMatchOptionsMenuItems(menu);
+			menu.removeGroup(NOT_IN_MATCH_ITEMS);
     		menu.removeGroup(NEW_USER_ITEMS);
 		} else {
 			if(UserModel.hasToken(this) && UserModel.hasUsername(this)) {
@@ -402,7 +314,7 @@ public class MainActivity extends SherlockFragmentActivity
 			if(UserModel.hasMatch(this)) {
 				Log.d(TAG, UserModel.getMatch(this).toString());
 				addInMatchOptionsMenuItems(menu);
-	    		removeNotInMatchOptionsMenuItems(menu);
+				menu.removeGroup(NOT_IN_MATCH_ITEMS);
 			}
 			else {
 				addNotInMatchOptionsMenuItems(menu);
@@ -410,8 +322,8 @@ public class MainActivity extends SherlockFragmentActivity
 			}
 		}
 		
-		menu.add(Menu.NONE, NOTIF_ID, Menu.NONE, "")
-			.setIcon(R.drawable.ic_audio_notification)
+		menu.add(Menu.NONE, NOTIF_ID, 1, "")
+			.setIcon(R.drawable.ic_action_hdpi_bulleted_list)
 			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		
 		return super.onPrepareOptionsMenu(menu);
@@ -419,68 +331,166 @@ public class MainActivity extends SherlockFragmentActivity
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    
-		FragmentTransaction ft;
 		
 		switch (item.getItemId()) {
-	    	case android.R.id.home:
-	    		return true;
+	    	case android.R.id.home:	 
+	    		Log.d(TAG, "home pressed");
+	    		toggleSideNavMenu();
+	    		return true;	
 	    	case CREATE_ACCOUNT_ID:
-	    		creatingAccount = true;
-    			supportInvalidateOptionsMenu();
-	    		createAccountFragment = new CreateAccoutFragment_();
-	    		ft = getSupportFragmentManager().beginTransaction();
-	    		ft.hide(mapFragment);
-	    		ft.add(R.id.fragment_container, createAccountFragment);
-	    	    //ft.show(createAccountFragment);
-
-	    	    ft.commit();
-	    	    
-
+	    		showCreateAccountFragment();
 	    	    return true;
 	    	case JOIN_ID:
-	    		joiningMatch = true;
-	    		supportInvalidateOptionsMenu();
-	    		joinMatchFragment = new JoinMatchFragment_();
-	    		ft = getSupportFragmentManager().beginTransaction();
-	    		ft.hide(mapFragment);
-	    		ft.add(R.id.fragment_container, joinMatchFragment);
-	    	    //ft.show(createAccountFragment);
-	    	    ft.commit();
-
+	    		showJoinMatchFragment();
 	    	    return true;
 	    	case CREATE_MATCH_ID:
-	    		creatingMatch = true;
-	    		supportInvalidateOptionsMenu();
-	    		createMatchFragment = new CreateMatchFragment_();
-	    		ft = getSupportFragmentManager().beginTransaction();
-	    		ft.hide(mapFragment);
-	    		ft.add(R.id.fragment_container, createMatchFragment);
-	    	    //ft.show(createAccountFragment);
-	    	    ft.commit();
+	    		showCreateMatchFragment();
 	    		return true;
 	    	case NOTIF_ID:
-	    		
-	    		if(viewingNotifications) {
-	    			removeNotificationFragment();
-	    		} else {
-	    		
-		    		viewingNotifications = true;
-		    		notifFrag = new NotificationFragment();
-		    		ft = getSupportFragmentManager().beginTransaction();
-		    		ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
-		    		ft.replace(R.id.fragment_container, notifFrag);
-		    	    //ft.show(createAccountFragment);
-		    	    ft.commit();
-	    	    
-	    		}
+	    		toggleNotificationFragment();
 	    	    return true;
 			default:
 	    }
 	    
 		return super.onOptionsItemSelected(item);
 	}
+
+	private void toggleNotificationFragment() {
+		FragmentTransaction ft;
+		if(notificationsShowing) {
+			removeNotificationFragment();
+		} else {
+			notificationsShowing = true;
+			notifFrag = new NotificationFragment();
+			ft = getSupportFragmentManager().beginTransaction();
+			//ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
+			ft.replace(R.id.fragment_container, notifFrag);
+		    //ft.show(createAccountFragment);
+		    ft.commit();
+		}
+	}
+
+	private void showCreateMatchFragment() {
+		FragmentTransaction ft;
+		createMatchShowing = true;
+		supportInvalidateOptionsMenu();
+		createMatchFragment = new CreateMatchFragment_();
+		ft = getSupportFragmentManager().beginTransaction();
+		ft.hide(mapFragment);
+		ft.add(R.id.fragment_container, createMatchFragment);
+		//ft.show(createAccountFragment);
+		ft.commit();
+	}
+
+	private void showJoinMatchFragment() {
+		FragmentTransaction ft;
+		joinMatchShowing = true;
+		supportInvalidateOptionsMenu();
+		joinMatchFragment = new JoinMatchFragment_();
+		ft = getSupportFragmentManager().beginTransaction();
+		ft.hide(mapFragment);
+		ft.add(R.id.fragment_container, joinMatchFragment);
+		//ft.show(createAccountFragment);
+		ft.commit();
+	}
+
+	private void showCreateAccountFragment() {
+		FragmentTransaction ft;
+		createAccountShowing = true;
+		supportInvalidateOptionsMenu();
+		createAccountFragment = new CreateAccoutFragment_();
+		ft = getSupportFragmentManager().beginTransaction();
+		ft.hide(mapFragment);
+		ft.add(R.id.fragment_container, createAccountFragment);
+		//ft.show(createAccountFragment);
+		ft.commit();
+	}
+
+	private void toggleSideNavMenu() {
+		FragmentTransaction ft;
+		if(sideNavMenuShowing) {
+			hideSideNavMenuFragment();
+		} else {
+			sideNavMenuShowing = true;
+			menuFrag = new MenuFragment();
+			ft = getSupportFragmentManager().beginTransaction();
+			//ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
+			ft.add(R.id.fragment_container, menuFrag);
+		    //ft.show(createAccountFragment);
+		    ft.commit();
+		}
+	}
 	
+	private void hideSideNavMenuFragment() {
+		if(sideNavMenuShowing) {
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.remove(menuFrag);
+		    ft.commit();
+		    sideNavMenuShowing = false;
+		    supportInvalidateOptionsMenu();
+		}
+	}
+	
+	private void hideCreateAccountFragment() {
+		
+		if(createAccountShowing && createAccountFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(createAccountFragment);
+		    ft.commit();   
+		    createAccountShowing = false;
+		    createAccountFragment = null;
+		}
+	}
+	
+	private void removeNotificationFragment() {
+		
+		if(notificationsShowing && notifFrag != null) {
+			/*
+			 * For 3.0+
+			 * dummyFragment = new Fragment();
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.setCustomAnimations(R.animator.object_slide_in_left, R.animator.object_slide_out_right);
+			ft.replace(R.id.fragment_container, dummyFragment);
+		    ft.commit();  */
+
+			
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.remove(notifFrag);
+		    ft.commit();
+		    notificationsShowing = false;
+		    supportInvalidateOptionsMenu();
+		}
+		
+	}
+	
+	private void hideCreateMatchFragment() {
+		
+		if(createMatchShowing && createMatchFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(createMatchFragment);
+		    ft.commit();   
+		    createMatchShowing = false;
+		    createMatchFragment = null;
+		}
+	}
+	
+	private void hideJoinMatchFragment() {
+
+		if(joinMatchShowing && joinMatchFragment != null) {
+		
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.show(mapFragment);
+			ft.remove(joinMatchFragment);
+		    ft.commit();   
+		    joinMatchShowing = false;
+		    joinMatchFragment = null;
+		}
+	}
+
 	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) 

@@ -17,4 +17,20 @@ class Player
       GeoKit::LatLng.new(location[:lat], location[:lng])
     end
     
+    def alive?
+      self.life > 0
+    end
+    
+    def take_hit amount
+      if amount <= self.life
+        self.life = self.life - amount
+        self.save
+      end
+    end
+    
+    def update_location lat, lng
+      self.location = { lat: lat, lng: lng }
+      self.save
+    end
+    
 end

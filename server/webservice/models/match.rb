@@ -1,5 +1,6 @@
 require 'mongoid'
 require 'securerandom'
+require 'bcrypt'
 
 class Match
   include Mongoid::Document
@@ -9,8 +10,8 @@ class Match
   #has_one :winner,  class_name: "User"
   
   field :name, type: String
-  field :password, type: String
   field :salt, type: String
+  field :password, type: String
   field :token, type: String
   
   has_many :users
@@ -34,12 +35,30 @@ class Match
   #spacial_index :nw_corner
   
   validates_uniqueness_of :name
-  
   before_create :assign_token
+
+  def self.authenticate match_name, match_password
+    
+    match = Match.where({ :name => match_name }).first
+        
+    if not match.nil? and (match.is_public? or match.correct_password(password))
+      return match
+    end
+    
+    throw :halt, {
+      status:  'error',
+      message: 'authentication failure'
+    }.to_json
+  end
+  
+  def correct_password? pass
+    BCrypt::Engine.hash_secret(pass, self.salt) == self.password
+  end
   
   def assign_token
     self.token = SecureRandom.hex
   end
+  
   
   def add_user user
     unless user.nil? #TODO or past start time
@@ -51,10 +70,23 @@ class Match
     end
   end
   
+  def in_progress?
+    self.winner.nil?
+  end
+  
+  def is_public?
+    self.password.nil?
+  end
+  
   def winner
     if player_ids.length == 1
       return Player.find(@player_ids[0])
     end
+  end
+  
+  def eliminate target
+    self.player_ids.delete target
+    self.save
   end
   
   def target_of player
@@ -91,8 +123,9 @@ class Match
     target = target_of enemy
     
     unless target.nil?
-      #TODO change message based on distance, etc
+      #TODO do not send enemy location to target, send range data
       target.user.send_push_notification({ 
+        #TODO do not send private data like install_id
         :install_id => enemy.user.install_id,
         :latitude   => enemy.location[:lat],
         :longitude  => enemy.location[:lng] 
@@ -105,7 +138,7 @@ class Match
     enemy = enemy_of target
     
     unless enemy.nil?
-      #TODO change message based on distance, etc
+      #TODO tailor message based on match parameters and distance between players
       enemy.user.send_push_notification ({ 
         :install_id => target.user.install_id,
         :latitude   => target.location[:lat],

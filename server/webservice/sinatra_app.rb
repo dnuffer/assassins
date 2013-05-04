@@ -20,7 +20,7 @@ enable :logging
 #Android device push notification API KEY for google cloud messaging (GCM)
 GCM.key = "AIzaSyCo6BoZUN9WwccMUPkUC69IcVp23YldgBY"
 
-#cloudfoundry 
+
 configure :production do
   services = JSON.parse(ENV['VCAP_SERVICES'])
   mongoKey = services.keys.select{|s| s =~ /mongodb/i}.first
@@ -39,60 +39,28 @@ configure :test do
 end
 
 
-
-# update a user account
-post '/api/users/:token' do
-  content_type :json  
-  data = JSON.parse(request.body.read)  
-  
-  u = User.where(token: params[:token]).first
-
-  unless u.nil? or data['password'].nil? or data['username'].nil?
-    salt = BCrypt::Engine.generate_salt
-    
-    u.update_attributes!({
-      salt:        salt,
-      password:    BCrypt::Engine.hash_secret(data['password'], salt),
-      username:    data['username'],
-      provisional: false
-    })
-    
-    if u.persisted?
-      return {
-        status: 'ok',
-        message: 'updated user',
-        token: u.token
-      }.to_json 
-    end
-  end
-  
-  {
-    status: 'error',
-    message: 'failed to update user'
-  }.to_json
-end
-
-
-# TODO send a push notification to verify the push id
-# Return a temporary limited token (5 mins), but for their token to last,
-# Require an acknowledgment of a push id verification token
+# TODO send a push notification to client in order to verify the push id
+# Return a temporary limited token (5 mins)
+# For their token to last, require an acknowledgment of the push id verification token
 # Otherwise, the sender may not be an authentic client
 
+#Accepts: 
+#Returns:
 post '/api/provisional-users' do
   content_type :json  
   data = JSON.parse(request.body.read)  
   
-  u = User.create({ 
+  user = User.create({ 
     install_id: data['install_id'], 
     push_id: data['push_id'],
     provisional: true
   })
   
-  if u.persisted?
+  if user.persisted?
     return {
       status: 'ok',
       message: 'created provisional user',
-      token: u.token
+      token: user.token
     }.to_json 
   end
   
@@ -102,6 +70,9 @@ post '/api/provisional-users' do
   }.to_json
 end
 
+
+#Accepts: 
+#Returns: 
 post '/api/users' do
   content_type :json  
   data = JSON.parse(request.body.read)  
@@ -110,13 +81,13 @@ post '/api/users' do
     data['salt']     = BCrypt::Engine.generate_salt
     data['password'] = BCrypt::Engine.hash_secret(data['password'], data['salt'])
 
-    u = User.create data
+    user = User.create data
     
-    if u.persisted?
+    if user.persisted?
       return {
         status: 'ok',
         message: 'created user',
-        token: u.token
+        token: user.token
       }.to_json 
     end
 
@@ -129,30 +100,65 @@ post '/api/users' do
 end
 
 
+
+#Accepts: 
+#Returns:
+post '/api/users/:token' do
+  content_type :json  
+  data = JSON.parse(request.body.read)  
+  
+  user = User.authenticate params[:token]
+
+  unless data['password'].nil? or data['username'].nil?
+    salt = BCrypt::Engine.generate_salt
+    
+    user.update_attributes!({
+      salt:        salt,
+      password:    BCrypt::Engine.hash_secret(data['password'], salt),
+      username:    data['username'],
+      provisional: false
+    })
+    
+    if user.persisted?
+      return {
+        status: 'ok',
+        message: 'updated user',
+        token: user.token
+      }.to_json 
+    end
+  end
+  
+  {
+    status: 'error',
+    message: 'failed to update user'
+  }.to_json
+end
+
+
+#Accepts: 
+#Returns: 
 post '/api/matches' do
   content_type :json
   data = JSON.parse(request.body.read) 
   
-  user = User.where( :token => data['token'] ).first
+  user = User.authenticate data['token']
   
-  unless user.nil?
+  password = data['match']['password']
   
-    password = data['match']['password']
-    unless password.nil?
-      salt = BCrypt::Engine.generate_salt
-      data['match']['salt'] = salt
-      data['match']['password'] = BCrypt::Engine.hash_secret(password, salt)
-    end
-  
-    match = Match.create(data['match'])
-    if match.persisted?
+  unless password.nil?
+    salt = BCrypt::Engine.generate_salt
+    data['match']['salt'] = salt
+    data['match']['password'] = BCrypt::Engine.hash_secret(password, salt)
+  end
 
-      return {
-        status: 'ok',
-        message: 'match created',
-        match: match
-      }.to_json 
-    end
+  match = Match.create(data['match'])
+  
+  if match.persisted?
+    return {
+      status: 'ok',
+      message: 'match created',
+      match: match
+    }.to_json 
   end
   
   {
@@ -161,49 +167,18 @@ post '/api/matches' do
   }.to_json
 end
 
+
 #Accepts: JoinMatchRequest
 #Returns: MatchResponse
-post '/api/matches/public/users' do
+post '/api/matches/:name/users' do
   content_type :json
   data = JSON.parse(request.body.read)
+  user = User.authenticate data['token']
   
-  match = Match.where({ name: data['match_name'], password: nil }).first
-  user = User.where(:token => data['token']).first
-
-  unless match.nil? or user.nil? or user.provisional?
-    
+  unless user.provisional?
+    match = Match.authenticate params[:name], data['match']['password']
     match.add_user user
     return {
-      status: 'ok',
-      message: 'joined match',
-      match: { 
-        token: match.token,
-        name:  match.name
-      }
-    }.to_json 
-  end
-  
-  {
-    status: 'error',
-    message: 'failed to join match'
-  }.to_json
-end
-
-#Accepts: JoinMatchRequest
-#Returns: MatchResponse
-post '/api/matches/private/users' do
-  content_type :json
-  data = JSON.parse(request.body.read)
-  
-  match = Match.where(:name => data['match_name']).first
-  user = User.where(:token => data['token']).first
-  
-  unless match.nil? or user.nil? or user.provisional?
-    
-    if match.password.nil? or match.password == BCrypt::Engine.hash_secret(data['password'], match.salt) 
-    
-      match.add_user user
-      return {
         status: 'ok',
         message: 'joined match',
         match: { 
@@ -211,12 +186,11 @@ post '/api/matches/private/users' do
           name:  match.name
         }
       }.to_json
-    end
   end
   
   {
     status: 'error',
-    message: 'failed to join match'
+    message: 'create an account to join a match'
   }.to_json
 end
 
@@ -227,48 +201,36 @@ post '/api/users/:token/location' do
   content_type :json
   data = JSON.parse(request.body.read)  
   
-  user = User.where({ 
-    :token => params[:token], 
-    :install_id => data['install_id']
-  }).first
+  user = User.authenticate params[:token]
   
-  unless user.nil? 
+  if user.in_match?
+    user.player.update_location data['latitude'], data['longitude']
+    user.match.notify_target user.player
+    user.match.notify_enemy  user.player
   
-    # if they are sending their location and are not in a match,
-    # they are in freeplay - look around them for (and possibly generate)
-    # some loot that they can pick up
-    if user.player.nil?
-      # query for loot, traps, etc.
-      return { 
-        status: 'ok', 
-        message: '', 
-        latitude: data['latitude'], 
-        longitude: data['longitude'] 
-        # achievements: [ ] 
-        # nearby_items: [ ]
-        # other_items:  [ ]
-        # strength:     [ ] # (when not in a match, a user has a persistent strength)
-      }.to_json
-    elsif
-      user.player.location = { lat: data['latitude'], lng: data['longitude'] }
-      user.player.save
-      user.match.notify_target user.player
-      user.match.notify_enemy  user.player
-    
-      return { 
-        status: 'ok', 
-        message: '', 
-        latitude: user.player.location[:lat], 
-        longitude: user.player.location[:lng]  
-        # items: [ ]
-      }.to_json
-    end
-    
+    return { 
+      status: 'ok', 
+      message: '', 
+      latitude: user.player.location[:lat], 
+      longitude: user.player.location[:lng] #, 
+      # items: [ ]
+    }.to_json
   end
+    
+  # if they are sending their location and are not in a match,
+  # they are in freeplay - look around their location for (and possibly generate)
+  # some loot that they can pick up
+    
+  #TODO query for loot, traps, etc.
   
-  { 
-    status: 'error', 
-    message: (user.nil? ? 'invalid user' : 'user is not in a match')
+  { status: 'ok', 
+    message: '', 
+    latitude: data['latitude'], 
+    longitude: data['longitude']#,
+    # achievements: [ ] 
+    # nearby_items: [ ]
+    # other_items:  [ ]
+    # strength:     [ ] # (when not in a match, a user has a persistent strength)
   }.to_json
 end
 
@@ -278,40 +240,25 @@ end
 post '/api/login' do
   content_type :json
   data = JSON.parse(request.body.read)  
-  
-  u = User.where(:username => data['username']).first
-  
-  unless u.nil? or u.password != BCrypt::Engine.hash_secret(data['password'], u.salt)
-   
-    u.push_id = data['push_id']
+
+  user = User.login(data)
     
-    msg = 'login successful'
-    if u.match.nil?
-      u.install_id = data['install_id']
-    else
-      msg = 'cannot login on a different device when in a match'
-    end
-    
-    u.save
-    
-    return {
-      status: 'ok',
-      message: msg,
-      token: u.token
-    }.to_json 
-  end
-  
-  {
-    status: 'error',
-    message: 'failed to login'
-  }.to_json
+  { status: 'ok',
+    message: msg,
+    token: user.token }.to_json 
 end
 
 
-# TODO do not send notifications to a logged out user
-# just check if token is null in send_push_notification
-#post 'logout' do
-#end
+post '/users/:token/logout' do
+  content_type :json
+  
+  user = User.authenticate params[:token]
+  user.logout
+  #TODO save a timestamp and remove them from the match if they are logged out too long
+  
+  { status: 'ok',
+    message: 'logged out' }.to_json
+end
 
 #Accepts: GCMRegistrationMessage
 #Returns: UserLoginResponse 
@@ -319,46 +266,27 @@ post '/api/users/:token/gcm/register' do
   content_type :json
   data = JSON.parse(request.body.read)  
   
-  user = User.where(:token => params[:token]).first
-
-  unless u.nil?
-    user.push_id = data['push_id']
-    user.save
-    return {
-      status: 'ok',
-      message: 'updated gcm registration id',
-      token: user.token
-    }.to_json 
-  end
+  user = User.authenticate params[:token]
+  user.push_id = data['push_id']
+  user.save
   
-  {
-    status: 'error',
-    message: 'failed to update gcm registration id'
-  }.to_json
+  { status: 'ok',
+    message: 'updated gcm registration id',
+    token: user.token }.to_json 
 end
 
 #Accepts: GCMRegistrationMessage
-#Returns: 
+#Returns: UserLoginResponse 
 post '/api/users/:token/gcm/unregister' do
   content_type :json
   data = JSON.parse(request.body.read)  
   
-  user = User.where(:token => params[:token]).first
-
-  unless user.nil? or user.push_id != data['push_id']
-    user.push_id = nil
-    user.save
-    return {
-      status: 'ok',
-      message: 'cleared gcm registration id',
-      token: user.token
-    }.to_json 
-  end
+  user = User.authenticate params[:token]
+  user.push_id = nil
+  user.save
   
-  {
-    status: 'error',
-    message: 'failed to clear gcm registration id'
-  }.to_json 
+  { status: 'ok',
+    message: 'cleared gcm registration id' }.to_json 
 end
 
 
@@ -367,32 +295,26 @@ end
 post '/api/users/:token/attack' do
   content_type :json
   data = JSON.parse(request.body.read)  
-
-  user = User.where({ 
-    :token => params[:token], 
-    :install_id => data['install_id']
-  }).first
+  user = User.authenticate params[:token]
   
-  unless user.nil? or user.player.nil? or user.match.winner != nil or user.player.life < 1
+  #TODO check install id?
+  
+  if user.match.in_progress? and user.player.alive?
     
     match = user.match
-    
     target = match.target_of user.player
     
     #TODO enforce attack range
-    target.life = target.life - 1
-    target.save
     
+    target.take_hit 1
     target.user.send_push_notification({
        type: 'player_event',
        my_life: target.life
     })
     
+    # send a message to all users if a player is eliminated
     if target.life < 1
-    
-      match.player_ids.delete target
-      match.save
-      
+      match.eliminate target
       winner = match.winner == user.player ? user.username : nil
       
       Thread.new do 
@@ -411,8 +333,7 @@ post '/api/users/:token/attack' do
             })
           end
         end
-      end
-      
+      end      
     end
     
     return {

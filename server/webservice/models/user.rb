@@ -21,8 +21,12 @@ class User
     
   before_create :assign_token
 
+  def in_match?
+    self.match != nil and self.player != nil
+  end
+
   def full_user?
-    provisional == false
+    self.provisional == false
   end
   
   def assign_token
@@ -30,9 +34,55 @@ class User
   end
   
   def send_push_notification msg_hash
-    GCM.send_notification push_id, msg_hash
+    if logged_in?
+      GCM.send_notification self.push_id, msg_hash
+    end
   end
-
+  
+  def self.authenticate token
+    user = User.where(:token => token).first
+    if user.nil?
+      throw :halt, {  status: 'error',
+                      message: 'authentication failure' }.to_json
+    end
+    user
+  end
+  
+  def correct_password? pass
+    BCrypt::Engine.hash_secret(pass, self.salt) == self.password
+  end
+  
+  def logged_in?
+    self.token != nil
+  end
+  
+  def logout
+    self.token = nil
+    self.save
+  end
+  
+  def self.login name, pass
+    user = User.where(:username => name).first
+    
+    if not user.nil? and user.correct_password? password
+      if user.in_match?
+        throw :halt, { status: 'error',
+                       message: 'cannot login on a different device when in a match' }.to_json
+      end
+      
+      # the push id can change per google, so need to update on login
+      user.push_id = data['push_id']
+      
+      # the installation can change if they uninstall and reinstall
+      # track this to make sure they do not switch devices in the middle of a match
+      user.install_id = data['install_id']
+      user.assign_token
+      user.save 
+    else
+      throw :halt, { status: 'error',
+                     message: 'failed to login' }.to_json
+    end
+  end
 end
 
 

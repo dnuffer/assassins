@@ -35,8 +35,8 @@ public final class JoinMatchFragment_
     }
 
     private void afterSetContentView_() {
-        matchName = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_join_match_name));
         password = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_join_match_password));
+        matchName = ((EditText) findViewById(com.nbs.client.assassins.R.id.edit_join_match_name));
         btnJoin = ((Button) findViewById(com.nbs.client.assassins.R.id.join_match));
         {
             View view = findViewById(com.nbs.client.assassins.R.id.join_match);

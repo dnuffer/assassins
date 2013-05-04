@@ -74,16 +74,18 @@ describe 'Hunted Game' do
   end
   
   it "allows a user to join a match" do
-    match_id=3
+    match_msg = JSON.parse(IO.read("spec/match.json"))
+    match_name = match_msg['match']['name']
     
     user_json = IO.read("spec/user.json")
-    post "/api/matches/#{match_id}/users", JSON.dump({ :token => "token1" })
+    post "/api/matches/#{match_name}/users", match_msg.to_json
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
+    match_msg['token'] = 'token2'
     user_json = IO.read("spec/user2.json")
-    post "/api/matches/#{match_id}/users", JSON.dump({ :token => "token2" })
+    post "/api/matches/#{match_name}/users", match_msg.to_json
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body

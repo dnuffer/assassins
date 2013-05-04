@@ -2,6 +2,6 @@
   "token" : "token1",
   "match" : {
     "id" : 3,
-    "name" : "a test match"
+    "name" : "testmatch1"
   }
 }

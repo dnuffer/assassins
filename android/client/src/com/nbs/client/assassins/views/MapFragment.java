@@ -3,10 +3,7 @@
  */
 package com.nbs.client.assassins.views;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
@@ -46,7 +43,7 @@ import com.googlecode.androidannotations.annotations.EFragment;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.drawable;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.User;
 
 
 /**
@@ -145,13 +142,13 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		LatLng lastLatLng;
 		
 		if(lastLocation == null) {
-			lastLatLng = UserModel.getLocation(getSherlockActivity());
+			lastLatLng = User.getLocation(getSherlockActivity());
 		} else {
 			lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
 			
-			if(UserModel.getLocation(getSherlockActivity()) == null)
+			if(User.getLocation(getSherlockActivity()) == null)
 			{
-				UserModel.setLocation(getSherlockActivity(), lastLocation);
+				User.setLocation(getSherlockActivity(), lastLocation);
 			}
 			
 		}
@@ -197,7 +194,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			MODE = MODE_NORTH;
 			getSherlockActivity().supportInvalidateOptionsMenu();
 			stopSensorUpdates();
-			this.moveMapPositionTo(UserModel.getLocation(getSherlockActivity()), true, 800);
+			this.moveMapPositionTo(User.getLocation(getSherlockActivity()), true, 800);
 			return true;
 		} else if (item.getItemId() == MODE_BEARING_ID) {
 			MODE = MODE_BEARING;
@@ -283,7 +280,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
         bearing = (mOrientation[0]*rad2deg); // orientation contains: azimuth, pitch and roll		
 		Log.i(TAG, "Sensor [bearing=" + bearing + "]");
 		
-		moveMapPositionTo(UserModel.getLocation(getSherlockActivity()));
+		moveMapPositionTo(User.getLocation(getSherlockActivity()));
     }
     
 	/*
@@ -309,7 +306,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	}
 
 	public void updateMapPosition() {
-		moveMapPositionTo(UserModel.getLocation(getSherlockActivity()));
+		moveMapPositionTo(User.getLocation(getSherlockActivity()));
 	}
 	
 	public void moveMapPositionTo(LatLng location) {

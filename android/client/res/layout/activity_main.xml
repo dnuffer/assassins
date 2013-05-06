@@ -4,18 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
      
-   <fragment
+   <!--  >fragment
         android:id="@+id/fragment_map"
-        android:name="com.nbs.client.assassins.MapFragment_"
+        android:name="com.nbs.client.assassins.views.MapFragment_"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:tag="tag_fragment_map" >
-        </fragment>
+        </fragment> -->
    
    <FrameLayout android:id="@+id/fragment_container" 
        android:layout_width="match_parent" 
        android:layout_height="match_parent"/>
-
+   
+   <ImageView 
+         android:layout_width="fill_parent"
+         android:layout_height="fill_parent"
+         android:visibility="invisible" />
 <!--    
       <FrameLayout android:id="@+id/hud_container" 
        android:layout_width="match_parent" 

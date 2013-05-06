@@ -17,12 +17,12 @@ import com.google.android.gcm.GCMRegistrar;
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
-import com.nbs.client.assassins.communication.GCMRegistrationMessage;
-import com.nbs.client.assassins.communication.HuntedRestClient;
-import com.nbs.client.assassins.communication.Response;
-import com.nbs.client.assassins.communication.UserLoginMessage;
-import com.nbs.client.assassins.communication.UserLoginResponse;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.network.GCMRegistrationMessage;
+import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.Response;
+import com.nbs.client.assassins.network.UserLoginMessage;
+import com.nbs.client.assassins.network.UserLoginResponse;
 
 
 @EService
@@ -145,17 +145,17 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Log.i(TAG, "OnRegistered() received: " + registrationId);
 		
 		//only send the new id if the user already has created an account
-		if(UserModel.hasToken(this)) {
+		if(User.hasToken(this)) {
 			GCMRegistrationMessage msg = new GCMRegistrationMessage();
-			msg.installId = UserModel.getInstallId(context);
+			msg.installId = User.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			
 			try {
 				UserLoginResponse response = 
-					restClient.updateGCMRegId(UserModel.getToken(context), msg);
+					restClient.updateGCMRegId(User.getToken(context), msg);
 				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
-					UserModel.setToken(context, response.token);
+					User.setToken(context, response.token);
 					GCMRegistrar.setRegisteredOnServer(context, true);
 				}
 			} catch(Exception e) {
@@ -163,10 +163,10 @@ public class GCMIntentService extends GCMBaseIntentService {
 				GCMRegistrar.setRegisteredOnServer(context, false);
 			}
 		}
-		else if(!UserModel.hasUsername(context))
+		else if(!User.hasUsername(context))
 		{
 			UserLoginMessage msg = new UserLoginMessage();
-			msg.installId = UserModel.getInstallId(context);
+			msg.installId = User.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			
 			try {
@@ -174,7 +174,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 					restClient.registerProvisionalUser(msg);
 				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
-					UserModel.setToken(context, response.token);
+					User.setToken(context, response.token);
 					GCMRegistrar.setRegisteredOnServer(context, true);
 				}
 			} catch(Exception e) {
@@ -188,12 +188,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 	@Override
 	protected void onUnregistered(Context context, String registrationId) {
         
-		if(UserModel.hasToken(context))
+		if(User.hasToken(context))
 		{
 			GCMRegistrationMessage msg = new GCMRegistrationMessage();
-			msg.installId = UserModel.getInstallId(context);
+			msg.installId = User.getInstallId(context);
 			msg.gcmRegId = registrationId;
-			restClient.unregisterGCMRegId(UserModel.getToken(context), msg);
+			restClient.unregisterGCMRegId(User.getToken(context), msg);
 			
 			//TODO handle response for unregister and make sure it was successful
 			GCMRegistrar.setRegisteredOnServer(context, false);

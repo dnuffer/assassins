@@ -39,6 +39,11 @@ configure :test do
 end
 
 
+get '/' do
+  'running hunted'
+end
+
+
 # TODO send a push notification to client in order to verify the push id
 # Return a temporary limited token (5 mins)
 # For their token to last, require an acknowledgment of the push id verification token
@@ -170,13 +175,13 @@ end
 
 #Accepts: JoinMatchRequest
 #Returns: MatchResponse
-post '/api/matches/:name/users' do
+post '/api/matches/:name/players' do
   content_type :json
   data = JSON.parse(request.body.read)
   user = User.authenticate data['token']
-  
+
   unless user.provisional?
-    match = Match.authenticate params[:name], data['match']['password']
+    match = Match.authenticate params[:name], data['password']
     match.add_user user
     return {
         status: 'ok',

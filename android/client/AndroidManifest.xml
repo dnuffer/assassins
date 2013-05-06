@@ -40,8 +40,8 @@
         android:theme="@style/AppTheme"
         android:allowBackup="false">
         
-        <service android:name=".GCMIntentService_" />
-		<service android:name=".LocationService_" />
+        <service android:name=".services.GCMIntentService_" />
+		<service android:name=".services.LocationService_" />
 		
         <receiver
             android:name="com.nbs.client.assassins.services.GCMBroadcastReceiverImpl"
@@ -58,13 +58,22 @@
             android:value="AIzaSyCzJhxBvjao1Ij6IqNcuhxd5JfTef5cRlM" />
 
         <activity
-            android:name=".MainActivity_">         
+            android:name=".controllers.MainActivity_">         
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         
+        <activity
+            android:name=".controllers.CreateAccountActivity_"> 
+        </activity>
+        <activity
+            android:name=".controllers.CreateMatchActivity_"> 
+        </activity>
+        <activity
+            android:name=".controllers.JoinMatchActivity_"> 
+        </activity>      
     </application>
 
 </manifest>

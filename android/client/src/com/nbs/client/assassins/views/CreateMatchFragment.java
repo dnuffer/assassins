@@ -1,5 +1,7 @@
 package com.nbs.client.assassins.views;
 
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -10,6 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
@@ -19,12 +22,12 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.id;
 import com.nbs.client.assassins.R.layout;
-import com.nbs.client.assassins.communication.CreateMatchMessage;
-import com.nbs.client.assassins.communication.HuntedRestClient;
-import com.nbs.client.assassins.communication.MatchResponse;
-import com.nbs.client.assassins.communication.Response;
 import com.nbs.client.assassins.models.Match;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.network.CreateMatchMessage;
+import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.MatchResponse;
+import com.nbs.client.assassins.network.Response;
 
 @EFragment(R.layout.create_match_fragment)
 public class CreateMatchFragment extends SherlockFragment {
@@ -72,6 +75,14 @@ public class CreateMatchFragment extends SherlockFragment {
         }
     }
 
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
+	}
+	
 	@Click(R.id.create_match)
 	void onCreateMatchClicked() {
 
@@ -92,7 +103,7 @@ public class CreateMatchFragment extends SherlockFragment {
 			msg.match = new Match();			
 			msg.match.password = passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null;
 			msg.match.name = matchName.getText().toString();
-			msg.token = UserModel.getToken(getActivity());
+			msg.token = User.getToken(getActivity());
 			
 			asyncProgress = new ProgressDialog(getActivity());
 			asyncProgress.setIndeterminate(true);
@@ -124,7 +135,9 @@ public class CreateMatchFragment extends SherlockFragment {
 			response = restClient.createMatch(msg);		
 		}
 		catch(Exception e) {
-			Log.i(TAG, e.getMessage());
+			Log.i(TAG, "EXCEPTION: " + e.toString());
+			//for(StackTraceElement el : e.getStackTrace())
+			//	Log.e(TAG, el.toString());
 		}
 		
 		matchCreatedResult(response);
@@ -140,19 +153,17 @@ public class CreateMatchFragment extends SherlockFragment {
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
 			
 			Log.d(TAG, response.toString());
-			Log.d(TAG, "statuses match: " + (response.status == Response.OK));
 			
 			if(response.ok()) {
-				
 				//only save if set to join on create
 				//UserModel.setMatch(getActivity(), response.match);
-				//Log.d(TAG, UserModel._toString(getActivity()));
-				
-				mListener.onMatchCreated(true);
-				return;
+				Log.d(TAG, "match created.");
 			}
-		} else {
 			
+			mListener.onMatchCreated(response.ok());
+			btnCreate.setEnabled(!response.ok());
+			
+		} else {
 			btnCreate.setEnabled(true);	
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
 		}

@@ -1,13 +1,7 @@
 package com.nbs.client.assassins.views;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.R.drawable;
-import com.nbs.client.assassins.R.layout;
 import com.nbs.client.assassins.controllers.MenuAdapter;
 import com.nbs.client.assassins.navigation.MenuEventData;
 import com.nbs.client.assassins.navigation.MenuHeaderData;
@@ -18,7 +12,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 
 public class MenuFragment extends SherlockListFragment {
 	

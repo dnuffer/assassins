@@ -9,11 +9,11 @@ import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
-import com.nbs.client.assassins.communication.HuntedRestClient;
-import com.nbs.client.assassins.communication.LocationMessage;
-import com.nbs.client.assassins.communication.LocationResponse;
 import com.nbs.client.assassins.controllers.MainActivity;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.LocationMessage;
+import com.nbs.client.assassins.network.LocationResponse;
 
 import android.app.Service;
 import android.content.Intent;
@@ -58,7 +58,7 @@ public class LocationService extends Service {
 	@Background
 	public void updateLocation(Location newLocation)
 	{
-		if(UserModel.hasToken(this) && isBetterLocation(newLocation, current))
+		if(User.hasToken(this) && isBetterLocation(newLocation, current))
 		{
 			current = newLocation;
 
@@ -71,12 +71,12 @@ public class LocationService extends Service {
 				LocationMessage msg = new LocationMessage(); 
 				msg.latitude  = current.getLatitude();
 				msg.longitude = current.getLongitude();
-				msg.installId = UserModel.getInstallId(this);
+				msg.installId = User.getInstallId(this);
 				
 				Log.v(TAG, msg.toString());
 				
 				LocationResponse response = restClient.updateLocation(
-												UserModel.getToken(this), msg);
+												User.getToken(this), msg);
 				
 				Log.i(TAG,  response.toString());
 				

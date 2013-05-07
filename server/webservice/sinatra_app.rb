@@ -43,6 +43,12 @@ get '/' do
   'running hunted'
 end
 
+get '/api/matches/:match_name/targets' do
+  content_type :json  
+  match = Match.where(name: params[:match_name]).first
+  match.player_ids.map { |id| Player.find(id).user.username }.to_json
+end
+
 
 # TODO send a push notification to client in order to verify the push id
 # Return a temporary limited token (5 mins)
@@ -162,7 +168,7 @@ post '/api/matches' do
     return {
       status: 'ok',
       message: 'match created',
-      match: match
+      match: match.as_json(only: [:name, :token])
     }.to_json 
   end
   
@@ -180,16 +186,13 @@ post '/api/matches/:name/players' do
   data = JSON.parse(request.body.read)
   user = User.authenticate data['token']
 
-  unless user.provisional?
+  unless user.provisional? or user.in_match?
     match = Match.authenticate params[:name], data['password']
     match.add_user user
     return {
         status: 'ok',
         message: 'joined match',
-        match: { 
-          token: match.token,
-          name:  match.name
-        }
+        match: match.as_json(only: [:name, :token])
       }.to_json
   end
   
@@ -210,15 +213,14 @@ post '/api/users/:token/location' do
   
   if user.in_match?
     user.player.update_location data['latitude'], data['longitude']
-    user.match.notify_target user.player
-    user.match.notify_enemy  user.player
+    user.match.notify_target_of user.player
+    user.match.notify_enemy_of  user.player
   
     return { 
       status: 'ok', 
-      message: '', 
+      message: 'location updated', 
       latitude: user.player.location[:lat], 
-      longitude: user.player.location[:lng] #, 
-      # items: [ ]
+      longitude: user.player.location[:lng]
     }.to_json
   end
     
@@ -229,13 +231,9 @@ post '/api/users/:token/location' do
   #TODO query for loot, traps, etc.
   
   { status: 'ok', 
-    message: '', 
+    message: 'location updated', 
     latitude: data['latitude'], 
-    longitude: data['longitude']#,
-    # achievements: [ ] 
-    # nearby_items: [ ]
-    # other_items:  [ ]
-    # strength:     [ ] # (when not in a match, a user has a persistent strength)
+    longitude: data['longitude']
   }.to_json
 end
 
@@ -259,7 +257,6 @@ post '/users/:token/logout' do
   
   user = User.authenticate params[:token]
   user.logout
-  #TODO save a timestamp and remove them from the match if they are logged out too long
   
   { status: 'ok',
     message: 'logged out' }.to_json
@@ -302,51 +299,17 @@ post '/api/users/:token/attack' do
   data = JSON.parse(request.body.read)  
   user = User.authenticate params[:token]
   
-  #TODO check install id?
-  
-  if user.match.in_progress? and user.player.alive?
-    
+  if user.in_match?
     match = user.match
     target = match.target_of user.player
-    
-    #TODO enforce attack range
-    
-    target.take_hit 1
-    target.user.send_push_notification({
-       type: 'player_event',
-       my_life: target.life
-    })
-    
-    # send a message to all users if a player is eliminated
-    if target.life < 1
-      match.eliminate target
-      winner = match.winner == user.player ? user.username : nil
-      
-      Thread.new do 
-        match.users.each do |other|    
-          other.send_push_notification({
-            type: 'match_event',
-            event_type: 'player_elimination',
-            detail: target.user.username
-          })
-          
-          unless winner.nil?
-            other.send_push_notification({
-              type: 'match_event',
-              event_type: 'winner',
-              detail: winner
-            })
-          end
-        end
-      end      
+    if match.attempt_attack user.player
+      return {
+        status: 'ok',
+        message: 'attack successful',
+        hit: true,
+        target_life: target.life
+      }.to_json 
     end
-    
-    return {
-      status: 'ok',
-      message: 'attack successful',
-      hit: true,
-      target_life: target.life
-    }.to_json 
   end
   
   {

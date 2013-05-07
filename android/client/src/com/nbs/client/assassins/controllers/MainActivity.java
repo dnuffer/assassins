@@ -336,8 +336,10 @@ public class MainActivity extends SherlockFragmentActivity {
 		FragmentTransaction ft;
 		if(notificationsShowing) {
 			removeNotificationFragment();
+			this.toggleCompass.setVisibility(ImageView.VISIBLE);
 		} else {
 			hideSideNavMenuFragment();
+			this.toggleCompass.setVisibility(ImageView.INVISIBLE);
 			notificationsShowing = true;
 			notifFrag = new NotificationFragment();
 			ft = getSupportFragmentManager().beginTransaction();

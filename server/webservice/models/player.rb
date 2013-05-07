@@ -17,6 +17,10 @@ class Player
       GeoKit::LatLng.new(location[:lat], location[:lng])
     end
     
+    def location?
+      location[:lat] != nil and location[:lng] != nil
+    end
+    
     def alive?
       self.life > 0
     end

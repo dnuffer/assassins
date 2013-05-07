@@ -74,35 +74,58 @@ describe 'Hunted Game' do
   end
   
   it "allows a user to join a match" do
-    match_msg = JSON.parse(IO.read("spec/match.json"))
-    match_name = match_msg['match']['name']
     
+    GCM.should_receive(:send_notification).once
+    
+    match_msg = JSON.parse(IO.read("spec/join_match.json"))
+    match_name = match_msg['match_name']
+    
+    match_msg['token'] = 'token1'
     user_json = IO.read("spec/user.json")
-    post "/api/matches/#{match_name}/users", match_msg.to_json
+    post "/api/matches/#{match_name}/players", match_msg.to_json
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
     match_msg['token'] = 'token2'
     user_json = IO.read("spec/user2.json")
-    post "/api/matches/#{match_name}/users", match_msg.to_json
+    post "/api/matches/#{match_name}/players", match_msg.to_json
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
+    
+    sleep 0.4
   end
   
   it "accepts a user location update" do
     
-    GCM.should_receive(:send_notification).twice
-    token="token1"
+    GCM.should_receive(:send_notification).exactly(4).times
     
-    player_json = IO.read("spec/player.json")        
+    token="token1"      
 
-    post "/api/users/#{token}/location", player_json
+    post("/api/users/#{token}/location", {
+      install_id: "install1",
+      latitude: 2,
+      longitude: 3
+    }.to_json)
+    
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
+    token="token2"
+    
+    post("/api/users/#{token}/location", {
+      install_id: "install2",
+      latitude: 3,
+      longitude: 4
+    }.to_json)
+    
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    puts last_response.body
+ 
+    sleep 0.4
   end
   
   it "accepts an attack" do
@@ -115,6 +138,8 @@ describe 'Hunted Game' do
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
+    
+    sleep 0.4
   end
   
   it "accepts an attack" do
@@ -134,7 +159,6 @@ describe 'Hunted Game' do
     puts last_response.body
     
     sleep 0.4
-    
   end
   
 end

@@ -59,7 +59,18 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Log.i(TAG, "  action: " + intent.getAction());
 		Bundle b = intent.getExtras();
 		
-		for(String key : b.keySet())
+		String msgType = (String)b.get("type");
+		
+		Log.i(TAG, "message type: " + msgType);
+		
+		
+		//if(msgType.equals(GCMMessages.TARGET_EVENT))
+		//{
+			
+		//}
+		
+		
+		/*for(String key : b.keySet())
 		{
 			Object o = b.get(key);
 			Log.i(TAG, "  " + key + " : " + b.getString(key));
@@ -67,7 +78,7 @@ public class GCMIntentService extends GCMBaseIntentService {
             Editor editor = PreferenceManager.getDefaultSharedPreferences(c).edit();
             editor.putString(key, b.getString(key));
             editor.commit();
-		}
+		}*/
 		
 		/*
 		intent.setAction(MainActivity.ACTION);

@@ -60,27 +60,38 @@ class Match
   end
   
   
-  def add_user user
-    unless user.nil? #TODO or past start time
-      user.create_player
-      users << user
-      player_ids << user.player.id.to_s
+  def add_user new_user
+    unless new_user.nil? or new_user.in_match? #TODO or past match start time
+      new_user.create_player
+      users << new_user
+      player_ids << new_user.player.id.to_s
       player_ids.shuffle
       save
+      
+      #TODO this may still block in which case try: $gem install delayed_job
+      Thread.new do
+        users[0...-1].each do |user|    
+          user.send_push_notification({
+            type: :player_joined_match,
+            match: name,
+            player: new_user.username
+          })
+        end
+      end 
     end
   end
   
   def in_progress?
-    self.winner.nil?
+    winner.nil?
   end
   
   def is_public?
-    self.password.nil?
+    password.nil?
   end
   
   def winner
     if player_ids.length == 1
-      return Player.find(@player_ids[0])
+      return Player.find(player_ids[0])
     end
   end
   
@@ -90,62 +101,108 @@ class Match
   end
   
   def target_of player
-    index = player_ids.index player.id.to_s
-    unless index.nil? 
-      target_index = (index == player_ids.length - 1) ? 0 : index + 1
-      return Player.find(player_ids[target_index])
+    if in_progress?
+      index = player_ids.index player.id.to_s
+      unless index.nil? 
+        target_index = (index == player_ids.length - 1) ? 0 : index + 1
+        return Player.find(player_ids[target_index])
+      end
     end
   end
   
   def enemy_of player
-    index = player_ids.index player.id.to_s
-    unless index.nil?
-      target_index = (index == 0) ? player_ids.length-1 : index-1
-      return Player.find(player_ids[target_index])
+    if in_progress?
+      index = player_ids.index player.id.to_s
+      unless index.nil?
+        target_index = (index == 0) ? player_ids.length-1 : index-1
+        return Player.find(player_ids[target_index])
+      end
     end
   end
   
   def bearing_to_target player
-    target = target_of(player)
-    unless player.nil? or target.nil?
-      return player.latlng.heading_to(target.latlng)
+    if in_progress?
+      target = target_of(player)
+      if target.location? and player.location?
+        return player.latlng.heading_to(target.latlng)
+      end
     end
   end
   
   def proximity_to_target player
-    target = target_of(player)
-    unless player.nil? or target.nil?
-      return player.latlng.distance_to(target.latlng)
+    if in_progress?
+      target = target_of(player)
+      if target.location? and player.location?
+        return player.latlng.distance_to(target.latlng)
+      end
     end
   end
   
-  def notify_target enemy
+  def notify_target_of enemy
     target = target_of enemy
-    
-    unless target.nil?
-      #TODO do not send enemy location to target, send range data
-      target.user.send_push_notification({ 
-        #TODO do not send private data like install_id
-        :install_id => enemy.user.install_id,
-        :latitude   => enemy.location[:lat],
-        :longitude  => enemy.location[:lng] 
+    puts "notify_target_of(#{enemy.user.username}) [target: #{target.user.username}]"
+    unless target.nil? or enemy.nil?
+      #TODO tailor message based on match parameters and distance between players
+      target.user.send_push_notification({
+        type:            :enemy_event,
+        time:            Time.now.utc,
+        my_life:         target.life,
+        enemy_proximity: proximity_to_target(enemy),
+        enemy_lat:       enemy.location[:lat],
+        enemy_lng:       enemy.location[:lng]
       })
     end
-  
+    
+  end
+
+  def notify_enemy_of target
+    enemy = enemy_of target
+    puts "notify_enemy_of(#{target.user.username}) [enemy: #{enemy.user.username}]"
+    unless enemy.nil? or target.nil?
+      #TODO tailor message based on match parameters and distance between players
+      enemy.user.send_push_notification({
+        type:             :target_event,
+        time:             Time.now.utc,
+        target_life:      target.life,
+        target_bearing:   bearing_to_target(enemy),
+        target_lat:       target.location[:lat],
+        target_lng:       target.location[:lng]
+      })
+    end 
   end
   
-  def notify_enemy target
-    enemy = enemy_of target
-    
-    unless enemy.nil?
-      #TODO tailor message based on match parameters and distance between players
-      enemy.user.send_push_notification ({ 
-        :install_id => target.user.install_id,
-        :latitude   => target.location[:lat],
-        :longitude  => target.location[:lng] 
-      })
+  
+  def attempt_attack attacker
+    if in_progress? and attacker.alive?
+      target = target_of attacker
+      target.take_hit 1
+      notify_target_of attacker
+      
+      # sends a message to all users if a player is eliminated
+      if target.life < 1
+        eliminate target
+        the_winner = (winner == attacker) ? attacker.user.username : nil
+        
+        #TODO this may still block in which case try: $gem install delayed_job
+        Thread.new do 
+          users.each do |user|    
+            user.send_push_notification({
+              type: :player_eliminated,
+              player_eliminated: target.user.username
+            })
+            
+            unless the_winner.nil?
+              user.send_push_notification({
+                type:  :match_winner,
+                match_winner: the_winner
+              })
+            end
+          end
+        end      
+      end
+      return true
     end
-    
+    false
   end
   
 end

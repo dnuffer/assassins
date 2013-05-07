@@ -3,7 +3,6 @@
  */
 package com.nbs.client.assassins.views;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -42,11 +41,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
-import com.googlecode.androidannotations.annotations.SystemService;
-import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.R.drawable;
 import com.nbs.client.assassins.models.User;
-import com.nbs.client.assassins.views.CreateMatchFragment.OnMatchCreatedListener;
 
 
 /**
@@ -107,12 +102,12 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	public void toggleCompassMode() {
 		if(getCompassMode() == MODE_BEARING) {
 			MODE = MODE_NORTH;
-			getSherlockActivity().supportInvalidateOptionsMenu();
 			stopSensorUpdates();
 			this.moveMapPositionTo(User.getLocation(getSherlockActivity()), true, 800);
+			map.getUiSettings().setZoomControlsEnabled(true);
 		} else  {
 			MODE = MODE_BEARING;
-			getSherlockActivity().supportInvalidateOptionsMenu();
+			map.getUiSettings().setZoomControlsEnabled(false);
 			if(!animating)
 				registerForSensorUpdates();
 		}

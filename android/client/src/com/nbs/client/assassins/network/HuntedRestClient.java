@@ -13,7 +13,7 @@ public interface HuntedRestClient {
 
 	@Post("/provisional-users")
 	UserLoginResponse registerProvisionalUser(UserLoginMessage loginMsg);
-		
+	
 	@Post("/users")
 	@Accept(MediaType.APPLICATION_JSON)
 	UserLoginResponse registerUser(UserLoginMessage loginMsg);
@@ -24,6 +24,10 @@ public interface HuntedRestClient {
 	@Post("/login")
 	@Accept(MediaType.APPLICATION_JSON)
 	UserLoginResponse login(UserLoginMessage loginMsg);
+	
+	@Post("/users/{token}/logout")
+	@Accept(MediaType.APPLICATION_JSON)
+	Response logout(String token);
 	
 	@Post("/users/{token}/gcm/register")
 	@Accept(MediaType.APPLICATION_JSON)

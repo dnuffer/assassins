@@ -61,18 +61,20 @@ post '/api/provisional-users' do
   content_type :json  
   data = JSON.parse(request.body.read)  
   
-  user = User.create({ 
-    install_id: data['install_id'], 
-    push_id: data['push_id'],
-    provisional: true
-  })
-  
-  if user.persisted?
-    return {
-      status: 'ok',
-      message: 'created provisional user',
-      token: user.token
-    }.to_json 
+  unless data['install_id'].nil? or data['push_id'].nil? 
+    user = User.create({ 
+      install_id: data['install_id'], 
+      push_id: data['push_id'],
+      provisional: true
+    })
+    
+    if user.persisted?
+      return {
+        status: 'ok',
+        message: 'created provisional user',
+        token: user.token
+      }.to_json 
+    end
   end
   
   {
@@ -87,7 +89,6 @@ end
 post '/api/users' do
   content_type :json  
   data = JSON.parse(request.body.read)  
-
   unless data['password'].nil? or data['username'].nil?
     data['salt']     = BCrypt::Engine.generate_salt
     data['password'] = BCrypt::Engine.hash_secret(data['password'], data['salt'])
@@ -112,37 +113,20 @@ end
 
 
 
-#Accepts: 
+#Accepts:  
 #Returns:
 post '/api/users/:token' do
   content_type :json  
   data = JSON.parse(request.body.read)  
   
   user = User.authenticate params[:token]
-
-  unless data['password'].nil? or data['username'].nil?
-    salt = BCrypt::Engine.generate_salt
-    
-    user.update_attributes!({
-      salt:        salt,
-      password:    BCrypt::Engine.hash_secret(data['password'], salt),
-      username:    data['username'],
-      provisional: false
-    })
-    
-    if user.persisted?
-      return {
-        status: 'ok',
-        message: 'updated user',
-        token: user.token
-      }.to_json 
-    end
-  end
+  user.upgrade_from_provisional data['username'], data['password']
   
   {
-    status: 'error',
-    message: 'failed to update user'
-  }.to_json
+    status: 'ok',
+    message: 'created account',
+    token: user.token
+  }.to_json 
 end
 
 
@@ -244,15 +228,19 @@ post '/api/login' do
   content_type :json
   data = JSON.parse(request.body.read)  
 
+  # once a user logs in, the provisional user is deleted
+  user = User.where(install_id: data['install_id'], provisional: true).first
+  user.delete unless user.nil?
+  
   user = User.login(data)
     
   { status: 'ok',
-    message: msg,
+    message: 'log in successful.',
     token: user.token }.to_json 
 end
 
 
-post '/users/:token/logout' do
+post '/api/users/:token/logout' do
   content_type :json
   
   user = User.authenticate params[:token]

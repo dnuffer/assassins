@@ -3,6 +3,8 @@
  */
 package com.nbs.client.assassins.controllers;
 
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+
 import net.simonvt.menudrawer.MenuDrawer;
 import android.support.v4.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -17,6 +19,7 @@ import android.preference.PreferenceManager;
 
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -25,6 +28,7 @@ import com.actionbarsherlock.view.SubMenu;
 
 import com.google.android.gcm.GCMRegistrar;
 
+import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EActivity;
@@ -34,6 +38,7 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.views.CreateAccountFragment;
@@ -131,22 +136,7 @@ public class MainActivity extends SherlockFragmentActivity {
 
     	Log.d(TAG, "onCreate() UserModel" + User._toString(this));
         
-        GCMRegistrar.checkDevice(this);
-        GCMRegistrar.checkManifest(this);
-        
-        if(GCMRegistrar.isRegistered(this))
-        {
-        	Log.i(TAG, "registered GCM id.");
-        	
-        	if(!GCMRegistrar.isRegisteredOnServer(this))
-        	{
-        		registerGCMRegIdOnServerInBackground();
-        	}
-        	
-        } else
-        {
-        	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
-        }
+        registerForPushNotifications();
         
     	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
@@ -174,6 +164,34 @@ public class MainActivity extends SherlockFragmentActivity {
  		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
     }
+    
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
+	}
+
+	private void registerForPushNotifications() {
+        
+    	GCMRegistrar.checkDevice(this);
+        GCMRegistrar.checkManifest(this);
+		
+		if(GCMRegistrar.isRegistered(this))
+        {
+        	Log.i(TAG, "registered GCM id.");
+        	
+        	if(!GCMRegistrar.isRegisteredOnServer(this))
+        	{
+        		registerGCMRegIdOnServerInBackground();
+        	}
+        	
+        } else
+        {
+        	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
+        }
+	}
     
     @Background
 	public void registerGCMRegIdOnServerInBackground() {
@@ -226,15 +244,21 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	
 	private void addInMatchOptionsMenuItems(Menu menu) {
-		menu.add(IN_MATCH_ITEMS, ATTACK_ID, Menu.NONE, "Attack")
-		.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);	
+		if(menu.findItem(ATTACK_ID) == null) {
+			menu.add(IN_MATCH_ITEMS, ATTACK_ID, Menu.NONE, "Attack")
+				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);	
+		}
 	}
 	
 	private void addNotInMatchOptionsMenuItems(Menu menu) {
-		menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "Create Game")
-			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "Join Game")
-			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		if(menu.findItem(CREATE_MATCH_ID) == null) {
+			menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "Create Game")
+				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
+		if(menu.findItem(JOIN_ID) == null) {
+			menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "Join Game")
+				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
 	}
 	
 	private void removeInMatchOptionsMenuItems(Menu menu) {
@@ -242,18 +266,23 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 
 	private void addNewUserOptionsMenuItems(Menu menu) {
-		menu.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account")
-			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		menu.add(NEW_USER_ITEMS, SIGN_IN_ID, 3, "Sign In")
-			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		if(menu.findItem(CREATE_ACCOUNT_ID) == null) {
+			menu.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account")
+				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
+		if(menu.findItem(SIGN_IN_ID) == null) {
+			menu.add(NEW_USER_ITEMS, SIGN_IN_ID, 3, "Sign In")
+				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
 	}
 	
 	private void addLoggedInOptionsMenuItems(Menu menu) {
-		SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 2, "");
-		more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
-		more.add(Menu.NONE, SIGN_OUT_ID, 2, "Sign Out");
-
-		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		if(menu.findItem(MORE_ID) == null) {
+			SubMenu more = menu.addSubMenu(Menu.NONE, MORE_ID, 2, "");
+			more.setIcon(R.drawable.abs__ic_menu_moreoverflow_normal_holo_dark);
+			more.add(Menu.NONE, SIGN_OUT_ID, 2, "Sign Out");
+			more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
 	}
 
 	@Override
@@ -304,6 +333,9 @@ public class MainActivity extends SherlockFragmentActivity {
 	    	case NOTIF_ID:
 	    		toggleNotificationFragment();
 	    	    return true;
+	    	case SIGN_IN_ID:
+	    		showSignInFragment();
+	    		return true;
 	    	case SIGN_OUT_ID:
 	    		ProgressDialog asyncProgress = new ProgressDialog(this);
 				asyncProgress.setIndeterminate(true);
@@ -321,15 +353,33 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Background
 	public void signOut(ProgressDialog asyncProgress)
 	{
-		User.signOut(this);
-		onSignOutFinished(asyncProgress);
+		Response response = null;
+		
+		try {
+			response = restClient.logout(User.getToken(this));
+			
+			Log.d(TAG, response.toString());
+
+			User.signOut(this);
+			GCMRegistrar.setRegisteredOnServer(this, false);
+			GCMRegistrar.unregister(this);
+
+		} catch (Exception e) {
+			Log.e(TAG, e.getMessage());
+		}
+		
+		onSignOutFinished(asyncProgress, response);
 	}
 	
 	@UiThread
-	public void onSignOutFinished(ProgressDialog asyncProgress)
+	public void onSignOutFinished(ProgressDialog asyncProgress, Response response)
 	{
 		supportInvalidateOptionsMenu();
 		asyncProgress.dismiss();
+		
+		String message = response == null ? "Network error." : response.message;
+		
+		Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 	}
 	
 	private void toggleNotificationFragment() {
@@ -363,6 +413,11 @@ public class MainActivity extends SherlockFragmentActivity {
 	private void showCreateAccountFragment() {
 		Intent createAccountIntent = new Intent(this, CreateAccountActivity_.class);
 		startActivityForResult(createAccountIntent, CREATE_ACCOUNT_ID);
+	}
+	
+	private void showSignInFragment() {
+		Intent loginIntent = new Intent(this, LoginActivity_.class);
+		startActivityForResult(loginIntent, SIGN_IN_ID);
 	}
 
 	private void toggleSideNavMenu() {
@@ -460,10 +515,13 @@ public class MainActivity extends SherlockFragmentActivity {
 
 
 	@Override
-	protected void onActivityResult(int arg0, int arg1, Intent arg2) {
+	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
 		Log.i(TAG, "onActivityResult");
 		supportInvalidateOptionsMenu();
-		super.onActivityResult(arg0, arg1, arg2);
+		
+		
+		
+		super.onActivityResult(requestCode, resultCode, arg2);
 	}
 
 

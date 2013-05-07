@@ -18,6 +18,7 @@ class User
     
   validates :username, :password, presence: true, :if => :full_user?  
   validates_uniqueness_of :username, allow_nil: true
+  validates_uniqueness_of :token,    allow_nil: true
     
   before_create :assign_token
 
@@ -58,13 +59,15 @@ class User
   
   def logout
     self.token = nil
+    self.push_id = nil
     self.save
   end
   
-  def self.login name, pass
-    user = User.where(:username => name).first
+  def self.login data
+
+    user = User.where(:username => data['username']).first
     
-    if not user.nil? and user.correct_password? password
+    unless user.nil? or not user.correct_password? data['password']
       if user.in_match?
         throw :halt, { status: 'error',
                        message: 'cannot login on a different device when in a match' }.to_json
@@ -78,9 +81,33 @@ class User
       user.install_id = data['install_id']
       user.assign_token
       user.save 
-    else
-      throw :halt, { status: 'error',
-                     message: 'failed to login' }.to_json
+      return user
+    end
+    
+    throw :halt, { status: 'error',
+                   message: 'failed to login' }.to_json
+  end
+  
+  def upgrade_from_provisional name, pass
+    unless name.nil? or pass.nil?
+      salt = BCrypt::Engine.generate_salt
+      
+      update_attributes!({
+        salt:        salt,
+        password:    BCrypt::Engine.hash_secret(pass, salt),
+        username:    name,
+        provisional: false
+      })
+      
+      if not persisted?
+        throw :halt, {
+          status: 'error',
+          message: 'failed to update user'
+        }.to_json 
+      end
+      
+      self.assign_token
+      self.save
     end
   end
 end

@@ -17,6 +17,8 @@ import com.google.android.gcm.GCMRegistrar;
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
+import com.nbs.client.assassins.R;
+import com.nbs.client.assassins.controllers.MainActivity;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.GCMRegistrationMessage;
 import com.nbs.client.assassins.network.HuntedRestClient;
@@ -59,9 +61,18 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Log.i(TAG, "  action: " + intent.getAction());
 		Bundle b = intent.getExtras();
 		
-		String msgType = (String)b.get("type");
+		for(String key : b.keySet())
+		{
+			Log.i(TAG, "  " + key + " : " + b.getString(key));
+			
+            //Editor editor = PreferenceManager.getDefaultSharedPreferences(c).edit();
+            //editor.putString(key, b.getString(key));
+            //editor.commit();
+		}
 		
-		Log.i(TAG, "message type: " + msgType);
+		//String msgType = (String)b.get("type");
+		
+		//Log.i(TAG, "message type: " + msgType);
 		
 		
 		//if(msgType.equals(GCMMessages.TARGET_EVENT))
@@ -69,19 +80,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			
 		//}
 		
-		
-		/*for(String key : b.keySet())
-		{
-			Object o = b.get(key);
-			Log.i(TAG, "  " + key + " : " + b.getString(key));
-			
-            Editor editor = PreferenceManager.getDefaultSharedPreferences(c).edit();
-            editor.putString(key, b.getString(key));
-            editor.commit();
-		}*/
-		
-		/*
-		intent.setAction(MainActivity.ACTION);
+		/*intent.setAction(MainActivity.ACTION);
 		
 		try {
 			c.sendBroadcast(intent);
@@ -93,7 +92,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		    NotificationCompat.Builder builder = 
 		    		new NotificationCompat.Builder(this)  
 		            .setSmallIcon(R.drawable.ic_launcher)  
-		            .setContentTitle(intent.getStringExtra("collapse_key"))  
+		            .setContentTitle(intent.getStringExtra("type"))  
 		            .setContentText(intent.getStringExtra("message"))
 		        	.setAutoCancel(true)
 	        		.setContentIntent(PendingIntent.getActivity(
@@ -106,47 +105,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 		catch (IllegalArgumentException e) {
 			Log.v(TAG, e.getMessage());
 		}*/
-		
-		
-		
-		
-/*		if(type != null)
-		{
-			if(type == ATTACKED) {
-				
-			} else if(type == TARGET_STATE_CHANGED) {
-				String targetUsername = intent.getStringExtra("target_username");
-				String targetProximity = intent.getStringExtra("target_proximity");
-				int targetLife = Integer.parseInt(intent.getStringExtra("target_life"));
-				
-				
-				if(targetProximity == Proximity.SEARCH) {
-						
-					
-				} else if(targetProximity == Proximity.HUNT) {
-					double lat = Double.parseDouble(intent.getStringExtra("latitude"));
-					double lng = Double.parseDouble(intent.getStringExtra("longitude"));
-				}
-				
-
-				
-			} else if(type == ENEMY_STATE_CHANGED) {
-				
-			} else if(type == MY_STATE_CHANGED) {
-				
-			} else if(type == MATCH_START) {
-				
-			} else if(type == MATCH_END) {
-				
-			} else if(type == MATCH_REMINDER) {
-				
-			} else if(type == INVITATION) {
-				
-			} else if(type == MATCH_EVENT) {
-				
-			}
-		}*/
-
 	}
 
 
@@ -174,6 +132,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 				GCMRegistrar.setRegisteredOnServer(context, false);
 			}
 		}
+		//provisional user
 		else if(!User.hasUsername(context))
 		{
 			UserLoginMessage msg = new UserLoginMessage();
@@ -193,7 +152,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 				GCMRegistrar.setRegisteredOnServer(context, false);
 			}
 		}
-		//else has account, but not logged in -> do nothing
 	}
 
 	@Override
@@ -205,7 +163,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 			msg.installId = User.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			restClient.unregisterGCMRegId(User.getToken(context), msg);
-			
 			//TODO handle response for unregister and make sure it was successful
 			GCMRegistrar.setRegisteredOnServer(context, false);
 		}

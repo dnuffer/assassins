@@ -16,7 +16,7 @@ public class JoinMatchActivity extends SherlockFragmentActivity implements OnMat
 		super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        this.setContentView(R.layout.join_match_layout);
+        this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
             //Bundle fragmentArgs = new Bundle();
@@ -24,7 +24,7 @@ public class JoinMatchActivity extends SherlockFragmentActivity implements OnMat
             JoinMatchFragment createMatchFragment = new JoinMatchFragment_();
             //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.join_match_container, createMatchFragment)
+                    .add(R.id.frag_container, createMatchFragment)
                     .commit();
         }
 	}

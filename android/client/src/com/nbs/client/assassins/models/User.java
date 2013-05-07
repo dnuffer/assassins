@@ -124,9 +124,7 @@ public class User {
 		} else {
 			setMatchName(context, match.name);
 			setMatchToken(context, match.token);
-		}
-		
-		
+		}	
 	}
 	
 	private static void setMatchToken(Context context, String matchId) {
@@ -180,8 +178,5 @@ public class User {
 		User.setMatch(context, null);
 		User.setUsername(context, null);
 		User.setToken(context, null);
-	}
-	
-	
-    
+	}  
 }

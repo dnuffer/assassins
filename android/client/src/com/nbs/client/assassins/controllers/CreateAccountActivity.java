@@ -16,7 +16,7 @@ public class CreateAccountActivity extends SherlockFragmentActivity implements O
 		super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        this.setContentView(R.layout.create_account_layout);
+        this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
             //Bundle fragmentArgs = new Bundle();
@@ -24,7 +24,7 @@ public class CreateAccountActivity extends SherlockFragmentActivity implements O
             CreateAccountFragment createAccountFragment = new CreateAccountFragment_();
             //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.create_account_container, createAccountFragment)
+                    .add(R.id.frag_container, createAccountFragment)
                     .commit();
         }
 	}

@@ -14,6 +14,6 @@ public class GCMBroadcastReceiverImpl extends GCMBroadcastReceiver {
 		  //android annotations generate source files with trailing underscore
 		  //android by default expects class to be named GCMIntentService if this
 		  //method is not overridden
-		  return "com.nbs.client.assassins.GCMIntentService_"; 
+		  return "com.nbs.client.assassins.services.GCMIntentService_"; 
 	  } 
 	}

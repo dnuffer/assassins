@@ -40,8 +40,8 @@
         android:theme="@style/AppTheme"
         android:allowBackup="false">
         
-        <service android:name=".services.GCMIntentService_" />
-		<service android:name=".services.LocationService_" />
+        <service android:name="com.nbs.client.assassins.services.GCMIntentService_" />
+		<service android:name="com.nbs.client.assassins.services.LocationService_" />
 		
         <receiver
             android:name="com.nbs.client.assassins.services.GCMBroadcastReceiverImpl"
@@ -65,7 +65,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
+        <activity
+            android:name=".controllers.LoginActivity_"> 
+        </activity>
         <activity
             android:name=".controllers.CreateAccountActivity_"> 
         </activity>

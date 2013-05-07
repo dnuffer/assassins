@@ -77,9 +77,9 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	private final String MODE_BEARING = "mode_user_direction";
 	private String MODE = MODE_NORTH;
 	
-	private final int MODE_NORTH_ID = 10;
-	private final int MODE_BEARING_ID = 11;
-	public static final int MAP_CONTROL_ITEMS = 12;
+	private final int MODE_NORTH_ID = 11;
+	private final int MODE_BEARING_ID = 12;
+	public static final int MAP_CONTROL_ITEMS = 13;
 
 	private static final float DEFAULT_ZOOM = 18.0f;
 	private static final float DEFAULT_TILT = 67.5f;
@@ -119,6 +119,8 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
+		
+		setHasOptionsMenu(true);
 		
 		map = getMap();
 
@@ -169,7 +171,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		if(MODE == MODE_BEARING) {
 			menu.removeItem(MODE_BEARING_ID);
 			if(menu.findItem(MODE_NORTH_ID) == null) {
-				menu.add(MAP_CONTROL_ITEMS, MODE_NORTH_ID, Menu.NONE, "")
+				menu.add(MAP_CONTROL_ITEMS, MODE_NORTH_ID, Menu.FIRST, "Orient North")
 					.setIcon(R.drawable.north)
 					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			}
@@ -177,7 +179,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		} else if (MODE == MODE_NORTH) {
 			menu.removeItem(MODE_NORTH_ID);
 			if(menu.findItem(MODE_BEARING_ID) == null) {
-				menu.add(MAP_CONTROL_ITEMS, MODE_BEARING_ID, Menu.NONE, "")
+				menu.add(MAP_CONTROL_ITEMS, MODE_BEARING_ID, Menu.FIRST, "Follow Bearing")
 					.setIcon(R.drawable.compass)
 					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 			}

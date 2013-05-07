@@ -58,7 +58,8 @@
             android:value="AIzaSyCzJhxBvjao1Ij6IqNcuhxd5JfTef5cRlM" />
 
         <activity
-            android:name=".controllers.MainActivity_">         
+            android:name=".controllers.MainActivity_"
+            android:uiOptions="splitActionBarWhenNarrow">            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -92,8 +92,10 @@ public class MainActivity extends SherlockFragmentActivity {
 	private static final int NOT_IN_MATCH_ITEMS = 6;
 
 	private static final int NEW_USER_ITEMS = 7;
-
-	private static final int NOTIF_ID = 8;
+	
+	private static final int IN_MATCH_ITEMS = 8;
+	private static final int ATTACK_ID = 9;
+	private static final int NOTIF_ID = 10;
 
 	IntentFilter intentActionFilter;
 	IntentFilter intentLocationUpdateFilter;
@@ -211,18 +213,19 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	
 	private void addInMatchOptionsMenuItems(Menu menu) {
+		menu.add(IN_MATCH_ITEMS, ATTACK_ID, Menu.NONE, "Attack")
+		.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);	
 	}
 	
 	private void addNotInMatchOptionsMenuItems(Menu menu) {
-		menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "Join Game")
-			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		
 		menu.add(NOT_IN_MATCH_ITEMS, CREATE_MATCH_ID, Menu.NONE, "Create Game")
+			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.add(NOT_IN_MATCH_ITEMS, JOIN_ID, Menu.NONE, "Join Game")
 			.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
 	
 	private void removeInMatchOptionsMenuItems(Menu menu) {
-		
+		menu.removeGroup(IN_MATCH_ITEMS);
 	}
 
 	private void addNewUserOptionsMenuItems(Menu menu) {
@@ -254,8 +257,7 @@ public class MainActivity extends SherlockFragmentActivity {
 				addInMatchOptionsMenuItems(menu);
 				menu.removeGroup(NOT_IN_MATCH_ITEMS);
 				
-				menu.add(Menu.NONE, NOTIF_ID, 1, "")
-				.setIcon(R.drawable.ic_action_hdpi_bulleted_list)
+				menu.add(Menu.NONE, NOTIF_ID, 1, "Messages")
 				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 				
 			} else {
@@ -323,6 +325,7 @@ public class MainActivity extends SherlockFragmentActivity {
 		if(notificationsShowing) {
 			removeNotificationFragment();
 		} else {
+			hideSideNavMenuFragment();
 			notificationsShowing = true;
 			notifFrag = new NotificationFragment();
 			ft = getSupportFragmentManager().beginTransaction();
@@ -353,6 +356,7 @@ public class MainActivity extends SherlockFragmentActivity {
 		if(sideNavMenuShowing) {
 			hideSideNavMenuFragment();
 		} else {
+			removeNotificationFragment();
 			sideNavMenuShowing = true;
 			menuFrag = new MenuFragment();
 			ft = getSupportFragmentManager().beginTransaction();

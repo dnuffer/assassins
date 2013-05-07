@@ -12,6 +12,7 @@
             android:layout_height="match_parent"
             android:divider="@android:color/transparent"
             android:overScrollFooter="#444"
+            android:choiceMode="singleChoice"
             android:background="#444" >
             
         </ListView>

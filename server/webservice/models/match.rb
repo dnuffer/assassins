@@ -41,7 +41,7 @@ class Match
     
     match = Match.where({ :name => match_name }).first
         
-    if not match.nil? and (match.is_public? or match.correct_password(password))
+    if not match.nil? and (match.is_public? or match.correct_password? match_password)
       return match
     end
     

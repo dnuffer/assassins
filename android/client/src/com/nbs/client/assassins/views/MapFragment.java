@@ -3,6 +3,7 @@
  */
 package com.nbs.client.assassins.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -30,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.LocationSource;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
@@ -44,6 +46,7 @@ import com.googlecode.androidannotations.annotations.SystemService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.drawable;
 import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.views.CreateMatchFragment.OnMatchCreatedListener;
 
 
 /**
@@ -55,7 +58,6 @@ import com.nbs.client.assassins.models.User;
 public class MapFragment extends SherlockMapFragment implements SensorEventListener {
 
 	protected static final String TAG = "MapFragment";
-	
 	
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
@@ -73,13 +75,9 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		super.onHiddenChanged(hidden);	
 	}
 	
-	private final String MODE_NORTH = "mode_north";
-	private final String MODE_BEARING = "mode_user_direction";
-	private String MODE = MODE_NORTH;
-	
-	private final int MODE_NORTH_ID = 11;
-	private final int MODE_BEARING_ID = 12;
-	public static final int MAP_CONTROL_ITEMS = 13;
+	public static final int MODE_NORTH = 0;
+	public static final int MODE_BEARING = 1;
+	private int MODE = MODE_NORTH;
 
 	private static final float DEFAULT_ZOOM = 18.0f;
 	private static final float DEFAULT_TILT = 67.5f;
@@ -101,6 +99,25 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	
  	public MapFragment(){ }
  	
+
+	public int getCompassMode() {
+		return this.MODE;
+	}
+	
+	public void toggleCompassMode() {
+		if(getCompassMode() == MODE_BEARING) {
+			MODE = MODE_NORTH;
+			getSherlockActivity().supportInvalidateOptionsMenu();
+			stopSensorUpdates();
+			this.moveMapPositionTo(User.getLocation(getSherlockActivity()), true, 800);
+		} else  {
+			MODE = MODE_BEARING;
+			getSherlockActivity().supportInvalidateOptionsMenu();
+			if(!animating)
+				registerForSensorUpdates();
+		}
+	}
+ 	
 	//replace with a broadcast receiver
 	private OnSharedPreferenceChangeListener prefChangeListener =  new OnSharedPreferenceChangeListener() {
 		@Override
@@ -120,21 +137,20 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		
-		setHasOptionsMenu(true);
+		//setHasOptionsMenu(true);
 		
 		map = getMap();
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getSherlockActivity());
 		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
 
-		map.getUiSettings().setCompassEnabled(true);
+		UiSettings uiSettings = map.getUiSettings();
+		uiSettings.setCompassEnabled(true);
 		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		map.getUiSettings().setScrollGesturesEnabled(false);
-		map.getUiSettings().setRotateGesturesEnabled(false);
-		map.getUiSettings().setZoomGesturesEnabled(true);
-		map.getUiSettings().setZoomControlsEnabled(true);
-		
-		
+		uiSettings.setScrollGesturesEnabled(false);
+		uiSettings.setRotateGesturesEnabled(false);
+		uiSettings.setZoomGesturesEnabled(true);
+		uiSettings.setZoomControlsEnabled(true);
 
 		mSensorManager = (SensorManager)getSherlockActivity().getSystemService(Context.SENSOR_SERVICE);
 		accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -151,8 +167,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			if(User.getLocation(getSherlockActivity()) == null)
 			{
 				User.setLocation(getSherlockActivity(), lastLocation);
-			}
-			
+			}	
 		}
 		
 		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
@@ -168,43 +183,11 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
 
-		if(MODE == MODE_BEARING) {
-			menu.removeItem(MODE_BEARING_ID);
-			if(menu.findItem(MODE_NORTH_ID) == null) {
-				menu.add(MAP_CONTROL_ITEMS, MODE_NORTH_ID, Menu.FIRST, "Orient North")
-					.setIcon(R.drawable.north)
-					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			}
-
-		} else if (MODE == MODE_NORTH) {
-			menu.removeItem(MODE_NORTH_ID);
-			if(menu.findItem(MODE_BEARING_ID) == null) {
-				menu.add(MAP_CONTROL_ITEMS, MODE_BEARING_ID, Menu.FIRST, "Follow Bearing")
-					.setIcon(R.drawable.compass)
-					.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			}
-			
-		}
-
 		super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		
-		if(item.getItemId() == MODE_NORTH_ID) {
-			MODE = MODE_NORTH;
-			getSherlockActivity().supportInvalidateOptionsMenu();
-			stopSensorUpdates();
-			this.moveMapPositionTo(User.getLocation(getSherlockActivity()), true, 800);
-			return true;
-		} else if (item.getItemId() == MODE_BEARING_ID) {
-			MODE = MODE_BEARING;
-			getSherlockActivity().supportInvalidateOptionsMenu();
-			if(!animating)
-				registerForSensorUpdates();
-			return true;
-		}
 		
 		return false;
 	}
@@ -368,22 +351,20 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			if(animate) {
 				stopSensorUpdates();
 				animating = true;
-				map.animateCamera(camUpdate, duration != null ? duration : 1000, new CancelableCallback(){
-
-					@Override
-					public void onCancel() {
-						animating = false;
-						if(MODE == MODE_BEARING)
-							registerForSensorUpdates();
-					}
-
-					@Override
-					public void onFinish() {
-						animating = false;
-						if(MODE == MODE_BEARING)
-							registerForSensorUpdates();
-					}
-					
+				map.animateCamera(camUpdate, duration != null ? duration : 1000, 
+					new CancelableCallback(){
+						@Override
+						public void onCancel() {
+							animating = false;
+							if(MODE == MODE_BEARING)
+								registerForSensorUpdates();
+						}
+						@Override
+						public void onFinish() {
+							animating = false;
+							if(MODE == MODE_BEARING)
+								registerForSensorUpdates();
+						}
 				});
 			} else {
 				//map.stopAnimation();

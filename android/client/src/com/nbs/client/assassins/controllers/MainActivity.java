@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import android.util.Log;
+import android.widget.ImageView;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -25,8 +26,10 @@ import com.actionbarsherlock.view.SubMenu;
 import com.google.android.gcm.GCMRegistrar;
 
 import com.googlecode.androidannotations.annotations.Background;
+import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.UiThread;
+import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.User;
@@ -36,6 +39,7 @@ import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.views.CreateAccountFragment;
 import com.nbs.client.assassins.views.CreateMatchFragment;
 import com.nbs.client.assassins.views.JoinMatchFragment;
+import com.nbs.client.assassins.views.MapFragment;
 import com.nbs.client.assassins.views.MapFragment_;
 import com.nbs.client.assassins.views.MenuFragment;
 import com.nbs.client.assassins.views.NotificationFragment;
@@ -55,7 +59,9 @@ String macAddress = wInfo.getMacAddress(); */
 @EActivity
 public class MainActivity extends SherlockFragmentActivity {
 	
-	//private MenuFragment menuFragment;
+	
+	private final String TAG = "MainActivity";
+	
 
 	MapFragment_ mapFragment;
 	
@@ -67,8 +73,9 @@ public class MainActivity extends SherlockFragmentActivity {
 	JoinMatchFragment joinMatchFragment;
 	NotificationFragment notifFrag;
 	MenuFragment menuFrag;
-	
-	private final String TAG = "MainActivity";
+
+	@ViewById(R.id.toggle_compass)
+	ImageView toggleCompass;
 	
 	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
 	public static final String ACTION = "some_action";
@@ -108,10 +115,8 @@ public class MainActivity extends SherlockFragmentActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            Log.i(TAG, "shared preference changed: " + key);
-            
+            Log.i(TAG, "shared preference changed: " + key);      
         }
-
 	};
 
 	private boolean sideNavMenuShowing;
@@ -196,7 +201,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	    super.onPause();
 	}
 	
-
 	@Override
 	protected void onResume() 
 	{
@@ -206,7 +210,16 @@ public class MainActivity extends SherlockFragmentActivity {
 	    registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
 	}
 
+	@Click(R.id.toggle_compass)
+	public void onToggleCompass() {
+		mapFragment.toggleCompassMode();
+		toggleCompass.setImageResource(
+			mapFragment.getCompassMode() == MapFragment.MODE_BEARING ? 
+					R.drawable.north : R.drawable.compass);
 
+	}
+	
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {		
 		return super.onCreateOptionsMenu(menu);
@@ -242,7 +255,6 @@ public class MainActivity extends SherlockFragmentActivity {
 
 		more.getItem().setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 	}
-	
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
@@ -388,8 +400,6 @@ public class MainActivity extends SherlockFragmentActivity {
 			ft.setCustomAnimations(R.animator.object_slide_in_left, R.animator.object_slide_out_right);
 			ft.replace(R.id.fragment_container, dummyFragment);
 		    ft.commit();  */
-
-			
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 			ft.remove(notifFrag);
 		    ft.commit();

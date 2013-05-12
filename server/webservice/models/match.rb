@@ -29,7 +29,14 @@ class Match
   #field :se_corner, type: Array, spacial: true
   
   #field :hunt_range, Float
+  def hunt_range
+    500.0
+  end
+
   #field :attack_range, Float
+  def attack_range
+    50.0
+  end
   #field :attack_delay, Integer
   
   #spacial_index :nw_corner
@@ -142,14 +149,11 @@ class Match
     target = target_of enemy
     puts "notify_target_of(#{enemy.user.username}) [target: #{target.user.username}]"
     unless target.nil? or enemy.nil?
-      #TODO tailor message based on match parameters and distance between players
       target.user.send_push_notification({
         type:            :enemy_event,
         time:            Time.now.utc,
         my_life:         target.life,
-        enemy_proximity: proximity_to_target(enemy),
-        enemy_lat:       enemy.location[:lat],
-        enemy_lng:       enemy.location[:lng]
+        enemy_proximity: proximity_to_target(enemy)
       })
     end
     
@@ -159,22 +163,29 @@ class Match
     enemy = enemy_of target
     puts "notify_enemy_of(#{target.user.username}) [enemy: #{enemy.user.username}]"
     unless enemy.nil? or target.nil?
-      #TODO tailor message based on match parameters and distance between players
-      enemy.user.send_push_notification({
+      notification = {
         type:             :target_event,
         time:             Time.now.utc,
         target_life:      target.life,
-        target_bearing:   bearing_to_target(enemy),
-        target_lat:       target.location[:lat],
-        target_lng:       target.location[:lng]
-      })
+        target_bearing:   bearing_to_target(enemy)
+      }
+
+      if proximity_to_target enemy < hunt_range
+        notification.merge! {
+          target_lat:       target.location[:lat],
+          target_lng:       target.location[:lng]
+        }
+      end
+
+      enemy.user.send_push_notification(notification)
     end 
   end
   
   
   def attempt_attack attacker
-    if in_progress? and attacker.alive?
-      target = target_of attacker
+    target = target_of attacker
+
+    if in_progress? and attacker.alive? and proximity_to_target attacker < attack_range
       target.take_hit 1
       notify_target_of attacker
       

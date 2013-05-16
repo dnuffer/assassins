@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'rspec'
 require 'rack/test'
 require 'json'
+require 'factory_girl'
+
 
 $LOAD_PATH.unshift('.')
 
@@ -18,7 +20,77 @@ RSpec.configure do |conf|
   end
 end
 
-describe 'Hunted Game' do
+FactoryGirl.define do
+  factory :match do
+    name 'my_match'
+    salt 'salt'
+    password 'password'
+    token 'token'
+  end
+end
+
+describe 'Match' do
+  include Rack::Test::Methods
+  
+  it 'can be created' do
+    
+    stub = FactoryGirl.build_stubbed(:match)
+    Match.stub(:where).and_return stub
+    puts Match.where.to_json
+    
+  end
+  
+  it 'cannot be joined without correct password' do
+  
+  end
+  
+  it 'can be joined with valid credentials' do
+  
+  end
+  
+  it 'assigns targets' do
+  
+  end
+  
+  it 'discloses target location to attacker only when in hunt range' do
+  
+  end
+  
+  it 'disallows an attack when out of attack range' do
+  
+  end
+  
+  it 'notifies an attacker when they change range' do
+  
+  end
+
+  it 'notifies a user when an enemy changes range' do
+  
+  end
+
+  it 'notifies a user when a target moves' do
+  
+  end
+
+  it 'allows an attack when in attack range' do
+  
+  end
+
+  it 'notifies a user when they have been attacked' do
+  
+  end
+
+  it 'notifies a user when the match is over' do
+  
+  end
+  
+  it 'notifies all users when a player is eliminated' do
+  
+  end
+  
+end
+
+describe 'Sinatra App' do
   include Rack::Test::Methods
 
   def app

@@ -18,4 +18,6 @@ gem 'bcrypt-ruby'
 gem 'rack'
 gem 'haml'
 gem 'regex'
+gem "factory_girl", "~> 4.0"
+
 

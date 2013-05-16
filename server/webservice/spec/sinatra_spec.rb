@@ -22,9 +22,10 @@ end
 
 FactoryGirl.define do
   factory :match do
+    s = Match.gen_salt
     name 'my_match'
-    salt 'salt'
-    password 'password'
+    salt s
+    password Match.hash_password('password', s)
     token 'token'
   end
 end
@@ -33,19 +34,21 @@ describe 'Match' do
   include Rack::Test::Methods
   
   it 'can be created' do
-    
     stub = FactoryGirl.build_stubbed(:match)
-    Match.stub(:where).and_return stub
-    puts Match.where.to_json
-    
+    # TODO how to really test create without mongo?
   end
   
   it 'cannot be joined without correct password' do
-  
+    stub = FactoryGirl.build_stubbed(:match)
+    Match.stub(:where).and_return [ stub ]
+    expect { Match.authenticate 'my_match', 'drowssap' }.to throw_symbol(:halt) 
   end
   
   it 'can be joined with valid credentials' do
-  
+    stub = FactoryGirl.build_stubbed(:match)
+    Match.stub(:where).and_return [ stub ]
+    match = Match.authenticate 'my_match', 'password'
+    match.should_not eq nil
   end
   
   it 'assigns targets' do

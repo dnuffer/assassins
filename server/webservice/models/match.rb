@@ -60,7 +60,15 @@ class Match
   end
   
   def correct_password? pass
-    BCrypt::Engine.hash_secret(pass, self.salt) == self.password
+    Match.hash_password(pass, self.salt) == self.password
+  end
+  
+  def self.gen_salt
+    BCrypt::Engine.generate_salt
+  end
+  
+  def self.hash_password pass, salt
+    BCrypt::Engine.hash_secret(pass, salt)
   end
   
   def assign_token

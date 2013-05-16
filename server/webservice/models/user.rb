@@ -11,10 +11,9 @@ class User
   field :salt, type: String
   field :token, type: String
   field :provisional, type: Boolean, default: false
-  
-  belongs_to :match
-  has_one    :player
-  #has_many   :achievements
+
+  has_one :player
+  #has_many :achievements
     
   validates :username, :password, presence: true, :if => :full_user?  
   validates_uniqueness_of :username, allow_nil: true
@@ -23,7 +22,7 @@ class User
   before_create :assign_token
 
   def in_match?
-    match != nil and player != nil
+    not player.nil? and player.match.in_progress?
   end
 
   def full_user?

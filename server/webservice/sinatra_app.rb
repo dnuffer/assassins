@@ -46,7 +46,7 @@ end
 get '/api/matches/:match_name/targets' do
   content_type :json  
   match = Match.where(name: params[:match_name]).first
-  match.player_ids.map { |id| Player.find(id).user.username }.to_json
+  match.players.map { |p| p.user.username }.to_json
 end
 
 
@@ -77,10 +77,8 @@ post '/api/provisional-users' do
     end
   end
   
-  {
-    status: 'error',
-    message: 'failed to create provisional user'
-  }.to_json
+  { status: 'error',
+    message: 'failed to create provisional user' }.to_json
 end
 
 
@@ -105,10 +103,8 @@ post '/api/users' do
 
   end
 
-  {
-    status: 'error',
-    message: 'failed to create user'
-  }.to_json
+  { status: 'error',
+    message: 'failed to create user' }.to_json
 end
 
 
@@ -122,11 +118,9 @@ post '/api/users/:token' do
   user = User.authenticate params[:token]
   user.upgrade_from_provisional data['username'], data['password']
   
-  {
-    status: 'ok',
+  { status: 'ok',
     message: 'created account',
-    token: user.token
-  }.to_json 
+    token: user.token }.to_json 
 end
 
 
@@ -156,10 +150,8 @@ post '/api/matches' do
     }.to_json 
   end
   
-  {
-    status: 'error',
-    message: 'failed to create match'
-  }.to_json
+  { status: 'error',
+    message: 'failed to create match' }.to_json
 end
 
 
@@ -180,10 +172,8 @@ post '/api/matches/:name/players' do
       }.to_json
   end
   
-  {
-    status: 'error',
-    message: 'create an account to join a match'
-  }.to_json
+  { status: 'error',
+    message: 'create an account to join a match' }.to_json
 end
 
 
@@ -196,15 +186,16 @@ post '/api/users/:token/location' do
   user = User.authenticate params[:token]
   
   if user.in_match?
-    user.player.update_location data['latitude'], data['longitude']
-    user.match.notify_target_of user.player
-    user.match.notify_enemy_of  user.player
+    player = user.player
+    player.update_location data['latitude'], data['longitude']
+    player.notify_target
+    player.notify_enemy
   
     return { 
-      status: 'ok', 
-      message: 'location updated', 
-      latitude: user.player.location[:lat], 
-      longitude: user.player.location[:lng]
+      status:   'ok', 
+      message:  'location updated', 
+      latitude:  player.location[:lat], 
+      longitude: player.location[:lng]
     }.to_json
   end
     
@@ -214,11 +205,10 @@ post '/api/users/:token/location' do
     
   #TODO query for loot, traps, etc.
   
-  { status: 'ok', 
-    message: 'location updated', 
-    latitude: data['latitude'], 
-    longitude: data['longitude']
-  }.to_json
+  { status:    'ok', 
+    message:   'not in a match.', 
+    latitude:   data['latitude'], 
+    longitude:  data['longitude'] }.to_json
 end
 
 
@@ -234,9 +224,9 @@ post '/api/login' do
   
   user = User.login(data)
     
-  { status: 'ok',
+  { status:  'ok',
     message: 'log in successful.',
-    token: user.token }.to_json 
+    token:    user.token }.to_json 
 end
 
 
@@ -246,7 +236,7 @@ post '/api/users/:token/logout' do
   user = User.authenticate params[:token]
   user.logout
   
-  { status: 'ok',
+  { status:  'ok',
     message: 'logged out' }.to_json
 end
 
@@ -260,9 +250,9 @@ post '/api/users/:token/gcm/register' do
   user.push_id = data['push_id']
   user.save
   
-  { status: 'ok',
+  { status:  'ok',
     message: 'updated gcm registration id',
-    token: user.token }.to_json 
+    token:    user.token }.to_json 
 end
 
 #Accepts: GCMRegistrationMessage
@@ -275,7 +265,7 @@ post '/api/users/:token/gcm/unregister' do
   user.push_id = nil
   user.save
   
-  { status: 'ok',
+  { status:  'ok',
     message: 'cleared gcm registration id' }.to_json 
 end
 
@@ -288,9 +278,8 @@ post '/api/users/:token/attack' do
   user = User.authenticate params[:token]
   
   if user.in_match?
-    match = user.match
-    target = match.target_of user.player
-    if match.attempt_attack user.player
+    target = user.player.target
+    if user.player.attack
       return {
         status: 'ok',
         message: 'attack successful',
@@ -300,11 +289,9 @@ post '/api/users/:token/attack' do
     end
   end
   
-  {
-    status: 'error',
+  { status:  'error',
     message: 'attack failed',
-    hit: false
-  }.to_json 
+    hit:     false }.to_json 
 end
 
 #return wrapped response to allow for error handling like twitter api

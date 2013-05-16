@@ -99,8 +99,6 @@ describe 'Hunted Game' do
   
   end
   
-  
-  
   it "allows a user to join a match" do
     
     GCM.should_receive(:send_notification).once
@@ -122,7 +120,15 @@ describe 'Hunted Game' do
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
-    sleep 0.4
+    sleep 0.7
+  end
+  
+  it "can get targets (debug feature)" do
+    match_msg = JSON.parse(IO.read("spec/join_match.json"))
+    match_name = match_msg['match_name'] 
+    get "/api/matches/#{match_name}/targets"
+    last_response.should be_ok
+    puts last_response.body  
   end
   
   it "accepts a user location update" do
@@ -145,8 +151,8 @@ describe 'Hunted Game' do
     
     post("/api/users/#{token}/location", {
       install_id: "install2",
-      latitude: 3,
-      longitude: 4
+      latitude: 2,
+      longitude: 3
     }.to_json)
     
     last_response.should be_ok

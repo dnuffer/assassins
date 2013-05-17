@@ -117,8 +117,8 @@ class Match
   end
   
   def target_of player
-    if in_progress? and self.player_ids.length > 1
-      index = player_ids.index player.id.to_s
+    if in_progress? and player_ids.length > 1
+      index = player_ids.map { |id| id.to_s }.find_index player.id.to_s 
       unless index.nil? 
         target_index = (index == player_ids.length - 1) ? 0 : index + 1
         target = players.find(player_ids[target_index])

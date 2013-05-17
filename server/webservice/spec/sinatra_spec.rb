@@ -43,8 +43,8 @@ FactoryGirl.define do
     salt       Match.gen_salt
     password { Match.hash_password('password', salt) }
     token     'token'
-    players  { [ association(:player) ] } 
-    player_ids { [ players.first.id ] }
+    players  { [ association(:player), association(:player), association(:player) ] } 
+    player_ids { [ players[0].id, players[1].id, players[2].id ] }
   end
   
 end
@@ -57,26 +57,29 @@ describe 'Match' do
     # TODO how to really test create without mongo?
   end
   
-  it 'cannot be joined without correct password' do
+  it 'can be authenticated without correct password' do
     stub = FactoryGirl.build_stubbed(:match)
     Match.stub(:where).and_return [ stub ]
     expect { Match.authenticate 'my_match', 'drowssap' }.to throw_symbol(:halt) 
   end
   
-  it 'users can join the match' do
-    #GCM.should_receive(:send_notification).exactly(4).times
-    
-    match = FactoryGirl.build_stubbed(:match)
-
-    match.player_ids.length.should eq 1
-    match.players.length.should eq 1
-    
-  end
-  
-  it 'assigns targets' do
+  it 'can be authenticated with correct password' do
     stub = FactoryGirl.build_stubbed(:match)
     Match.stub(:where).and_return [ stub ]
     match = Match.authenticate 'my_match', 'password'
+    match.should eq stub 
+  end
+  
+  it 'assigns targets' do
+    match = FactoryGirl.build_stubbed(:match)
+    match.player_ids.length.should eq 3
+    match.players.length.should eq 3
+    match.players.first.match.should eq match
+    match.players.stub(:find) do |arg|
+      arg.should eq match.players.first.id
+      match.players.first
+    end
+    match.players.last.get_target.should eq match.players[0]
   end
   
   it 'discloses target location to attacker only when in hunt range' do

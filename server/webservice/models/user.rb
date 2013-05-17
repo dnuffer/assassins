@@ -1,6 +1,7 @@
 require 'mongoid'
 require 'pushmeup'
 require 'securerandom'
+require 'bcrypt'
 
 class User
   include Mongoid::Document
@@ -39,6 +40,14 @@ class User
     end
   end
   
+  def self.gen_salt
+    BCrypt::Engine.generate_salt
+  end
+  
+  def self.hash_password pass, salt
+    BCrypt::Engine.hash_secret(pass, salt)
+  end
+  
   def self.authenticate token
     user = User.where(:token => token).first
     if user.nil?
@@ -49,7 +58,7 @@ class User
   end
   
   def correct_password? pass
-    BCrypt::Engine.hash_secret(pass, self.salt) == self.password
+    User.hash_password(pass, self.salt) == self.password
   end
   
   def logged_in?
@@ -89,11 +98,11 @@ class User
   
   def upgrade_from_provisional name, pass
     unless name.nil? or pass.nil?
-      salt = BCrypt::Engine.generate_salt
+      salt = User.gen_salt
       
       update_attributes!({
         salt:        salt,
-        password:    BCrypt::Engine.hash_secret(pass, salt),
+        password:    User.hash_password(pass, salt),
         username:    name,
         provisional: false
       })

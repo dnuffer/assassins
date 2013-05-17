@@ -24,7 +24,7 @@ class Player
   end
   
   def alive?
-    self.life > 0
+    life > 0
   end
   
   def distance_to point
@@ -35,45 +35,45 @@ class Player
     Location::bearing self, point
   end
   
-  def target
-    self.match.target_of self unless match.nil?
+  def get_target
+    match.target_of(self)
   end
   
-  def enemy
-    self.match.enemy_of self unless match.nil?
+  def get_enemy
+    match.enemy_of(self)
   end
   
-  def attack
-    self.match.attempt_attack self
+  def attack_target
+    match.attempt_attack self
   end
   
   def take_hit amount
-    if amount <= self.life
-      self.life = self.life - amount
-      self.save
+    if amount <= life
+      self.life -= amount
+      save
     end
   end
   
   def update_location lat, lng
     self.location = { lat: lat, lng: lng }
-    self.save
+    save
   end
 
   def notify_enemy
-    my_enemy = self.enemy
+    my_enemy = self.get_enemy
     unless my_enemy.nil?
       notification = {
         type:             :target_event,
         time:             Time.now.utc,
-        target_life:      self.life,
+        target_life:      life,
         target_bearing:   my_enemy.bearing_to(self)
       }
 
       enemy_distance = my_enemy.distance_to(self)
-      unless enemy_distance.nil? or enemy_distance > self.match.hunt_range
+      unless enemy_distance.nil? or enemy_distance > match.hunt_range
         notification.merge!({
-          target_lat: self.location[:lat],
-          target_lng: self.location[:lng]
+          target_lat: location[:lat],
+          target_lng: location[:lng]
         })
       end
 
@@ -82,13 +82,13 @@ class Player
   end
   
   def notify_target
-    my_target = self.target
+    my_target = self.get_target
     unless my_target.nil?
       my_target.user.send_push_notification({
         type:            :enemy_event,
         time:            Time.now.utc,
         my_life:         my_target.life,
-        enemy_proximity: self.distance_to(my_target)
+        enemy_proximity: distance_to(my_target)
       })
     end
     

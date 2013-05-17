@@ -278,13 +278,14 @@ post '/api/users/:token/attack' do
   user = User.authenticate params[:token]
   
   if user.in_match?
-    target = user.player.target
-    if user.player.attack
+    player = user.player
+
+    if player.attack_target
       return {
         status: 'ok',
         message: 'attack successful',
         hit: true,
-        target_life: target.life
+        target_life: player.get_target.life
       }.to_json 
     end
   end

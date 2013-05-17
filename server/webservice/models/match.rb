@@ -117,32 +117,31 @@ class Match
   end
   
   def target_of player
-    if in_progress?
+    if in_progress? and self.player_ids.length > 1
       index = player_ids.index player.id.to_s
       unless index.nil? 
         target_index = (index == player_ids.length - 1) ? 0 : index + 1
-        return Player.find(player_ids[target_index])
+        target = players.find(player_ids[target_index])
+        return target
       end
     end
   end
   
   def enemy_of player
-    if in_progress?
+    if in_progress? and self.player_ids.length > 1
       index = player_ids.index player.id.to_s
       unless index.nil?
         target_index = (index == 0) ? player_ids.length-1 : index-1
-        return Player.find(player_ids[target_index])
+        return players.find(player_ids[target_index])
       end
     end
   end
   
   def attempt_attack attacker
     target = target_of attacker
-
-    if in_progress? and attacker.alive? and attacker.distance_to(target) < attack_range
+    if in_progress? and target != nil and attacker.alive? and attacker.distance_to(target) < attack_range
       target.take_hit 1
       attacker.notify_target
-      
       # sends a message to all users if a player is eliminated
       if target.life < 1
         eliminate target

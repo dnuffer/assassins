@@ -21,13 +21,32 @@ RSpec.configure do |conf|
 end
 
 FactoryGirl.define do
-  factory :match do
-    s = Match.gen_salt
-    name 'my_match'
-    salt s
-    password Match.hash_password('password', s)
-    token 'token'
+  
+  factory :user do
+    sequence(:push_id)    { |n| "push#{n}" }
+    sequence(:install_id) { |n| "install#{n}" }
+    sequence(:username)   { |n| "user#{n}" }
+    salt                    User.gen_salt
+    password              { User.hash_password('password', salt) }
+    sequence(:token)      { |n| "token#{n}" }
+    provisional           false
   end
+  
+  factory :player do
+    location({ lat: 3, lng: 3 })
+    life       3
+    user { association(:user) }
+  end
+  
+  factory :match do
+    name      'my_match'
+    salt       Match.gen_salt
+    password { Match.hash_password('password', salt) }
+    token     'token'
+    players  { [ association(:player) ] } 
+    player_ids { [ players.first.id ] }
+  end
+  
 end
 
 describe 'Match' do
@@ -44,15 +63,20 @@ describe 'Match' do
     expect { Match.authenticate 'my_match', 'drowssap' }.to throw_symbol(:halt) 
   end
   
-  it 'can be joined with valid credentials' do
-    stub = FactoryGirl.build_stubbed(:match)
-    Match.stub(:where).and_return [ stub ]
-    match = Match.authenticate 'my_match', 'password'
-    match.should_not eq nil
+  it 'users can join the match' do
+    #GCM.should_receive(:send_notification).exactly(4).times
+    
+    match = FactoryGirl.build_stubbed(:match)
+
+    match.player_ids.length.should eq 1
+    match.players.length.should eq 1
+    
   end
   
   it 'assigns targets' do
-  
+    stub = FactoryGirl.build_stubbed(:match)
+    Match.stub(:where).and_return [ stub ]
+    match = Match.authenticate 'my_match', 'password'
   end
   
   it 'discloses target location to attacker only when in hunt range' do

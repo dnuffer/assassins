@@ -3,9 +3,9 @@
  */
 package com.nbs.client.assassins.views;
 
+import android.app.Fragment;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -22,9 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.actionbarsherlock.app.SherlockMapFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,8 +38,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
+import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
-
+import com.nbs.client.assassins.sensors.BearingProvider;
+import com.nbs.client.assassins.sensors.BearingReceiver;
 
 /**
  * @author cam
@@ -50,8 +49,8 @@ import com.nbs.client.assassins.models.User;
  */
 
 @EFragment
-public class MapFragment extends SherlockMapFragment implements SensorEventListener {
-
+public class MapFragment extends SherlockMapFragment implements BearingReceiver {
+	
 	protected static final String TAG = "MapFragment";
 	
 	@Override
@@ -70,19 +69,20 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		super.onHiddenChanged(hidden);	
 	}
 	
+	BearingProvider bearingProvider;
+	
 	public static final int MODE_NORTH = 0;
 	public static final int MODE_BEARING = 1;
 	private int MODE = MODE_NORTH;
 
+	private float bearing;
+	
 	private static final float DEFAULT_ZOOM = 18.0f;
 	private static final float DEFAULT_TILT = 67.5f;
 	
 	private GoogleMap map;
-	private SensorManager mSensorManager;
-	private Sensor accelerometer;
-	private Sensor magnetometer;
-	private float bearing;
-	private boolean registeredForSensorUpdates = false;
+	
+	private Marker targetLocationMarker;
 	
 	private Circle rangeCircle; 
 	private Polygon boundsPolygon;
@@ -91,10 +91,62 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
  	private int boundsColor = Color.argb(100, Color.red(Color.BLUE), Color.green(Color.BLUE), Color.blue(Color.BLUE));
 	
  	private boolean animating = false;
-	
- 	public MapFragment(){ }
  	
+ 	public MapFragment(){ }
 
+	@Override
+	public void onViewCreated(View view, Bundle savedInstanceState) {
+
+		map = getMap();
+
+		UiSettings uiSettings = map.getUiSettings();
+		uiSettings.setCompassEnabled(true);
+		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+		uiSettings.setScrollGesturesEnabled(false);
+		uiSettings.setRotateGesturesEnabled(false);
+		uiSettings.setZoomGesturesEnabled(true);
+		uiSettings.setZoomControlsEnabled(true);
+		
+		Location lastLocation = getBestLastKnownLocation();
+		LatLng lastLatLng;
+		
+		if(lastLocation == null) {
+			lastLatLng = User.getLocation(getSherlockActivity());
+		} else {
+			lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+			
+			if(User.getLocation(getSherlockActivity()) == null)
+			{
+				User.setLocation(getSherlockActivity(), lastLocation);
+			}	
+		}
+		
+		showGameBoundary();
+		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
+        
+		super.onViewCreated(view, savedInstanceState);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		
+		if(MODE == MODE_BEARING) {
+			registerForSensorUpdates();
+		}
+		else if (MODE == MODE_NORTH) {
+			stopSensorUpdates();
+		}
+		
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		stopSensorUpdates();
+		
+	}
+	
 	public int getCompassMode() {
 		return this.MODE;
 	}
@@ -112,181 +164,22 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 				registerForSensorUpdates();
 		}
 	}
- 	
-	//replace with a broadcast receiver
-	private OnSharedPreferenceChangeListener prefChangeListener =  new OnSharedPreferenceChangeListener() {
-		@Override
-		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			Log.i(TAG, "shared preference changed: " + key);
-		}
-	};
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View root = super.onCreateView(inflater, container, savedInstanceState);
-		
-		return root;
-
-	}
-
-	@Override
-	public void onViewCreated(View view, Bundle savedInstanceState) {
-		
-		//setHasOptionsMenu(true);
-		
-		map = getMap();
-
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getSherlockActivity());
-		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
-
-		UiSettings uiSettings = map.getUiSettings();
-		uiSettings.setCompassEnabled(true);
-		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		uiSettings.setScrollGesturesEnabled(false);
-		uiSettings.setRotateGesturesEnabled(false);
-		uiSettings.setZoomGesturesEnabled(true);
-		uiSettings.setZoomControlsEnabled(true);
-
-		mSensorManager = (SensorManager)getSherlockActivity().getSystemService(Context.SENSOR_SERVICE);
-		accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-		
-		Location lastLocation = getBestLastKnownLocation();
-		LatLng lastLatLng;
-		
-		if(lastLocation == null) {
-			lastLatLng = User.getLocation(getSherlockActivity());
-		} else {
-			lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-			
-			if(User.getLocation(getSherlockActivity()) == null)
-			{
-				User.setLocation(getSherlockActivity(), lastLocation);
-			}	
-		}
-		
-		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
-		
-		super.onViewCreated(view, savedInstanceState);
+	public void setBearingProvider(BearingProvider bp) {
+		bearingProvider = bp;
 	}
 	
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		super.onCreateOptionsMenu(menu, inflater);
-	}
-
-	@Override
-	public void onPrepareOptionsMenu(Menu menu) {
-
-		super.onPrepareOptionsMenu(menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		
-		return false;
-	}
-
-	@Override
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		
-		if(MODE == MODE_BEARING) {
-			registerForSensorUpdates();
-		}
-		else if (MODE == MODE_NORTH) {
-			stopSensorUpdates();
-		}
-	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		stopSensorUpdates();
-		
-	}
-	
-	@Override
-	public void onStop() {
-		super.onStop();
-	}
-	
-	private void registerForSensorUpdates() {
-		if(!registeredForSensorUpdates) {
-			mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-			mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
-			registeredForSensorUpdates = true;
-		}
-	}
 	private void stopSensorUpdates() {
-		if(registeredForSensorUpdates) {
-			mSensorManager.unregisterListener(this);
-			registeredForSensorUpdates = false;
-		}
+		bearingProvider.unregisterForBearingUpdates(this);
 	}
 
-    private float[] mGData = new float[3];
-    private float[] mMData = new float[3];
-    private float[] mR = new float[16];
-    private float[] mI = new float[16];
-    private float[] mOrientation = new float[3];
-    private final float rad2deg = (float)(180.0f/Math.PI);
-
-	/* 
-	 * @see http://www.codingforandroid.com/2011/01/using-orientation-sensors-simple.html 
-	 * @see http://www.netmite.com/android/mydroid/cupcake/development/samples/
-	 *      Compass/src/com/example/android/compass/CompassActivity.java
-	 */
-    public void onSensorChanged(SensorEvent event) {
-
-        int type = event.sensor.getType();
-        
-        if (type == Sensor.TYPE_ACCELEROMETER) {
-            mGData = lowPass( event.values.clone(), mGData );
-        } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
-        	mMData = lowPass( event.values.clone(), mMData );
-        } else {
-            // we should not be here.
-            return;
-        }
-        //TODO landscape mode is not working here
-        SensorManager.getRotationMatrix(mR, mI, mGData, mMData);
-        SensorManager.getOrientation(mR, mOrientation);
-            
-        bearing = (mOrientation[0]*rad2deg); // orientation contains: azimuth, pitch and roll		
-		Log.i(TAG, "Sensor [bearing=" + bearing + "]");
-		
-		moveMapPositionTo(User.getLocation(getSherlockActivity()));
-    }
-    
-	/*
-	 * time smoothing constant for low-pass filter
-	 * 0 ≤ alpha ≤ 1 ; a smaller value basically means more smoothing
-	 * See: http://en.wikipedia.org/wiki/Low-pass_filter#Discrete-time_realization
-	 */
-	private static final float ALPHA = 0.10f;
-
-	/**
-	 * @see http://en.wikipedia.org/wiki/Low-pass_filter#Algorithmic_implementation
-	 * @see http://developer.android.com/reference/android/hardware/SensorEvent.html#values
-	 * @see http://blog.thomnichols.org/2012/06/smoothing-sensor-data-part-2
-	 */
-	private float[] lowPass( float[] newXYZ, float[] oldXYZ ) {
-	    if ( oldXYZ == null ) return newXYZ;
-	     
-	    float[] filtered = new float[newXYZ.length];
-	    for ( int i=0; i<newXYZ.length; i++ ) {
-	    	filtered[i] = oldXYZ[i] + ALPHA * (newXYZ[i] - oldXYZ[i]);
-	    }
-	    return filtered;
+	private void registerForSensorUpdates() {
+		bearingProvider.registerForBearingUpdates(this);
 	}
-
-	public void updateMapPosition() {
-		moveMapPositionTo(User.getLocation(getSherlockActivity()));
+	public void onLocationChanged(LatLng location) {
+		showMyLocation(location); 
+		showAttackRangeCircle(location);
+		moveMapPositionTo(location);
 	}
 	
 	public void moveMapPositionTo(LatLng location) {
@@ -306,7 +199,7 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			Log.d(TAG, "move map to [position=" + location.toString() + 
 					", bearing=" + bearing + 
 					", animate="+ animate + "]");
-		
+
 			CameraPosition cameraPosition = new CameraPosition.Builder()
 				.target(location)
 				.zoom(zoom != null ? zoom : 19)              
@@ -314,33 +207,6 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 				.tilt(tilt != null ? tilt : DEFAULT_TILT)                
 				.build(); 	
 			
-			if(rangeCircle == null) {
-				rangeCircle = map.addCircle(new CircleOptions()
-				     .center(location)
-				     .radius(50)
-				     .strokeColor(circleColor)
-				     .fillColor(Color.TRANSPARENT));
-			} else {
-				rangeCircle.setCenter(location);
-			}
-			
-			if(boundsPolygon == null) {
-				boundsPolygon = map.addPolygon(new PolygonOptions()
-					.zIndex(0)
-					.add(new LatLng(40.3, -111.6), new LatLng(40.4, -111.6), new LatLng(40.4, -111.7), new LatLng(40.3, -111.7))
-				    .strokeColor(boundsColor)
-				    .fillColor(Color.TRANSPARENT));
-			}
-			
-			
-			if(myLocationMarker == null) {	
-				myLocationMarker = map.addMarker(new MarkerOptions()
-		    		.position(location)
-		    		.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-			} else {
-				myLocationMarker.setPosition(location);
-			} 
-
 			CameraUpdate camUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
 			
 			if(animate) {
@@ -367,6 +233,61 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 			}
 		}
 	}
+
+	private void showMyLocation(LatLng location) {
+		if(myLocationMarker == null) {	
+			myLocationMarker = map.addMarker(new MarkerOptions()
+				.position(location)
+				.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+		} else {
+			myLocationMarker.setPosition(location);
+		}
+	}
+	
+	public void showTargetLocation(LatLng tLatLng) {
+		if(targetLocationMarker == null) {
+			targetLocationMarker = getMap().addMarker(
+		    		new MarkerOptions()
+		    		.position(tLatLng)
+		    		.title("target")
+		    		.snippet(PlayerState.getTargetLife(getActivity()).toString())
+		    		.icon(BitmapDescriptorFactory
+		    				.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+			targetLocationMarker.showInfoWindow();
+		}
+		else
+		{
+			targetLocationMarker.setPosition(tLatLng);
+		}
+		
+		targetLocationMarker.setVisible(true);
+	}	
+	
+	public void hideTargetLocation() {
+		if(targetLocationMarker != null) targetLocationMarker.setVisible(false);
+	}
+
+	private void showGameBoundary() {
+		if(boundsPolygon == null) {
+			boundsPolygon = map.addPolygon(new PolygonOptions()
+				.zIndex(0)
+				.add(new LatLng(40.3, -111.6), new LatLng(40.4, -111.6), new LatLng(40.4, -111.7), new LatLng(40.3, -111.7))
+			    .strokeColor(boundsColor)
+			    .fillColor(Color.TRANSPARENT));
+		}
+	}
+
+	private void showAttackRangeCircle(LatLng location) {
+		if(rangeCircle == null) {
+			rangeCircle = map.addCircle(new CircleOptions()
+			     .center(location)
+			     .radius(50)
+			     .strokeColor(circleColor)
+			     .fillColor(Color.TRANSPARENT));
+		} else {
+			rangeCircle.setCenter(location);
+		}
+	}
 	
 	private Location getBestLastKnownLocation() {
 		LocationManager locationManager = (LocationManager) (getSherlockActivity().getSystemService(Context.LOCATION_SERVICE));
@@ -385,4 +306,21 @@ public class MapFragment extends SherlockMapFragment implements SensorEventListe
 		
 		return location;
 	}
+
+	
+
+
+	@Override
+	public void onBearingChanged(float bearing) {
+		this.bearing =- bearing;
+		
+		//TOD
+		
+	}
+	
+	public void onTargetBearingChanged(float tBearing) {
+		
+		
+	}
+
 }

@@ -23,7 +23,7 @@ class Match
   
   #field :type, String
   
-  #field :start_time, Integer
+  #field :start_time, type: Integer, default: -> { Time.now.utc._to_i + 100 } #TODO start match in 1 min (just for testing)
   #field :max_players, Integer
   
   #field :nw_corner, type: Array, spacial: true
@@ -75,9 +75,8 @@ class Match
     self.token = SecureRandom.hex
   end
   
-  
   def add_user new_user
-    unless new_user.nil? or new_user.in_match? #TODO or past match start time
+    unless in_progress? or new_user.nil? or new_user.in_match?
       new_user.create_player
       players << new_user.player
       player_ids << new_user.player.id.to_s
@@ -90,7 +89,7 @@ class Match
           player.user.send_push_notification({
             type: :player_joined_match,
             match: name,
-            player: new_user.username
+            player_joined_match: new_user.username
           })
         end
       end 
@@ -98,7 +97,7 @@ class Match
   end
   
   def in_progress?
-    winner.nil?
+    players.length > 1 and winner.nil?
   end
   
   def is_public?
@@ -158,9 +157,9 @@ class Match
             
             unless the_winner.nil?
               player.user.send_push_notification({
-                type:  :match_winner,
+                type:  :match_end,
                 match: self.name,
-                match_winner: the_winner
+                winner: the_winner
               })
             end
           end

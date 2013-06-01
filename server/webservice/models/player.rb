@@ -13,6 +13,8 @@ class Player
   field :location, type: Array,   spacial: true
   field :life,     type: Integer, default: 3
   
+  #field :range_to_target, type: Enum[ :search, :hunt, :attack ]
+  
   spacial_index :location
   
   def latlng
@@ -25,6 +27,19 @@ class Player
   
   def alive?
     life > 0
+  end
+  
+  def range_to other_player
+    if not other_player.nil? and other_player.location?
+      dist = distance_to(other_player) 
+      if dist < match.attack_range
+        return :attack_range
+      elsif dist < match.hunt_range
+        return :hunt_range
+      end
+      return :search_range
+    end
+    return :unknown_range
   end
   
   def distance_to point
@@ -57,16 +72,41 @@ class Player
   def update_location lat, lng
     self.location = { lat: lat, lng: lng }
     save
+    notify_target
+    notify_enemy
+  end
+
+
+  def state
+    my_enemy  = self.get_enemy
+    my_target = self.get_target
+    playerstate = {
+      time:           Time.now.utc.to_i,
+      target_life:    life,
+      target_bearing: my_enemy.bearing_to(self),
+      target_range:   range_to(my_enemy),
+      my_life:        life,
+      enemy_range:    range_to(my_target)
+    }
+    enemy_distance = my_enemy.distance_to(self)
+    unless enemy_distance.nil? or enemy_distance > match.hunt_range
+      playerstate.merge!({
+        target_lat: my_target.location[:lat],
+        target_lng: my_target.location[:lng]
+      })
+    end       
+    return playerstate
   end
 
   def notify_enemy
     my_enemy = self.get_enemy
     unless my_enemy.nil?
       notification = {
-        type:             :target_event,
-        time:             Time.now.utc,
-        target_life:      life,
-        target_bearing:   my_enemy.bearing_to(self)
+        type:           :target_event,
+        time:           Time.now.utc.to_i,
+        target_life:    life,
+        target_bearing: my_enemy.bearing_to(self),
+        target_range:   range_to(my_enemy) 
       }
 
       enemy_distance = my_enemy.distance_to(self)
@@ -85,10 +125,14 @@ class Player
     my_target = self.get_target
     unless my_target.nil?
       my_target.user.send_push_notification({
-        type:            :enemy_event,
-        time:            Time.now.utc,
-        my_life:         my_target.life,
-        enemy_proximity: distance_to(my_target)
+        type:        :enemy_event,
+        time:        Time.now.utc.to_i,
+        #an attack is considered an enemy event
+        # attack is only indicated by a change in life
+        # at the moment, life is always sent, even if life has not changed.
+        # TODO send a separate 'attacked' message with current life
+        my_life:     my_target.life,
+        enemy_range: range_to(my_target)
       })
     end
     

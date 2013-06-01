@@ -7,6 +7,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import net.simonvt.menudrawer.MenuDrawer;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +15,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 
@@ -27,6 +32,10 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
 
 import com.google.android.gcm.GCMRegistrar;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
@@ -36,13 +45,20 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
+import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.network.AttackResponse;
 import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.LocationMessage;
+import com.nbs.client.assassins.network.LocationResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.views.CreateAccountFragment;
 import com.nbs.client.assassins.views.CreateMatchFragment;
+import com.nbs.client.assassins.views.GameFragment;
+import com.nbs.client.assassins.views.GameFragment_;
+import com.nbs.client.assassins.views.HUDFragment_;
 import com.nbs.client.assassins.views.JoinMatchFragment;
 import com.nbs.client.assassins.views.MapFragment;
 import com.nbs.client.assassins.views.MapFragment_;
@@ -67,33 +83,15 @@ public class MainActivity extends SherlockFragmentActivity {
 	
 	private final String TAG = "MainActivity";
 	
-
-	MapFragment_ mapFragment;
-	
 	@RestService
 	HuntedRestClient restClient;
 	
-	CreateAccountFragment createAccountFragment;
-	CreateMatchFragment createMatchFragment;
-	JoinMatchFragment joinMatchFragment;
 	NotificationFragment notifFrag;
 	MenuFragment menuFrag;
-
-	@ViewById(R.id.toggle_compass)
-	ImageView toggleCompass;
+	GameFragment gameFragment;
 	
-	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
-	public static final String ACTION = "some_action";
-	public static final String ATTACKED = "attacked";
-	public static final String MATCH_START = "match_start";
-	public static final String MATCH_END = "match_end";
-	public static final String MATCH_REMINDER = "match_reminder";
-	public static final String INVITATION = "invitation";
-	public static final String MATCH_EVENT = "match_event";
-	public static final String TARGET_STATE_CHANGED = "a";
-	public static final String ENEMY_STATE_CHANGED = "b";
-	public static final String MY_STATE_CHANGED = "c";
-
+	public static final String LOCATION_UPDATED  = "com.nbs.android.client.LOCATION_UPDATED";
+	
 	/*options menu items*/
 	private static final int JOIN_ID = 0;
 	private static final int CREATE_ACCOUNT_ID = 1;
@@ -116,16 +114,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	
 	//MenuDrawer mDrawer;
 
-	private OnSharedPreferenceChangeListener prefChangeListener =  new OnSharedPreferenceChangeListener() {
-
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            Log.i(TAG, "shared preference changed: " + key);      
-        }
-	};
-
 	private boolean sideNavMenuShowing;
-
 	
 	public MainActivity() {
 	}
@@ -137,12 +126,16 @@ public class MainActivity extends SherlockFragmentActivity {
     	Log.d(TAG, "onCreate() UserModel" + User._toString(this));
         
         registerForPushNotifications();
-        
-    	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		sp.registerOnSharedPreferenceChangeListener(prefChangeListener);
 
         intentActionFilter = new IntentFilter();
-        intentActionFilter.addAction(ACTION);      
+        intentActionFilter.addAction(PlayerState.NEW_TARGET);   
+        intentActionFilter.addAction(PlayerState.TARGET_EVENT);
+        intentActionFilter.addAction(PlayerState.TARGET_BEARING_CHANGED); 
+        intentActionFilter.addAction(PlayerState.TARGET_LIFE_CHANGED); 
+        intentActionFilter.addAction(PlayerState.TARGET_LOCATION_CHANGED); 
+        intentActionFilter.addAction(PlayerState.TARGET_RANGE_CHANGED); 
+        intentActionFilter.addAction(PlayerState.ATTACKED); 
+        intentActionFilter.addAction(PlayerState.ENEMY_RANGE_CHANGED); 
         
         intentLocationUpdateFilter = new IntentFilter();
         intentLocationUpdateFilter.addAction(LOCATION_UPDATED);   
@@ -154,13 +147,13 @@ public class MainActivity extends SherlockFragmentActivity {
         //mDrawer.setContentView(R.layout.activity_main);
         //mDrawer.setMenuView(R.layout.menu_list);
         setContentView(R.layout.activity_main);
-        
-		FragmentTransaction ft;
-		mapFragment = new MapFragment_();
-		ft = getSupportFragmentManager().beginTransaction();
-		ft.replace(R.id.fragment_container, mapFragment);
-		ft.commit();
-        
+
+    	FragmentTransaction ft;
+    	gameFragment = new GameFragment_();
+    	ft = getSupportFragmentManager().beginTransaction();
+    	ft.replace(R.id.fragment_container, gameFragment);
+    	ft.commit();
+
  		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		
     }
@@ -171,6 +164,49 @@ public class MainActivity extends SherlockFragmentActivity {
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
 				new HttpComponentsClientHttpRequestFactory());
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
+		Log.i(TAG, "onActivityResult");
+		supportInvalidateOptionsMenu();
+		super.onActivityResult(requestCode, resultCode, arg2);
+	}
+	
+    @Override
+    public void onDestroy() 
+    {
+        try {
+        	GCMRegistrar.onDestroy(this);
+        }
+        catch(RuntimeException e) {
+        	Log.v(TAG, e.getMessage());
+        }
+    	super.onDestroy();
+    }
+
+	@Override
+	protected void onPause() 
+	{
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentActionReceiver);
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver);
+	    super.onPause();
+	}
+	
+	@Override
+	protected void onResume() 
+	{
+	    super.onResume();
+
+	    LocalBroadcastManager.getInstance(this)
+	    	.registerReceiver(intentActionReceiver, intentActionFilter);
+	    LocalBroadcastManager.getInstance(this)
+	    	.registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {		
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	private void registerForPushNotifications() {
@@ -196,51 +232,6 @@ public class MainActivity extends SherlockFragmentActivity {
     @Background
 	public void registerGCMRegIdOnServerInBackground() {
     	Log.e(TAG, "Gcm Registered with google, but apparently not on server...");
-	}
-
-    
-    @Override
-    public void onDestroy() 
-    {
-        try {
-        	GCMRegistrar.onDestroy(this);
-        }
-        catch(RuntimeException e) {
-        	Log.v(TAG, e.getMessage());
-        }
-    	super.onDestroy();
-    }
-
-	@Override
-	protected void onPause() 
-	{
-		unregisterReceiver(intentActionReceiver);
-		unregisterReceiver(locationUpdateReceiver);
-	    super.onPause();
-	}
-	
-	@Override
-	protected void onResume() 
-	{
-	    super.onResume();
-
-	    registerReceiver(intentActionReceiver, intentActionFilter);
-	    registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
-	}
-
-	@Click(R.id.toggle_compass)
-	public void onToggleCompass() {
-		mapFragment.toggleCompassMode();
-		toggleCompass.setImageResource(
-			mapFragment.getCompassMode() == MapFragment.MODE_BEARING ? 
-					R.drawable.north : R.drawable.compass);
-
-	}
-	
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {		
-		return super.onCreateOptionsMenu(menu);
 	}
 	
 	private void addInMatchOptionsMenuItems(Menu menu) {
@@ -344,10 +335,37 @@ public class MainActivity extends SherlockFragmentActivity {
 				asyncProgress.show();
 	    		signOut(asyncProgress);
 	    		return true;
+	    	case ATTACK_ID:
+	    		item.setEnabled(false);
+	    		attack(item);
+	    		return true;
 			default:
 	    }
 	    
 		return super.onOptionsItemSelected(item);
+	}
+
+	@Background
+	public void attack(MenuItem attackMenuItem) {
+		LocationMessage msg = new LocationMessage();
+		LatLng latlng = User.getLocation(this);
+		msg.latitude = latlng.latitude;
+		msg.longitude = latlng.longitude;
+		msg.installId = User.getInstallId(this);
+		
+		AttackResponse response = restClient.attack(User.getToken(this), msg);
+		attackFinished(response, attackMenuItem);
+	}
+	
+	@UiThread
+	public void attackFinished(AttackResponse response, MenuItem attackMenuItem)
+	{
+		attackMenuItem.setEnabled(true);
+		
+		if(response.ok()) {
+			PlayerState.setTargetLife(this, Integer.parseInt(response.targetLife));
+			Toast.makeText(this, "Attack " + response.ok(), Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	@Background
@@ -386,10 +404,10 @@ public class MainActivity extends SherlockFragmentActivity {
 		FragmentTransaction ft;
 		if(notificationsShowing) {
 			removeNotificationFragment();
-			this.toggleCompass.setVisibility(ImageView.VISIBLE);
+			//this.toggleCompass.setVisibility(ImageView.VISIBLE);
 		} else {
 			hideSideNavMenuFragment();
-			this.toggleCompass.setVisibility(ImageView.INVISIBLE);
+			//this.toggleCompass.setVisibility(ImageView.INVISIBLE);
 			notificationsShowing = true;
 			notifFrag = new NotificationFragment();
 			ft = getSupportFragmentManager().beginTransaction();
@@ -448,84 +466,57 @@ public class MainActivity extends SherlockFragmentActivity {
 	
 	
 	private void removeNotificationFragment() {
-		
 		if(notificationsShowing && notifFrag != null) {
-			/*
-			 * For 3.0+
-			 * dummyFragment = new Fragment();
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.setCustomAnimations(R.animator.object_slide_in_left, R.animator.object_slide_out_right);
-			ft.replace(R.id.fragment_container, dummyFragment);
-		    ft.commit();  */
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 			ft.remove(notifFrag);
 		    ft.commit();
 		    notificationsShowing = false;
 		    supportInvalidateOptionsMenu();
-		}
-		
+		}	
 	}
-	
 
 	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) 
-        {
+        public void onReceive(Context context, Intent intent) {
     		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
-    	
-    		if(mapFragment != null)
-    			mapFragment.updateMapPosition();
+    		gameFragment.onLocationChanged(User.getLocation(context));
 	    }
 	};
 	
-	   private BroadcastReceiver intentActionReceiver = new BroadcastReceiver() 
-	    {
-	        @Override
-	        public void onReceive(Context context, Intent intent) 
-	        {
-	    		Log.v(TAG, "map " + mapFragment);
-	        	
-	        	if(mapFragment != null)
-	    		{
-/*		    		LocationMessage u = new LocationMessage();
-		    		u.installId = intent.getStringExtra("installId");
-		    		u.latitude = intent.getDoubleExtra("latitude", 0);
-		    		u.longitude = intent.getDoubleExtra("longitude", 0);
-
-		    		Log.v(TAG, u.installId);
-		    		Log.v(TAG, Installation.id(context));
-		    		
-		    		Float markerColor = u.installId == Installation.id(context) ? 
-									    					BitmapDescriptorFactory.HUE_AZURE : 
-									    					BitmapDescriptorFactory.HUE_GREEN;
-		    		
-		    		Marker m = map.getMap().addMarker(
-		    		new MarkerOptions()
-		    		.position(new LatLng(u.latitude, u.longitude))
-		    		.title(u.installId)
-		    		.snippet("snippet")
-		    		.icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
-		    		
-		    		
-		    		m.showInfoWindow();*/
-	    		}
-
-	        }
-	    };
-
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
-		Log.i(TAG, "onActivityResult");
-		supportInvalidateOptionsMenu();
-		
-		
-		
-		super.onActivityResult(requestCode, resultCode, arg2);
-	}
-
-
-
-
+	private BroadcastReceiver intentActionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        	String action = intent.getAction();
+        	
+        	Log.d(TAG, "received event [" + action + "]");
+    		
+    		if(action.equals(PlayerState.NEW_TARGET)) {
+    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_LONG).show();
+    		}
+    		else if(action.equals(PlayerState.TARGET_EVENT)) {
+    			String tRange = PlayerState.getTargetProximity(context);
+    			gameFragment.onTargetRangeChanged(tRange);
+    		}
+    		else if(action.equals(PlayerState.TARGET_BEARING_CHANGED)) {
+    			float tBearing = PlayerState.getTargetBearing(context);
+    			gameFragment.onTargetBearingChanged(tBearing);
+    		}
+    		else if(action.equals(PlayerState.TARGET_LIFE_CHANGED)) {
+    			//TODO: update target life indicator
+    			Toast.makeText(context, "you target has suffered a blow.", 1000).show();
+    		}
+    		else if(action.equals(PlayerState.TARGET_RANGE_CHANGED)) {
+    			//TODO: update target range indicator
+    		}
+    		else if(action.equals(PlayerState.ATTACKED)) {
+    			//TODO: update my life indicator
+    			Toast.makeText(context, "you were attacked.", 1000).show();
+    		}
+    		else if(action.equals(PlayerState.ENEMY_RANGE_CHANGED)) {
+    			Toast.makeText(context, "your enemy has entered " + 
+    									PlayerState.getEnemyProximity(context) + ".", 1000).show();
+    		}
+        }
+	};
 
 }

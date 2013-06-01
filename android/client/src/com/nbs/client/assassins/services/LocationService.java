@@ -10,10 +10,12 @@ import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.controllers.MainActivity;
+import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.network.LocationResponse;
+import com.nbs.client.assassins.network.PlayerStateResponse;
 
 import android.app.Service;
 import android.content.Intent;
@@ -24,6 +26,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 @EService
@@ -82,12 +85,34 @@ public class LocationService extends Service {
 				
 				if(response != null && response.ok()) {
 					Log.i(TAG,"location successfully sent to server.");
-		            Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		            editor.putString("my_lat", Double.toString(response.latitude));
-		            editor.putString("my_lng", Double.toString(response.longitude));
-		            editor.commit();
-
-		            sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
+					User.setLocation(this, response.latitude, response.longitude);
+					
+					PlayerStateResponse state = response.playerState;
+					
+					if(state != null)
+					{
+						if(state.myLife != null) {
+							PlayerState.setMyLife(this, state.myLife);
+						}
+						if(state.enemyRange != null) {
+							PlayerState.setEnemyProximity(this, state.enemyRange);
+						}
+						if(state.targetLife != null) {
+							PlayerState.setTargetLife(this, state.targetLife);
+						}
+						if(state.targetLat != null && state.targetLng != null) {
+							PlayerState.setTargetLocation(this, state.targetLat, state.targetLng);
+						}
+						if(state.targetBearing != null) {
+							PlayerState.setTargetBearing(this, state.targetBearing);
+						}
+						if(state.targetRange != null) {
+							PlayerState.setTargetProximity(this, state.targetRange);
+						}
+					}
+					
+		            LocalBroadcastManager.getInstance(this)
+		            	.sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
 				}
 			}
 		}
@@ -110,7 +135,7 @@ public class LocationService extends Service {
 		};
 
 		// Register the listener with the Location Manager to receive location updates
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0/*ms*/, 5/*meters*/, locationListener);
+		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0/*ms*/, 3/*meters*/, locationListener);
 	}
 
 	@Override

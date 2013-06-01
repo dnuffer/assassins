@@ -4,6 +4,8 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.google.android.gms.maps.model.LatLng;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Player {
@@ -11,4 +13,15 @@ public class Player {
 	@JsonProperty("username")
 	public String username;
 	
+	private int	myLife;
+	private int targetLife;
+	
+	private LatLng myLocation;
+	private LatLng targetLocation;
+	
+	private float bearingToTarget;
+	
+	private String targetProximity;
+	private String enemyProximity;
+
 }

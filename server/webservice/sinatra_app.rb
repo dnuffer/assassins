@@ -188,12 +188,11 @@ post '/api/users/:token/location' do
   if user.in_match?
     player = user.player
     player.update_location data['latitude'], data['longitude']
-    player.notify_target
-    player.notify_enemy
-  
+
     return { 
       status:   'ok', 
-      message:  'location updated', 
+      message:  'location updated',
+      player_state: player.state,
       latitude:  player.location[:lat], 
       longitude: player.location[:lng]
     }.to_json
@@ -294,6 +293,7 @@ post '/api/users/:token/attack' do
     message: 'attack failed',
     hit:     false }.to_json 
 end
+
 
 #return wrapped response to allow for error handling like twitter api
 # {"response" : null, "type" : "error", "errors":[{"message":"Bad Authentication data","code":215}]}

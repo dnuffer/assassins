@@ -57,7 +57,7 @@ describe 'Match' do
     # TODO how to really test create without mongo?
   end
   
-  it 'can be authenticated without correct password' do
+  it 'cannot be authenticated with incorrect password' do
     stub = FactoryGirl.build_stubbed(:match)
     Match.stub(:where).and_return [ stub ]
     expect { Match.authenticate 'my_match', 'drowssap' }.to throw_symbol(:halt) 
@@ -264,7 +264,7 @@ describe 'Sinatra App' do
     sleep 0.4
   end
   
-  it "accepts an attack" do
+  it "accepts an attack and sends a push notification to target" do
     GCM.should_receive(:send_notification).once
     token="newToken1"
     
@@ -278,7 +278,7 @@ describe 'Sinatra App' do
     sleep 0.4
   end
   
-  it "accepts an attack" do
+  it "accepts more attacks and sends push notifications for match over" do
     GCM.should_receive(:send_notification).exactly(4).times
     token="newToken1"
     

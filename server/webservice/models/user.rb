@@ -75,7 +75,7 @@ class User
 
     user = User.where(:username => data['username']).first
     
-    unless user.nil? or not user.correct_password? data['password']
+    if not user.nil? and user.correct_password? data['password']
       if user.in_match?
         throw :halt, { status: 'error',
                        message: 'cannot login on a different device when in a match' }.to_json

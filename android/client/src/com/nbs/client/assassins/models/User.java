@@ -80,12 +80,6 @@ public class User {
     	return getToken(context) != null;
     }
 
-	public static String _toString(Context c) {
-		
-		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
-				"match=" + getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
-	}
-
 	public static LatLng getLocation(Context c) {
 		
 		if(c == null) return null;
@@ -113,8 +107,16 @@ public class User {
     	editor.putString("my_lat", Double.toString(lastLocation.getLatitude()));
     	editor.putString("my_lng", Double.toString(lastLocation.getLongitude()));
         editor.commit();
-		
 	}
+	
+	public synchronized static void setLocation(Context context,
+			double lat, double lng) {
+    	if(context == null) return;
+    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+    	editor.putString("my_lat", Double.toString(lat));
+    	editor.putString("my_lng", Double.toString(lng));
+        editor.commit();
+	}  
 
 	public synchronized static void setMatch(Context context, Match match) {
 
@@ -178,5 +180,11 @@ public class User {
 		User.setMatch(context, null);
 		User.setUsername(context, null);
 		User.setToken(context, null);
-	}  
+	}
+	
+	public static String _toString(Context c) {
+		
+		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
+				"match=" + getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
+	}
 }

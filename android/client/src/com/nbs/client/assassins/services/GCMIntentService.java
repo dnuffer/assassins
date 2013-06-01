@@ -1,5 +1,7 @@
 package com.nbs.client.assassins.services;
 
+import java.util.UUID;
+
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import android.app.NotificationManager;
@@ -10,15 +12,19 @@ import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gcm.GCMBaseIntentService;
 import com.google.android.gcm.GCMRegistrar;
+import com.google.android.gms.maps.model.LatLng;
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.MainActivity;
+import com.nbs.client.assassins.models.Player;
+import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.GCMRegistrationMessage;
 import com.nbs.client.assassins.network.HuntedRestClient;
@@ -59,54 +65,85 @@ public class GCMIntentService extends GCMBaseIntentService {
 	protected void onMessage(Context c, Intent intent) {
 		Log.i(TAG, "received a GCM message.");
 		Log.i(TAG, "  action: " + intent.getAction());
-		Bundle b = intent.getExtras();
+		Bundle extras = intent.getExtras();
 		
-		for(String key : b.keySet())
+		for(String key : extras.keySet())
 		{
-			Log.i(TAG, "  " + key + " : " + b.getString(key));
-			
-            //Editor editor = PreferenceManager.getDefaultSharedPreferences(c).edit();
-            //editor.putString(key, b.getString(key));
-            //editor.commit();
+			Log.i(TAG, "  " + key + " : " + extras.getString(key));
 		}
 		
-		//String msgType = (String)b.get("type");
+		String type = extras.getString("type");
 		
-		//Log.i(TAG, "message type: " + msgType);
-		
-		
-		//if(msgType.equals(GCMMessages.TARGET_EVENT))
-		//{
-			
-		//}
-		
-		/*intent.setAction(MainActivity.ACTION);
-		
+		if(type.equals(GCMMessages.NEW_TARGET)) {
+			PlayerState.onNewTarget(c, extras);
+		}
+		else if(type.equals(GCMMessages.TARGET_EVENT)) {
+			PlayerState.onTargetEvent(c, extras);
+		}
+		else if(type.equals(GCMMessages.ENEMY_EVENT)) {
+			PlayerState.onEnemyEvent(c, extras);
+		}
+		else if(type.equals(GCMMessages.PLAYER_JOINED_MATCH)) {
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.PLAYER_JOINED_MATCH, new Bundle());
+		}
+		else if(type.equals(GCMMessages.MATCH_REMINDER))
+		{
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.MATCH_REMINDER, new Bundle());
+		}
+		else if(type.equals(GCMMessages.MATCH_START))
+		{
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.MATCH_START, new Bundle());
+		}
+		else if(type.equals(GCMMessages.MATCH_END))
+		{
+			PlayerState.onMatchEnd(c, extras);
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.MATCH_END, new Bundle());
+		}
+		else if(type.equals(GCMMessages.PLAYER_ELIMINATED))
+		{
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.PLAYER_ELIMINATED, new Bundle());
+		}
+		else if(type.equals(GCMMessages.INVITE))
+		{
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.INVITE, new Bundle());
+		}
+		else if(type.equals(GCMMessages.ACHIEVEMENT))
+		{
+			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+					TAG, GCMMessages.ACHIEVEMENT, new Bundle());
+		}
+	}
+	
+	private void postNotification(int id, int res, String title, String message, Bundle extras)
+	{
 		try {
-			c.sendBroadcast(intent);
-			
 			//the intent to launch when the notification is touched
 		    Intent notificationIntent = new Intent(this, MainActivity.class);
-		    notificationIntent.putExtras(intent);
-			
+		    notificationIntent.putExtras(extras);
+		    
 		    NotificationCompat.Builder builder = 
 		    		new NotificationCompat.Builder(this)  
-		            .setSmallIcon(R.drawable.ic_launcher)  
-		            .setContentTitle(intent.getStringExtra("type"))  
-		            .setContentText(intent.getStringExtra("message"))
+		            .setSmallIcon(res)  
+		            .setContentTitle(title)  
+		            .setContentText(message)
 		        	.setAutoCancel(true)
 	        		.setContentIntent(PendingIntent.getActivity(
 	        				this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
 	        // Add as notification  
 	        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);  
-	        manager.notify(MainActivity.ACTION.hashCode(), builder.build());  
+	        manager.notify(id, builder.build());  
 		}
 		catch (IllegalArgumentException e) {
 			Log.v(TAG, e.getMessage());
-		}*/
+		}
 	}
-
 
 	
 	@Override

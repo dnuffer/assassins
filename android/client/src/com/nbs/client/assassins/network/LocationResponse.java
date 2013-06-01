@@ -15,6 +15,9 @@ public class LocationResponse extends Response {
 	@JsonProperty("longitude")
 	public double longitude;
 	
+	@JsonProperty("player_state")
+	public PlayerStateResponse playerState;
+	
 	@Override
 	public String toString() {
 		return "LocationResponse [latitude=" + latitude + ", longitude="

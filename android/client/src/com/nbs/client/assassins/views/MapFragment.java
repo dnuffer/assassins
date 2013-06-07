@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.actionbarsherlock.app.SherlockMapFragment;
+import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -37,6 +38,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
 import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
@@ -91,6 +94,10 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
  	private int boundsColor = Color.argb(100, Color.red(Color.BLUE), Color.green(Color.BLUE), Color.blue(Color.BLUE));
 	
  	private boolean animating = false;
+
+	private Float tBearing;
+
+	private Polyline tBearingLine;
  	
  	public MapFragment(){ }
 
@@ -179,6 +186,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 
 		showAttackRangeCircle(location);
+		showDirectionToTarget(tBearing);
 		moveMapPositionTo(location);
 	}
 	
@@ -289,6 +297,37 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		}
 	}
 	
+
+	private void showDirectionToTarget(Float tBearing) {
+		
+		if(tBearing != null && myLocationMarker != null) {
+		
+			LatLng myLocation = this.myLocationMarker.getPosition();
+			
+			tBearing = (float) Math.toRadians(tBearing);
+			
+			double dist = 0.05/6371.0;
+			double lat1 = Math.toRadians(myLocation.latitude);
+			double lon1 = Math.toRadians(myLocation.longitude);
+	
+			double lat2 = Math.asin( Math.sin(lat1)*Math.cos(dist) + Math.cos(lat1)*Math.sin(dist)*Math.cos(tBearing) );
+			double a = Math.atan2(Math.sin(tBearing)*Math.sin(dist)*Math.cos(lat1), Math.cos(dist)-Math.sin(lat1)*Math.sin(lat2));
+			double lon2 = lon1 + a;
+			//lon2 = (lon2+ 3.0*Math.PI) % (2.0*Math.PI) - Math.PI;
+			
+			if(tBearingLine != null) {
+				tBearingLine.remove();
+			}
+			
+			tBearingLine = map.addPolyline(new PolylineOptions()
+					.add(myLocation, new LatLng(Math.toDegrees(lat2), Math.toDegrees(lon2)))
+					.color(circleColor));
+		}
+		else if(tBearingLine != null) {
+			tBearingLine.remove();
+		}
+	}
+	
 	private Location getBestLastKnownLocation() {
 		LocationManager locationManager = (LocationManager) (getSherlockActivity().getSystemService(Context.LOCATION_SERVICE));
 		
@@ -312,15 +351,13 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 
 	@Override
 	public void onBearingChanged(float bearing) {
-		this.bearing =- bearing;
-		
-		//TOD
-		
+		this.bearing = bearing;
+		moveMapPositionTo(this.myLocationMarker.getPosition());
 	}
 	
 	public void onTargetBearingChanged(float tBearing) {
-		
-		
+		this.tBearing = tBearing;
+		showDirectionToTarget(tBearing);
 	}
 
 }

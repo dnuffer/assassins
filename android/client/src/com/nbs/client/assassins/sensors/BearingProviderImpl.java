@@ -55,6 +55,7 @@ public class BearingProviderImpl implements BearingProvider, SensorEventListener
     
 	public void onBearingChanged(float bearing) {
 		for(BearingReceiver receiver : bearingReceivers.values()) {
+			Log.d(TAG, receiver.toString());
 			receiver.onBearingChanged(bearing);
 		}
 		
@@ -69,7 +70,7 @@ public class BearingProviderImpl implements BearingProvider, SensorEventListener
 
 	@Override
 	public void unregisterForBearingUpdates(BearingReceiver receiver) {
-		bearingReceivers.remove(receiver.hashCode());
+		bearingReceivers.remove(receiver);
 		if(bearingReceivers.isEmpty()) stopSensorUpdates();
 	}
 

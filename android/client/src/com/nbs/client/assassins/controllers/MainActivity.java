@@ -80,7 +80,6 @@ String macAddress = wInfo.getMacAddress(); */
 @EActivity
 public class MainActivity extends SherlockFragmentActivity {
 	
-	
 	private final String TAG = "MainActivity";
 	
 	@RestService
@@ -214,17 +213,14 @@ public class MainActivity extends SherlockFragmentActivity {
     	GCMRegistrar.checkDevice(this);
         GCMRegistrar.checkManifest(this);
 		
-		if(GCMRegistrar.isRegistered(this))
-        {
+		if(GCMRegistrar.isRegistered(this)) {
         	Log.i(TAG, "registered GCM id.");
         	
-        	if(!GCMRegistrar.isRegisteredOnServer(this))
-        	{
+        	if(!GCMRegistrar.isRegisteredOnServer(this)) {
         		registerGCMRegIdOnServerInBackground();
         	}
         	
-        } else
-        {
+        } else {
         	GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
         }
 	}
@@ -347,21 +343,30 @@ public class MainActivity extends SherlockFragmentActivity {
 
 	@Background
 	public void attack(MenuItem attackMenuItem) {
-		LocationMessage msg = new LocationMessage();
-		LatLng latlng = User.getLocation(this);
-		msg.latitude = latlng.latitude;
-		msg.longitude = latlng.longitude;
-		msg.installId = User.getInstallId(this);
 		
-		AttackResponse response = restClient.attack(User.getToken(this), msg);
-		attackFinished(response, attackMenuItem);
+		Log.d(TAG, "attack in background");
+		
+		try {
+			LocationMessage msg = new LocationMessage();
+			LatLng latlng = User.getLocation(this);
+			msg.latitude = latlng.latitude;
+			msg.longitude = latlng.longitude;
+			msg.installId = User.getInstallId(this);
+			
+			AttackResponse response = restClient.attack(User.getToken(this), msg);
+			attackFinished(response, attackMenuItem);
+		}
+		catch(Exception e) {
+			Log.d(TAG, e.getMessage());
+		}
 	}
 	
 	@UiThread
 	public void attackFinished(AttackResponse response, MenuItem attackMenuItem)
 	{
+		Log.d(TAG, "attackFinished status:" + response.ok());
 		attackMenuItem.setEnabled(true);
-		
+
 		if(response.ok()) {
 			PlayerState.setTargetLife(this, Integer.parseInt(response.targetLife));
 			Toast.makeText(this, "Attack " + response.ok(), Toast.LENGTH_SHORT).show();

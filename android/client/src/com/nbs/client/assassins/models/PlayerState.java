@@ -76,7 +76,7 @@ public class PlayerState {
     	editor.putInt("target_life", targetLife);
         editor.commit();
         
-		if(targetLife != oldLife)
+		if(targetLife < oldLife)
 		{
 			LocalBroadcastManager.getInstance(c)
 				.sendBroadcast(new Intent().setAction(TARGET_LIFE_CHANGED));

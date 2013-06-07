@@ -49,7 +49,7 @@ public interface HuntedRestClient {
 	@Accept(MediaType.APPLICATION_JSON)
 	LocationResponse updateLocation(String token, LocationMessage msg);	
 	
-	@Post("users/{token}/attack")
+	@Post("/users/{token}/attack")
 	@Accept(MediaType.APPLICATION_JSON)
 	AttackResponse attack(String token, LocationMessage msg);
 	

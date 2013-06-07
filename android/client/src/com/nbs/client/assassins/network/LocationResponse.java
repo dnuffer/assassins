@@ -17,11 +17,11 @@ public class LocationResponse extends Response {
 	
 	@JsonProperty("player_state")
 	public PlayerStateResponse playerState;
-	
+
 	@Override
 	public String toString() {
 		return "LocationResponse [latitude=" + latitude + ", longitude="
-				+ longitude + ", status=" + status + ", message=" + message
-				+ "]";
+				+ longitude + ", playerState=" + playerState + ", status="
+				+ status + ", message=" + message + ", ok()=" + ok() + "]";
 	}
 }

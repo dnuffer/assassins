@@ -3,8 +3,14 @@ package com.nbs.client.assassins.services;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import com.google.android.gcm.GCMRegistrar;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
+import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationListener;
 import com.googlecode.androidannotations.annotations.AfterInject;
-import com.googlecode.androidannotations.annotations.App;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
@@ -19,13 +25,10 @@ import com.nbs.client.assassins.network.PlayerStateResponse;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences.Editor;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -40,8 +43,11 @@ public class LocationService extends Service {
 	@SystemService
 	LocationManager locationManager;
 
+	LocationClient locationClient;
 	LocationListener locationListener;
 	Location current;
+	
+	ActivityRecognitionClient userActivityRecognitionClient;
 
 	@AfterInject
 	public void afterInjection() {
@@ -61,7 +67,7 @@ public class LocationService extends Service {
 	@Background
 	public void updateLocation(Location newLocation)
 	{
-		if(User.hasToken(this) && isBetterLocation(newLocation, current))
+		if(User.hasToken(this)/* && isBetterLocation(newLocation, current)*/)
 		{
 			current = newLocation;
 
@@ -126,21 +132,68 @@ public class LocationService extends Service {
 			public void onLocationChanged(Location location) {
 				updateLocation(location);
 			}
-
-			public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-			public void onProviderEnabled(String provider) {}
-
-			public void onProviderDisabled(String provider) {}
 		};
-
-		// Register the listener with the Location Manager to receive location updates
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0/*ms*/, 3/*meters*/, locationListener);
+		
+		
+		locationClient = new LocationClient(this, 
+			new ConnectionCallbacks(){
+				@Override
+				public void onConnected(Bundle arg0) {
+					Location lastLocation = locationClient.getLastLocation();
+					
+					if(lastLocation != null) {
+						updateLocation(lastLocation);
+					}
+					
+					locationClient.requestLocationUpdates(
+							new LocationRequest()
+								.setInterval(5000)
+								.setSmallestDisplacement(4)
+								.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY),
+							locationListener);
+				}
+				@Override
+				public void onDisconnected() {
+					// TODO Auto-generated method stub
+					
+				}
+			}, 
+			new OnConnectionFailedListener(){
+				@Override
+				public void onConnectionFailed(ConnectionResult arg0) {
+					Log.d(TAG, "LocationClient connection failed");
+					locationClient.connect();
+				}
+		});
+		
+		locationClient.connect();
+		
+		
+/*	TODO: implement activity recognition PendingIntent that would broadcast a 
+ * userActivityRecognitionClient = new ActivityRecognitionClient(this, 
+			new ConnectionCallbacks(){
+				@Override
+				public void onConnected(Bundle arg0) {
+					userActivityRecognitionClient.requestActivityUpdates(5000, PendingIntent);
+				}
+				@Override
+				public void onDisconnected() {
+					// TODO Auto-generated method stub
+					
+				}
+			}, 
+			new OnConnectionFailedListener(){
+				@Override
+				public void onConnectionFailed(ConnectionResult arg0) {
+					Log.d(TAG, "LocationClient connection failed");
+					locationClient.connect();
+				}
+		});*/
 	}
 
 	@Override
 	public void onDestroy() {
-		locationManager.removeUpdates(locationListener);
+		locationClient.disconnect();
 	}
 
 	@Override

@@ -30,8 +30,8 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
-import com.nbs.client.assassins.models.PlayerState;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.PlayerModel;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 
@@ -107,25 +107,25 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		LatLng lastLatLng;
 		
 		if(lastLocation == null) {
-			lastLatLng = User.getLocation(getSherlockActivity());
+			lastLatLng = UserModel.getLocation(getSherlockActivity());
 		} else {
 			lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
 			
-			if(User.getLocation(getSherlockActivity()) == null)
+			if(UserModel.getLocation(getSherlockActivity()) == null)
 			{
-				User.setLocation(getSherlockActivity(), lastLocation);
+				UserModel.setLocation(getSherlockActivity(), lastLocation);
 			}	
 		}
 		
 		
 		showMyLocation(lastLatLng); 
 		
-		if(User.inMatch(getSherlockActivity()))
+		if(UserModel.inMatch(getSherlockActivity()))
 		{
 			showGameBoundary();
 			showAttackRangeCircle(lastLatLng);
 			showDirectionToTarget(tBearing);
-			showTargetLocation(PlayerState.getTargetLocation(getSherlockActivity()));
+			showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
 		}
 		
 		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
@@ -161,7 +161,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		if(getCompassMode() == MODE_BEARING) {
 			MODE = MODE_NORTH;
 			stopSensorUpdates();
-			this.moveMapPositionTo(User.getLocation(getSherlockActivity()), true, 800);
+			this.moveMapPositionTo(UserModel.getLocation(getSherlockActivity()), true, 800);
 			map.getUiSettings().setZoomControlsEnabled(true);
 		} else  {
 			MODE = MODE_BEARING;
@@ -258,7 +258,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			    		new MarkerOptions()
 			    		.position(tLatLng)
 			    		.title("target")
-			    		.snippet(PlayerState.getTargetLife(getActivity()).toString())
+			    		.snippet(PlayerModel.getTargetLife(getActivity()).toString())
 			    		.icon(BitmapDescriptorFactory
 			    				.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 				targetLocationMarker.showInfoWindow();

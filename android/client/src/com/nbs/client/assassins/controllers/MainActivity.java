@@ -45,14 +45,15 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.PlayerState;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.PlayerModel;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.AttackResponse;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.network.LocationResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
+import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.views.CreateAccountFragment;
 import com.nbs.client.assassins.views.CreateMatchFragment;
@@ -89,8 +90,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	MenuFragment menuFrag;
 	GameFragment gameFragment;
 	
-	public static final String LOCATION_UPDATED  = "com.nbs.android.client.LOCATION_UPDATED";
-	
 	/*options menu items*/
 	private static final int JOIN_ID = 0;
 	private static final int CREATE_ACCOUNT_ID = 1;
@@ -122,23 +121,23 @@ public class MainActivity extends SherlockFragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-    	Log.d(TAG, "onCreate() UserModel" + User._toString(this));
+    	Log.d(TAG, "onCreate() UserModel" + UserModel._toString(this));
         
         registerForPushNotifications();
 
         intentActionFilter = new IntentFilter();
-        intentActionFilter.addAction(PlayerState.NEW_TARGET);   
-        intentActionFilter.addAction(PlayerState.TARGET_EVENT);
-        intentActionFilter.addAction(PlayerState.TARGET_BEARING_CHANGED); 
-        intentActionFilter.addAction(PlayerState.TARGET_LIFE_CHANGED); 
-        intentActionFilter.addAction(PlayerState.TARGET_LOCATION_CHANGED); 
-        intentActionFilter.addAction(PlayerState.TARGET_RANGE_CHANGED); 
-        intentActionFilter.addAction(PlayerState.ATTACKED); 
-        intentActionFilter.addAction(PlayerState.ENEMY_RANGE_CHANGED); 
-        intentActionFilter.addAction(PlayerState.MATCH_END);
+        intentActionFilter.addAction(PlayerModel.NEW_TARGET);   
+        intentActionFilter.addAction(PlayerModel.TARGET_EVENT);
+        intentActionFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
+        intentActionFilter.addAction(PlayerModel.TARGET_LIFE_CHANGED); 
+        intentActionFilter.addAction(PlayerModel.TARGET_LOCATION_CHANGED); 
+        intentActionFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
+        intentActionFilter.addAction(PlayerModel.ATTACKED); 
+        intentActionFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
+        intentActionFilter.addAction(PlayerModel.MATCH_END);
         
         intentLocationUpdateFilter = new IntentFilter();
-        intentLocationUpdateFilter.addAction(LOCATION_UPDATED);   
+        intentLocationUpdateFilter.addAction(LocationService.LOCATION_UPDATED);   
         
         startService(new Intent(this, LocationService_.class));
 		
@@ -190,6 +189,11 @@ public class MainActivity extends SherlockFragmentActivity {
 	{
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentActionReceiver);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver);
+		
+		if(!UserModel.inMatch(this)) {
+			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
+		}
+		
 	    super.onPause();
 	}
 	
@@ -200,8 +204,11 @@ public class MainActivity extends SherlockFragmentActivity {
 
 	    LocalBroadcastManager.getInstance(this)
 	    	.registerReceiver(intentActionReceiver, intentActionFilter);
+	   
 	    LocalBroadcastManager.getInstance(this)
 	    	.registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
+	    
+	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
 	}
 
 	@Override
@@ -276,13 +283,13 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
-		if(User.loggedIn(this)) {
+		if(UserModel.loggedIn(this)) {
 			
 			addLoggedInOptionsMenuItems(menu);
 			menu.removeGroup(NEW_USER_ITEMS);
 			
-			if(User.inMatch(this)) {
-				Log.d(TAG, User.getMatch(this).toString());
+			if(UserModel.inMatch(this)) {
+				Log.d(TAG, UserModel.getMatch(this).toString());
 				addInMatchOptionsMenuItems(menu);
 				menu.removeGroup(NOT_IN_MATCH_ITEMS);
 				
@@ -349,12 +356,12 @@ public class MainActivity extends SherlockFragmentActivity {
 		
 		try {
 			LocationMessage msg = new LocationMessage();
-			LatLng latlng = User.getLocation(this);
+			LatLng latlng = UserModel.getLocation(this);
 			msg.latitude = latlng.latitude;
 			msg.longitude = latlng.longitude;
-			msg.installId = User.getInstallId(this);
+			msg.installId = UserModel.getInstallId(this);
 			
-			AttackResponse response = restClient.attack(User.getToken(this), msg);
+			AttackResponse response = restClient.attack(UserModel.getToken(this), msg);
 			attackFinished(response, attackMenuItem);
 		}
 		catch(Exception e) {
@@ -369,7 +376,7 @@ public class MainActivity extends SherlockFragmentActivity {
 		attackMenuItem.setEnabled(true);
 
 		if(response.ok()) {
-			PlayerState.setTargetLife(this, Integer.parseInt(response.targetLife));
+			PlayerModel.setTargetLife(this, Integer.parseInt(response.targetLife));
 			Toast.makeText(this, "Attack " + response.ok(), Toast.LENGTH_SHORT).show();
 		}
 	}
@@ -380,11 +387,11 @@ public class MainActivity extends SherlockFragmentActivity {
 		Response response = null;
 		
 		try {
-			response = restClient.logout(User.getToken(this));
+			response = restClient.logout(UserModel.getToken(this));
 			
 			Log.d(TAG, response.toString());
 
-			User.signOut(this);
+			UserModel.signOut(this);
 			GCMRegistrar.setRegisteredOnServer(this, false);
 			GCMRegistrar.unregister(this);
 
@@ -485,7 +492,7 @@ public class MainActivity extends SherlockFragmentActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
     		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
-    		gameFragment.onLocationChanged(User.getLocation(context));
+    		gameFragment.onLocationChanged(UserModel.getLocation(context));
 	    }
 	};
 	
@@ -496,42 +503,42 @@ public class MainActivity extends SherlockFragmentActivity {
         	
         	Log.d(TAG, "received event [" + action + "]");
     		
-    		if(action.equals(PlayerState.NEW_TARGET)) {
+    		if(action.equals(PlayerModel.NEW_TARGET)) {
     			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
     		}
-    		else if(action.equals(PlayerState.TARGET_EVENT)) {
-    			String tRange = PlayerState.getTargetProximity(context);
+    		else if(action.equals(PlayerModel.TARGET_EVENT)) {
+    			String tRange = PlayerModel.getTargetProximity(context);
     			gameFragment.onTargetRangeChanged(tRange);
     		}
-    		else if(action.equals(PlayerState.TARGET_BEARING_CHANGED)) {
-    			float tBearing = PlayerState.getTargetBearing(context);
+    		else if(action.equals(PlayerModel.TARGET_BEARING_CHANGED)) {
+    			float tBearing = PlayerModel.getTargetBearing(context);
     			gameFragment.onTargetBearingChanged(Math.round(tBearing));
     		}
-    		else if(action.equals(PlayerState.TARGET_LIFE_CHANGED)) {
-    			gameFragment.onTargetLifeChanged(PlayerState.getTargetLife(context));
+    		else if(action.equals(PlayerModel.TARGET_LIFE_CHANGED)) {
+    			gameFragment.onTargetLifeChanged(PlayerModel.getTargetLife(context));
     			Toast.makeText(context, "your target has suffered a blow.", Toast.LENGTH_SHORT).show();
     		}
-    		else if(action.equals(PlayerState.TARGET_RANGE_CHANGED)) {
+    		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED)) {
     			Toast.makeText(context, "your target is within " + 
-						PlayerState.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
+						PlayerModel.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
     		}
-    		else if(action.equals(PlayerState.ATTACKED)) {
-    			gameFragment.onMyLifeChanged(PlayerState.getMyLife(context));
+    		else if(action.equals(PlayerModel.ATTACKED)) {
+    			gameFragment.onMyLifeChanged(PlayerModel.getMyLife(context));
     			Toast.makeText(context, "you were attacked.", Toast.LENGTH_SHORT).show();
     		}
-    		else if(action.equals(PlayerState.ENEMY_RANGE_CHANGED)) {
+    		else if(action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
     			Toast.makeText(context, "your enemy has entered " + 
-    									PlayerState.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
+    									PlayerModel.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
     		}
-    		else if(action.equals(PlayerState.MATCH_END)) {
+    		else if(action.equals(PlayerModel.MATCH_END)) {
     			String winner = intent.getStringExtra("winner");
-    			if(winner != null && winner.equals(User.getUsername(context))) {
+    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
     				winner = "you";
     			}
     			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
-    			User.setMatch(context, null);
-    			PlayerState.clearTarget(context);
-    			PlayerState.clearEnemy(context);
+    			UserModel.setMatch(context, null);
+    			PlayerModel.clearTarget(context);
+    			PlayerModel.clearEnemy(context);
     		}
         }
 	};

@@ -21,7 +21,7 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.network.UserLoginMessage;
@@ -94,7 +94,7 @@ public class CreateAccountFragment extends SherlockFragment {
 			UserLoginMessage msg = new UserLoginMessage();
 			//TODO: what if they do not have a registrationId yet?
 			msg.gcmRegId = GCMRegistrar.getRegistrationId(getActivity());
-			msg.installId = User.getInstallId(getActivity());		
+			msg.installId = UserModel.getInstallId(getActivity());		
 			
 			msg.password = password.getText().toString();
 			msg.username = username.getText().toString();
@@ -105,7 +105,7 @@ public class CreateAccountFragment extends SherlockFragment {
 			asyncProgress.setCancelable(false);
 			asyncProgress.show();
 			
-			createAccountInBackground(User.getToken(getActivity()), msg);
+			createAccountInBackground(UserModel.getToken(getActivity()), msg);
 		}
 		else {
 			//TODO: provide earlier and better validation information to user
@@ -151,10 +151,10 @@ public class CreateAccountFragment extends SherlockFragment {
 			
 			if(response.ok()) {
 				
-				User.setUsername(getActivity(), username.getText().toString());
-				User.setToken(getActivity(), response.token);
+				UserModel.setUsername(getActivity(), username.getText().toString());
+				UserModel.setToken(getActivity(), response.token);
 				
-				Log.d(TAG, User._toString(getActivity()));
+				Log.d(TAG, UserModel._toString(getActivity()));
 				
 				mListener.onAccountCreated(true);
 				return;

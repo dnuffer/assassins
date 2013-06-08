@@ -13,15 +13,4 @@ public class Player {
 	@JsonProperty("username")
 	public String username;
 	
-	private int	myLife;
-	private int targetLife;
-	
-	private LatLng myLocation;
-	private LatLng targetLocation;
-	
-	private float bearingToTarget;
-	
-	private String targetProximity;
-	private String enemyProximity;
-
 }

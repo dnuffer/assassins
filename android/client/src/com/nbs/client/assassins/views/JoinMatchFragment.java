@@ -23,7 +23,7 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.id;
 import com.nbs.client.assassins.R.layout;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.JoinMatchMessage;
 import com.nbs.client.assassins.network.MatchResponse;
@@ -100,7 +100,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			
 			JoinMatchMessage msg = new JoinMatchMessage();
 			
-			msg.userToken = User.getToken(getActivity());
+			msg.userToken = UserModel.getToken(getActivity());
 			msg.matchPassword = passwordStr.length() > 0 ? passwordStr : null;
 			msg.matchName = matchName.getText().toString();
 			
@@ -155,7 +155,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				User.setMatch(getActivity(), response.match);
+				UserModel.setMatch(getActivity(), response.match);
 				mListener.onMatchJoined(true);
 				return;
 			}

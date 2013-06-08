@@ -23,7 +23,7 @@ import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.id;
 import com.nbs.client.assassins.R.layout;
 import com.nbs.client.assassins.models.Match;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.CreateMatchMessage;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.MatchResponse;
@@ -103,7 +103,7 @@ public class CreateMatchFragment extends SherlockFragment {
 			msg.match = new Match();			
 			msg.match.password = passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null;
 			msg.match.name = matchName.getText().toString();
-			msg.token = User.getToken(getActivity());
+			msg.token = UserModel.getToken(getActivity());
 			
 			asyncProgress = new ProgressDialog(getActivity());
 			asyncProgress.setIndeterminate(true);

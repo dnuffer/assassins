@@ -13,7 +13,7 @@ import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.PlayerState;
+import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
@@ -83,9 +83,9 @@ public class GameFragment extends SherlockFragment{
 	}
 	
 	public void onTargetRangeChanged(String tRange) {
-		if(tRange.equals(PlayerState.HUNT_RANGE) || 
-		   tRange.equals(PlayerState.ATTACK_RANGE)) {
-			mapFragment.showTargetLocation(PlayerState.getTargetLocation(getSherlockActivity()));
+		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
+		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
+			mapFragment.showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
 		} else {
 			mapFragment.hideTargetLocation();
 		}

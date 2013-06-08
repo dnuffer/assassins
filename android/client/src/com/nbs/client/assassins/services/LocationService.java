@@ -16,15 +16,18 @@ import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.controllers.MainActivity;
+import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.PlayerState;
-import com.nbs.client.assassins.models.User;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.network.LocationResponse;
-import com.nbs.client.assassins.network.PlayerStateResponse;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -37,6 +40,20 @@ public class LocationService extends Service {
 
 	private static final String TAG = "LocationService";
 
+	private static final int TWO_MINUTES = 1000 * 60 * 2;
+
+	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
+	public static final String STOP_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
+	public static final String START_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
+	
+	public static final float SEARCH_MIN_DISPLACEMENT = 100.0f;
+	public static final float HUNT_MIN_DISPLACEMENT   = 10.0f;
+	public static final float ATTACK_MIN_DISPLACEMENT = 0.5f;
+	
+	public static final int SEARCH_INTERVAL = 10000;
+	public static final int HUNT_INTERVAL   = 2000;
+	public static final int ATTACK_INTERVAL = 500;
+	
 	@RestService
 	HuntedRestClient restClient;
 
@@ -48,86 +65,87 @@ public class LocationService extends Service {
 	Location current;
 	
 	ActivityRecognitionClient userActivityRecognitionClient;
-
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
 	
+	private IntentFilter intentFilter;
+	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+    		
+        	String action = intent.getAction();
+        	Log.d(TAG, "received intent [" + action + "]");
+        	
+    		if(action.equals(GCMMessages.MATCH_REMINDER) || 
+    		   action.equals(UserModel.USER_TOKEN_RECEIVED)) {
+				
+    			Location lastLocation = locationClient.getLastLocation();
+				Log.d(TAG, "last location ["+lastLocation.toString()+"]");
+				if(lastLocation != null) {
+					updateLocation(lastLocation);
+				}
+    		}
+    		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED) || 
+    				action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
+    			
+    			//TODO if the user is not moving, do not request location updates
+    			
+    			//throttle location updates based on the nearest of these two ranges
+    			String tRange = PlayerModel.getTargetProximity(LocationService.this);
+    			String eRange = PlayerModel.getEnemyProximity(LocationService.this);
+    			
+    			int   interval = SEARCH_INTERVAL;
+    			float dist = SEARCH_MIN_DISPLACEMENT;
+    			int   priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+    			
+    			if(tRange.equals(PlayerModel.ATTACK_RANGE) || eRange.equals(PlayerModel.ATTACK_RANGE)) {
+    				interval = ATTACK_INTERVAL; dist = ATTACK_MIN_DISPLACEMENT; priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+    			} else if(tRange.equals(PlayerModel.HUNT_RANGE) || eRange.equals(PlayerModel.HUNT_RANGE)) {
+    				interval = HUNT_INTERVAL; dist = HUNT_MIN_DISPLACEMENT; priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+    			} 
+    			requestLocationUpdates(interval, dist, priority);
+    		}
+    		else if(action.equals(PlayerModel.MATCH_END)) {
+    			requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+    		}
+	    }
+	};
+	
+	private void requestLocationUpdates(int intervalMillis, float minDistanceMeters, int priority) {
+		//replaces previous requests for the same listener
+		locationClient.requestLocationUpdates(
+				new LocationRequest()
+					.setInterval(intervalMillis)
+					.setSmallestDisplacement(minDistanceMeters)
+					.setPriority(priority),
+				locationListener);
+	}
 	
 	@Override
-	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Background
-	public void updateLocation(Location newLocation)
-	{
-		if(User.hasToken(this)/* && isBetterLocation(newLocation, current)*/)
-		{
-			current = newLocation;
-
-			final String regId = GCMRegistrar.getRegistrationId(this);
-			if (regId.equals("")) {
-				GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
-			} else {
-				Log.v(TAG, "Already registered");
-
-				LocationMessage msg = new LocationMessage(); 
-				msg.latitude  = current.getLatitude();
-				msg.longitude = current.getLongitude();
-				msg.installId = User.getInstallId(this);
-				
-				Log.v(TAG, msg.toString());
-				
-				LocationResponse response = restClient.updateLocation(
-												User.getToken(this), msg);
-				
-				Log.i(TAG,  response.toString());
-				
-				if(response != null && response.ok()) {
-					Log.i(TAG,"location successfully sent to server.");
-					User.setLocation(this, response.latitude, response.longitude);
-					
-					PlayerStateResponse state = response.playerState;
-					
-					if(state != null)
-					{
-						if(state.myLife != null) {
-							PlayerState.setMyLife(this, state.myLife);
-						}
-						if(state.enemyRange != null) {
-							PlayerState.setEnemyProximity(this, state.enemyRange);
-						}
-						if(state.targetLife != null) {
-							PlayerState.setTargetLife(this, state.targetLife);
-						}
-						if(state.targetLat != null && state.targetLng != null) {
-							PlayerState.setTargetLocation(this, state.targetLat, state.targetLng);
-						}
-						if(state.targetBearing != null) {
-							PlayerState.setTargetBearing(this, state.targetBearing);
-						}
-						if(state.targetRange != null) {
-							PlayerState.setTargetProximity(this, state.targetRange);
-						}
-					}
-					
-		            LocalBroadcastManager.getInstance(this)
-		            	.sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
-				}
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		String action = intent.getAction();
+		
+		Log.d(TAG, "onStartCommand("+action+")");
+		
+		if(locationClient.isConnected()) {
+			
+			if(action != null && action.equals(LocationService.STOP_UPDATES)) {
+				locationClient.removeLocationUpdates(locationListener);
 			}
-		} else {
-			//no token yet, but still want to draw user on map
-			User.setLocation(this, newLocation.getLatitude(), newLocation.getLongitude());
-			LocalBroadcastManager.getInstance(this)
-        		.sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
+			else if(action != null && action.equals(LocationService.START_UPDATES)) {
+				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+			}
+			
+			LocalBroadcastManager.getInstance(this).registerReceiver(intentReceiver, intentFilter);
+			
+		} else if (locationClient.isConnecting() && action != null && action.equals(LocationService.STOP_UPDATES)) {
+			locationClient.disconnect();
 		}
-
+		return super.onStartCommand(intent, flags, startId);
+	}
+	
+	@Override
+	public void onDestroy() {
+		locationClient.disconnect();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentReceiver);
 	}
 
 	@Override
@@ -135,12 +153,18 @@ public class LocationService extends Service {
 		
 		Log.d(TAG, "onCreate");
 		
+		intentFilter = new IntentFilter();
+		intentFilter.addAction(GCMMessages.MATCH_REMINDER);
+        intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
+        intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
+        intentFilter.addAction(PlayerModel.MATCH_END);
+        intentFilter.addAction(UserModel.USER_TOKEN_RECEIVED);
+		
 		locationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
 				updateLocation(location);
 			}
 		};
-		
 		
 		locationClient = new LocationClient(this, 
 			new ConnectionCallbacks(){
@@ -154,16 +178,13 @@ public class LocationService extends Service {
 						updateLocation(lastLocation);
 					}
 					
-					locationClient.requestLocationUpdates(
-							new LocationRequest()
-								.setInterval(3000)
-								.setSmallestDisplacement(1.0f)
-								.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY),
-							locationListener);
+					//TODO: if the app is hidden and the player is not in a match, stop the location updates
+					//      the MainActivity should handle this in the onPause
+					requestLocationUpdates(1000, 3.0f, LocationRequest.PRIORITY_HIGH_ACCURACY);
 				}
 				@Override
 				public void onDisconnected() {
-					// TODO Auto-generated method stub
+					Log.d(TAG, "LocationClient disconnected");
 					
 				}
 			}, 
@@ -178,8 +199,9 @@ public class LocationService extends Service {
 		locationClient.connect();
 		
 		
-/*	TODO: implement activity recognition PendingIntent that would broadcast a 
- * userActivityRecognitionClient = new ActivityRecognitionClient(this, 
+		/*	TODO: implement activity recognition PendingIntent that would broadcast
+		 *        to stop requesting location updates when a user is still for instance
+		 * userActivityRecognitionClient = new ActivityRecognitionClient(this, 
 			new ConnectionCallbacks(){
 				@Override
 				public void onConnected(Bundle arg0) {
@@ -199,74 +221,68 @@ public class LocationService extends Service {
 				}
 		});*/
 	}
+	
+	
+	@Background
+	public void updateLocation(Location newLocation)
+	{
+		if(UserModel.hasToken(this))
+		{
+			current = newLocation;
 
-	@Override
-	public void onDestroy() {
-		locationClient.disconnect();
+			final String regId = GCMRegistrar.getRegistrationId(this);
+			if (regId.equals("")) {
+				GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
+			} else {
+				Log.v(TAG, "Already registered");
+
+				LocationMessage msg = new LocationMessage(); 
+				msg.latitude  = current.getLatitude();
+				msg.longitude = current.getLongitude();
+				msg.installId = UserModel.getInstallId(this);
+				
+				Log.v(TAG, msg.toString());
+				
+				LocationResponse response = restClient.updateLocation(
+												UserModel.getToken(this), msg);
+				
+				Log.i(TAG,  response.toString());
+				
+				if(response != null && response.ok()) {
+					Log.i(TAG,"location successfully sent to server.");
+					UserModel.setLocation(this, response.latitude, response.longitude);
+					
+					if(UserModel.inMatch(this)) {
+						PlayerModel.setPlayerState(this, response.playerState);
+					}
+
+		            LocalBroadcastManager.getInstance(this)
+		            	.sendBroadcast(new Intent(LocationService.LOCATION_UPDATED));
+				}
+			}
+		} else {
+			//no token yet, but still want to draw user on map
+			UserModel.setLocation(this, newLocation.getLatitude(), newLocation.getLongitude());
+			LocalBroadcastManager.getInstance(this)
+        		.sendBroadcast(new Intent(LocationService.LOCATION_UPDATED));
+		}
+
+	}
+	
+
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
 	}
 
 	@Override
-	public void onStart(Intent intent, int startid) {
-
+	public IBinder onBind(Intent intent) {
+		// TODO Auto-generated method stub
+		return null;
 	}
-
-	private static final int TWO_MINUTES = 1000 * 60 * 2;
-
-	/** Determines whether one Location reading is better than the current Location fix
-	 * @param location  The new Location that you want to evaluate
-	 * @param currentBestLocation  The current Location fix, to which you want to compare the new one
-	 */
-	private boolean isBetterLocation(Location location, Location currentBestLocation) {
-		if (currentBestLocation == null) {
-			// A new location is always better than no location
-			return true;
-		}
-
-		// Check whether the new location fix is newer or older
-		long timeDelta = location.getTime() - currentBestLocation.getTime();
-		boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
-		boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
-		boolean isNewer = timeDelta > 0;
-
-		// If it's been more than two minutes since the current location, use the new location
-		// because the user has likely moved
-		if (isSignificantlyNewer) {
-			return true;
-			// If the new location is more than two minutes older, it must be worse
-		} else if (isSignificantlyOlder) {
-			return false;
-		}
-
-		// Check whether the new location fix is more or less accurate
-		int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
-		boolean isLessAccurate = accuracyDelta > 0;
-		boolean isMoreAccurate = accuracyDelta < 0;
-		boolean isSignificantlyLessAccurate = accuracyDelta > 200;
-
-		// Check if the old and new location are from the same provider
-		boolean isFromSameProvider = isSameProvider(location.getProvider(),
-				currentBestLocation.getProvider());
-
-		// Determine location quality using a combination of timeliness and accuracy
-		if (isMoreAccurate) {
-			return true;
-		} else if (isNewer && !isLessAccurate) {
-			return true;
-		} else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
-			return true;
-		}
-		return false;
-	}
-
-	/** Checks whether two providers are the same */
-	private boolean isSameProvider(String provider1, String provider2) {
-		if (provider1 == null) {
-			return provider2 == null;
-		}
-		return provider1.equals(provider2);
-	}
-
-
 
 }
 

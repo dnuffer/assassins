@@ -5,10 +5,12 @@ import java.util.UUID;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.location.Location;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 /* 
@@ -17,12 +19,13 @@ import android.util.Log;
  *
  */
 
-public class User {
+public class UserModel {
     private static final String INSTALLATION = "INSTALLATION";
     private static final String ID = "install_id";
 	private static final String TOKEN = "token";
 	private static final String USERNAME = "username";
 	private static final String TAG = "UserModel";
+	public  static final String USER_TOKEN_RECEIVED = "com.nbs.client.assassins.USER_TOKEN_CHANGED";
 
     public synchronized static String getInstallId(Context context) {
         
@@ -73,6 +76,11 @@ public class User {
         Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
         editor.putString(TOKEN, token);
         editor.commit();
+        
+        if(token != null) {
+			LocalBroadcastManager.getInstance(context)
+				.sendBroadcast(new Intent().setAction(USER_TOKEN_RECEIVED));
+        }
     }
     
     public static boolean hasToken(Context context)
@@ -168,18 +176,18 @@ public class User {
 	}
 
 	public static boolean inMatch(Context context) {
-		return User.getMatch(context) != null;
+		return UserModel.getMatch(context) != null;
 	}
 
 	public static boolean loggedIn(Context context) {
 		// TODO Auto-generated method stub
-		return User.hasToken(context) && User.hasUsername(context);
+		return UserModel.hasToken(context) && UserModel.hasUsername(context);
 	}
 
 	public synchronized static void signOut(Context context) {
-		User.setMatch(context, null);
-		User.setUsername(context, null);
-		User.setToken(context, null);
+		UserModel.setMatch(context, null);
+		UserModel.setUsername(context, null);
+		UserModel.setToken(context, null);
 	}
 	
 	public static String _toString(Context c) {

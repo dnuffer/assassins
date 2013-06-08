@@ -36,7 +36,7 @@ class Match
 
   #field :attack_range, Float
   def attack_range
-    0.05 # miles
+    0.03 # miles
   end
   #field :attack_delay, Integer
   
@@ -92,12 +92,25 @@ class Match
             player_joined_match: new_user.username
           })
         end
+        
+        if in_progress?
+          players.each do |player|
+          #TODO this is only valid if it starts when a minimum number of players
+          # is reached.  For a timed start, it may have to be a timer on the client
+          # that fires off and intiates all clients reporting their location to begin
+          
+            player.user.send_push_notification({
+              type: :match_start,
+              match: name
+            }.merge!(player.state))
+          end
+        end
       end 
     end
   end
   
   def in_progress?
-    players.length > 1 and winner.nil?
+    players.length > 1 and winner.nil? #TODO starting match at a min # of players instead of time
   end
   
   def is_public?
@@ -111,7 +124,7 @@ class Match
   end
   
   def eliminate target
-    self.player_ids.delete target
+    self.player_ids.delete target.id
     self.save
   end
   
@@ -144,7 +157,19 @@ class Match
       # sends a message to all users if a player is eliminated
       if target.life < 1
         eliminate target
-        the_winner = (winner == attacker) ? attacker.user.username : nil
+        the_winner = winner
+        
+        #TODO: for efficiency, just return this in http attack request
+        Thread.new do
+          if the_winner.nil?
+            new_target_notif = {
+              type: :new_target,
+              match: self.name
+            }.merge!(attacker.state)
+            
+            attacker.user.send_push_notification(new_target_notif)
+          end
+        end
         
         #TODO this may still block in which case try: $gem install delayed_job
         Thread.new do 
@@ -159,7 +184,7 @@ class Match
               player.user.send_push_notification({
                 type:  :match_end,
                 match: self.name,
-                winner: the_winner
+                winner: the_winner.user.username
               })
             end
           end

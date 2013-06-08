@@ -121,13 +121,20 @@ public class LocationService extends Service {
 		            	.sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
 				}
 			}
+		} else {
+			//no token yet, but still want to draw user on map
+			User.setLocation(this, newLocation.getLatitude(), newLocation.getLongitude());
+			LocalBroadcastManager.getInstance(this)
+        		.sendBroadcast(new Intent(MainActivity.LOCATION_UPDATED));
 		}
 
 	}
 
 	@Override
 	public void onCreate() {
-
+		
+		Log.d(TAG, "onCreate");
+		
 		locationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
 				updateLocation(location);
@@ -141,14 +148,16 @@ public class LocationService extends Service {
 				public void onConnected(Bundle arg0) {
 					Location lastLocation = locationClient.getLastLocation();
 					
+					Log.d(TAG, "LocationClient connected, location ["+lastLocation.toString()+"]");
+					
 					if(lastLocation != null) {
 						updateLocation(lastLocation);
 					}
 					
 					locationClient.requestLocationUpdates(
 							new LocationRequest()
-								.setInterval(5000)
-								.setSmallestDisplacement(4)
+								.setInterval(3000)
+								.setSmallestDisplacement(1.0f)
 								.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY),
 							locationListener);
 				}

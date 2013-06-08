@@ -135,6 +135,7 @@ public class MainActivity extends SherlockFragmentActivity {
         intentActionFilter.addAction(PlayerState.TARGET_RANGE_CHANGED); 
         intentActionFilter.addAction(PlayerState.ATTACKED); 
         intentActionFilter.addAction(PlayerState.ENEMY_RANGE_CHANGED); 
+        intentActionFilter.addAction(PlayerState.MATCH_END); 
         
         intentLocationUpdateFilter = new IntentFilter();
         intentLocationUpdateFilter.addAction(LOCATION_UPDATED);   
@@ -504,22 +505,31 @@ public class MainActivity extends SherlockFragmentActivity {
     		}
     		else if(action.equals(PlayerState.TARGET_BEARING_CHANGED)) {
     			float tBearing = PlayerState.getTargetBearing(context);
-    			gameFragment.onTargetBearingChanged(tBearing);
+    			gameFragment.onTargetBearingChanged(Math.round(tBearing));
     		}
     		else if(action.equals(PlayerState.TARGET_LIFE_CHANGED)) {
-    			//TODO: update target life indicator
-    			Toast.makeText(context, "you target has suffered a blow.", 1000).show();
+    			gameFragment.onTargetLifeChanged(PlayerState.getTargetLife(context));
+    			Toast.makeText(context, "your target has suffered a blow.", 1000).show();
     		}
     		else if(action.equals(PlayerState.TARGET_RANGE_CHANGED)) {
-    			//TODO: update target range indicator
+    			Toast.makeText(context, "your target is within " + 
+						PlayerState.getEnemyProximity(context) + ".", 1000).show();
     		}
     		else if(action.equals(PlayerState.ATTACKED)) {
-    			//TODO: update my life indicator
+    			gameFragment.onMyLifeChanged(PlayerState.getMyLife(context));
     			Toast.makeText(context, "you were attacked.", 1000).show();
     		}
     		else if(action.equals(PlayerState.ENEMY_RANGE_CHANGED)) {
     			Toast.makeText(context, "your enemy has entered " + 
     									PlayerState.getEnemyProximity(context) + ".", 1000).show();
+    		}
+    		else if(action.equals(PlayerState.MATCH_END)) {
+    			String winner = intent.getStringExtra("winner");
+    			if(winner != null && winner.equals(User.getUsername(context))) {
+    				winner = "you";
+    			}
+    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG);
+    			User.setMatch(context, null);
     		}
         }
 	};

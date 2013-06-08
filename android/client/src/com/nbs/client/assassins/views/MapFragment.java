@@ -3,31 +3,20 @@
  */
 package com.nbs.client.assassins.views;
 
-import android.app.Fragment;
 import android.content.Context;
-import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.actionbarsherlock.app.SherlockMapFragment;
-import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -128,7 +117,17 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			}	
 		}
 		
-		showGameBoundary();
+		
+		showMyLocation(lastLatLng); 
+		
+		if(User.inMatch(getSherlockActivity()))
+		{
+			showGameBoundary();
+			showAttackRangeCircle(lastLatLng);
+			showDirectionToTarget(tBearing);
+			showTargetLocation(PlayerState.getTargetLocation(getSherlockActivity()));
+		}
+		
 		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
         
 		super.onViewCreated(view, savedInstanceState);
@@ -253,22 +252,24 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	
 	public void showTargetLocation(LatLng tLatLng) {
-		if(targetLocationMarker == null) {
-			targetLocationMarker = getMap().addMarker(
-		    		new MarkerOptions()
-		    		.position(tLatLng)
-		    		.title("target")
-		    		.snippet(PlayerState.getTargetLife(getActivity()).toString())
-		    		.icon(BitmapDescriptorFactory
-		    				.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-			targetLocationMarker.showInfoWindow();
+		if(tLatLng != null) {
+			if(targetLocationMarker == null) {
+				targetLocationMarker = getMap().addMarker(
+			    		new MarkerOptions()
+			    		.position(tLatLng)
+			    		.title("target")
+			    		.snippet(PlayerState.getTargetLife(getActivity()).toString())
+			    		.icon(BitmapDescriptorFactory
+			    				.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+				targetLocationMarker.showInfoWindow();
+			}
+			else
+			{
+				targetLocationMarker.setPosition(tLatLng);
+			}
+			
+			targetLocationMarker.setVisible(true);
 		}
-		else
-		{
-			targetLocationMarker.setPosition(tLatLng);
-		}
-		
-		targetLocationMarker.setVisible(true);
 	}	
 	
 	public void hideTargetLocation() {

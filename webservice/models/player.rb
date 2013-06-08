@@ -83,7 +83,7 @@ class Player
     playerstate = {
       time:           Time.now.utc.to_i,
       target_life:    life,
-      target_bearing: my_enemy.bearing_to(self),
+      target_bearing: self.bearing_to(my_target),
       target_range:   range_to(my_enemy),
       my_life:        life,
       enemy_range:    range_to(my_target)

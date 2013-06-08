@@ -1,129 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/gray"
-    android:orientation="horizontal"
-    android:layout_gravity="bottom"
-    android:padding="8dp" >
-    <LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:layout_weight=".66" >
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-           <TextView
-            android:id="@+id/life_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="30dp"
-            android:textStyle="bold"
-            android:text="88.5">
-        </TextView>    
-       <TextView
-            android:id="@+id/life_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="10dp"
-            android:text="bearing to target">
-        </TextView>    
-</LinearLayout>
-<FrameLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:paddingLeft="8dp">
-    <View 
-    android:layout_width="2dp"
-    android:layout_height="50dp"
-    android:layout_gravity="center"
-    android:background="@drawable/needle"/>
+	android:layout_width="match_parent" android:layout_height="wrap_content"
+	android:background="@color/gray" android:orientation="horizontal"
+	android:layout_gravity="bottom" android:padding="8dp">
+	<LinearLayout android:layout_width="wrap_content"
+		android:layout_height="match_parent" android:orientation="horizontal"
+		android:layout_weight=".66">
+		<LinearLayout android:layout_width="wrap_content"
+			android:layout_height="match_parent" android:orientation="vertical">
+			<TextView android:id="@+id/hud_tbearing" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textColor="@color/white"
+				android:textSize="30dp" android:textStyle="bold" android:text="88.5" />
+			<TextView android:id="@+id/hud_label_tbearing"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textColor="@color/white" android:textSize="10dp"
+				android:text="bearing to target" />
+		</LinearLayout>
+		<FrameLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:paddingLeft="8dp">
+			<View android:layout_width="2dp" android:layout_height="50dp"
+				android:layout_gravity="center" android:background="@drawable/needle" />
+			<View android:layout_width="50dp" android:layout_height="50dp"
+				android:background="@drawable/circle" android:gravity="right" />
+		</FrameLayout>
+	</LinearLayout>
+	<LinearLayout android:layout_width="wrap_content"
+		android:layout_height="match_parent" android:orientation="horizontal">
+		<LinearLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:orientation="vertical">
+			<TextView android:id="@+id/hud_label_life" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textColor="@color/white"
+				android:layout_gravity="right" android:textSize="12dp" android:text="me" />
+			<TextView android:id="@+id/hud_label_target_life"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:text="target" android:layout_gravity="right"
+				android:textColor="@color/white" android:textSize="12dp" />
+		</LinearLayout>
+		<LinearLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:orientation="vertical">
+			<ProgressBar android:id="@+id/hud_my_life"
+				style="?android:attr/progressBarStyleHorizontal"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_gravity="right" android:max="3" android:progress="3" />
+			<ProgressBar android:id="@+id/hud_target_life"
+				style="?android:attr/progressBarStyleHorizontal"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_gravity="right" android:max="3" android:progress="3" />
 
-<View 
-    android:layout_width="50dp"
-    android:layout_height="50dp"
-    android:background="@drawable/circle"
-    android:gravity="right"/>
-</FrameLayout>
-
-
-
-
-    </LinearLayout>
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:orientation="horizontal" >
-
-
-    
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" >
-
-        <TextView
-            android:id="@+id/life_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:layout_gravity="right"
-            android:textSize="12dp"
-            android:text="me">
-        </TextView>
-        <TextView
-            android:id="@+id/target_life_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="target"
-            android:layout_gravity="right"
-            android:textColor="@color/white"
-            android:textSize="12dp" >
-
-        </TextView>
-  
-    </LinearLayout>
-    
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" >
-
-      <ProgressBar
-            android:id="@+id/ProgressBar01"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:max="3"
-            android:progress="2" />
-    
-    <ProgressBar
-        android:id="@+id/progressBar1"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:max="3"
-        android:progress="2" />
-    
-                    <TextView
-            android:id="@+id/target_life_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="life remaining"
-            android:layout_gravity="right|bottom"
-			android:paddingTop="4dp"
-            android:textColor="@color/white"
-            android:textSize="10dp" >
-
-        </TextView>
-    
-    </LinearLayout>
-    
-    </LinearLayout>
+			<TextView android:id="@+id/hud_label_life_remaining"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:text="life remaining" android:layout_gravity="right|bottom"
+				android:paddingTop="4dp" android:textColor="@color/white"
+				android:textSize="10dp" />
+		</LinearLayout>
+	</LinearLayout>
 </LinearLayout>

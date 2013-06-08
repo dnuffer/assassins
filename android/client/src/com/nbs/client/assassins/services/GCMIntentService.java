@@ -23,6 +23,7 @@ import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.MainActivity;
+import com.nbs.client.assassins.controllers.MainActivity_;
 import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.User;
@@ -124,7 +125,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	{
 		try {
 			//the intent to launch when the notification is touched
-		    Intent notificationIntent = new Intent(this, MainActivity.class);
+		    Intent notificationIntent = new Intent(this, MainActivity_.class);
 		    notificationIntent.putExtras(extras);
 		    
 		    NotificationCompat.Builder builder = 

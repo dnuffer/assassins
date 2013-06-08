@@ -3,12 +3,16 @@
  */
 package com.nbs.client.assassins.views;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.googlecode.androidannotations.annotations.EFragment;
+import com.googlecode.androidannotations.annotations.ViewById;
+import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 
@@ -16,28 +20,23 @@ import com.nbs.client.assassins.sensors.BearingReceiver;
  * @author cam
  *
  */
-@EFragment
+@EFragment(R.layout.hud)
 public class HUDFragment extends SherlockFragment implements BearingReceiver {
 
+	private static final String TAG = "HUDFragment";
+
+	@ViewById(R.id.hud_tbearing)
+	TextView tBearingView;
+	
+	@ViewById(R.id.hud_target_life)
+	ProgressBar tLifeView;
+	
+	@ViewById(R.id.hud_my_life)
+	ProgressBar lifeView;
+	
+	private BearingProvider bearingProvider;
+
 	public HUDFragment() {}
-
-	/* (non-Javadoc)
-	 * @see com.actionbarsherlock.app.SherlockFragment#onAttach(android.app.Activity)
-	 */
-	@Override
-	public void onAttach(Activity activity) {
-		// TODO Auto-generated method stub
-		super.onAttach(activity);
-	}
-
-	/* (non-Javadoc)
-	 * @see com.actionbarsherlock.app.SherlockFragment#onDetach()
-	 */
-	@Override
-	public void onDetach() {
-		// TODO Auto-generated method stub
-		super.onDetach();
-	}
 
 	/* (non-Javadoc)
 	 * @see android.support.v4.app.Fragment#onCreate(android.os.Bundle)
@@ -62,7 +61,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	 */
 	@Override
 	public void onPause() {
-		// TODO Auto-generated method stub
+		//stopSensorUpdates();
 		super.onPause();
 	}
 
@@ -71,24 +70,37 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	 */
 	@Override
 	public void onResume() {
-		// TODO Auto-generated method stub
+		//registerForSensorUpdates();
 		super.onResume();
+	}
+	
+	private void stopSensorUpdates() {
+		bearingProvider.unregisterForBearingUpdates(this);
+	}
+
+	private void registerForSensorUpdates() {
+		bearingProvider.registerForBearingUpdates(this);
+	}
+	
+	@Override
+	public void setBearingProvider(BearingProvider provider) {
+		bearingProvider = provider;	
 	}
 
 	@Override
 	public void onBearingChanged(float bearing) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setBearingProvider(BearingProvider provider) {
-		// TODO Auto-generated method stub
-		
+		Log.d(TAG, Float.toString(bearing));
 	}
 	
 	public void onTargetBearingChanged(float tBearing) {
-		// TODO Auto-generated method stub
-		
+		tBearingView.setText(Float.toString(tBearing));
+	}
+	
+	public void onMyLifeChanged(int life) {
+		lifeView.setProgress(life);
+	}
+	
+	public void onTargetLifeChanged(int tLife) {
+		tLifeView.setProgress(tLife);
 	}
 }

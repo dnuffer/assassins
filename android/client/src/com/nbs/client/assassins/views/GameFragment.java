@@ -96,6 +96,14 @@ public class GameFragment extends SherlockFragment{
 		hudFragment.onTargetBearingChanged(tBearing);
 	}
 	
+	public void onTargetLifeChanged(int tLife) {
+		hudFragment.onTargetLifeChanged(tLife);
+	}
+	
+	public void onMyLifeChanged(int life) {
+		hudFragment.onMyLifeChanged(life);
+	}
+	
 	public void onLocationChanged(LatLng location) {
 		mapFragment.onLocationChanged(location);
 	}

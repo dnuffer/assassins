@@ -135,7 +135,7 @@ public class MainActivity extends SherlockFragmentActivity {
         intentActionFilter.addAction(PlayerState.TARGET_RANGE_CHANGED); 
         intentActionFilter.addAction(PlayerState.ATTACKED); 
         intentActionFilter.addAction(PlayerState.ENEMY_RANGE_CHANGED); 
-        intentActionFilter.addAction(PlayerState.MATCH_END); 
+        intentActionFilter.addAction(PlayerState.MATCH_END);
         
         intentLocationUpdateFilter = new IntentFilter();
         intentLocationUpdateFilter.addAction(LOCATION_UPDATED);   
@@ -497,7 +497,7 @@ public class MainActivity extends SherlockFragmentActivity {
         	Log.d(TAG, "received event [" + action + "]");
     		
     		if(action.equals(PlayerState.NEW_TARGET)) {
-    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_LONG).show();
+    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerState.TARGET_EVENT)) {
     			String tRange = PlayerState.getTargetProximity(context);
@@ -509,27 +509,29 @@ public class MainActivity extends SherlockFragmentActivity {
     		}
     		else if(action.equals(PlayerState.TARGET_LIFE_CHANGED)) {
     			gameFragment.onTargetLifeChanged(PlayerState.getTargetLife(context));
-    			Toast.makeText(context, "your target has suffered a blow.", 1000).show();
+    			Toast.makeText(context, "your target has suffered a blow.", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerState.TARGET_RANGE_CHANGED)) {
     			Toast.makeText(context, "your target is within " + 
-						PlayerState.getEnemyProximity(context) + ".", 1000).show();
+						PlayerState.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerState.ATTACKED)) {
     			gameFragment.onMyLifeChanged(PlayerState.getMyLife(context));
-    			Toast.makeText(context, "you were attacked.", 1000).show();
+    			Toast.makeText(context, "you were attacked.", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerState.ENEMY_RANGE_CHANGED)) {
     			Toast.makeText(context, "your enemy has entered " + 
-    									PlayerState.getEnemyProximity(context) + ".", 1000).show();
+    									PlayerState.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerState.MATCH_END)) {
     			String winner = intent.getStringExtra("winner");
     			if(winner != null && winner.equals(User.getUsername(context))) {
     				winner = "you";
     			}
-    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG);
+    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
     			User.setMatch(context, null);
+    			PlayerState.clearTarget(context);
+    			PlayerState.clearEnemy(context);
     		}
         }
 	};

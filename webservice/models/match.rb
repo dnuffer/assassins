@@ -121,10 +121,11 @@ class Match
     if player_ids.length == 1
       return Player.find(player_ids[0])
     end
+    nil
   end
   
   def eliminate target
-    self.player_ids.delete target.id
+    self.player_ids.delete target.id.to_s
     self.save
   end
   

@@ -23,7 +23,7 @@ class User
   before_create :assign_token
 
   def in_match?
-    not player.nil? and player.match.in_progress?
+    not player.nil? and not player.match.nil?
   end
 
   def full_user?

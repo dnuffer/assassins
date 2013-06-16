@@ -195,4 +195,9 @@ public class UserModel {
 		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
 				"match=" + getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
 	}
+
+	public static Long getMatchStartTimeUTC(Context context) {
+		//TODO make this a real start time
+		return System.currentTimeMillis() + 30000;
+	}
 }

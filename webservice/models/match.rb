@@ -26,21 +26,14 @@ class Match
   #field :start_time, type: Integer, default: -> { Time.now.utc._to_i + 100 } #TODO start match in 1 min (just for testing)
   #field :max_players, Integer
   
-  #field :nw_corner, type: Array, spacial: true
-  #field :se_corner, type: Array, spacial: true
+  field :nw_corner, type: Array, spacial: true
+  field :se_corner, type: Array, spacial: true
   
-  #field :hunt_range, Float
-  def hunt_range
-    0.25 # miles
-  end
-
-  #field :attack_range, Float
-  def attack_range
-    0.03 # miles
-  end
-  #field :attack_delay, Integer
+  field :hunt_range, Float
+  field :attack_range, Float
+  field :escape_time, Integer
   
-  #spacial_index :nw_corner
+  spacial_index :nw_corner
   
   validates_uniqueness_of :name
   before_create :assign_token

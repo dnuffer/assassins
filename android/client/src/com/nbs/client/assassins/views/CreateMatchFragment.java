@@ -5,13 +5,18 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Parcelable;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
@@ -20,17 +25,20 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.R.id;
-import com.nbs.client.assassins.R.layout;
+import com.nbs.client.assassins.controllers.GameplayActivity;
+import com.nbs.client.assassins.controllers.MatchBoundsActivity;
 import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.CreateMatchMessage;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.MatchResponse;
-import com.nbs.client.assassins.network.Response;
+import com.nbs.client.assassins.utils.LocationUtils;
+import com.nbs.client.assassins.views.DatePickerDialogFragment.OnDatePickedListener;
+import com.nbs.client.assassins.views.TimePickerDialogFragment.OnTimePickedListener;
 
 @EFragment(R.layout.create_match_fragment)
-public class CreateMatchFragment extends SherlockFragment {
+public class CreateMatchFragment extends SherlockFragment 
+	implements OnDatePickedListener, OnTimePickedListener {
 
     // Container Activity must implement this interface
     public interface OnMatchCreatedListener {
@@ -41,6 +49,9 @@ public class CreateMatchFragment extends SherlockFragment {
 
 	private static final int MIN_PASSWORD_LEN = 6;
 	private static final int MIN_MATCH_NAME_LEN = 6;
+
+	private static final int GAMEPLAY_ACTIVITY_REQUEST = 0;
+	private static final int BOUNDS_ACTIVITY_REQUEST = 1;
 	
     OnMatchCreatedListener mListener;
 	
@@ -53,6 +64,18 @@ public class CreateMatchFragment extends SherlockFragment {
 	@ViewById(R.id.edit_match_password)
 	EditText password;
 	
+	@ViewById(R.id.boundaries)
+	Button selectBoundaries;
+	
+	@ViewById(R.id.gameplay)
+	Button gameplaySettings;
+	
+	@ViewById(R.id.start_date)
+	Button startDate;
+	
+	@ViewById(R.id.start_time)
+	Button startTime;
+	
 	//@ViewById(R.id.join_when_create_match)
 	//Switch join;
 	
@@ -60,9 +83,8 @@ public class CreateMatchFragment extends SherlockFragment {
 	HuntedRestClient restClient;
 	
 	private ProgressDialog asyncProgress;
-	
+
 	public CreateMatchFragment() {
-		
 	}
 	
     @Override
@@ -81,6 +103,50 @@ public class CreateMatchFragment extends SherlockFragment {
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
 				new HttpComponentsClientHttpRequestFactory());
+	}
+	
+	@Click(R.id.boundaries)
+	void onSelectBoundariesClicked() {
+		Log.i(TAG, "onSelectBoundariesClicked()");
+		
+		hideKeyboard();
+		
+		Intent boundariesIntent = new Intent(getSherlockActivity(), MatchBoundsActivity.class);
+        startActivityForResult(boundariesIntent, BOUNDS_ACTIVITY_REQUEST);
+	}
+	
+	@Click(R.id.gameplay)
+	void onGameplaySettingsClicked() {
+		Log.i(TAG, "onGameplaySettingsClicked()");
+		
+		hideKeyboard();
+		
+		Intent intent = new Intent(getSherlockActivity(), GameplayActivity.class);
+        startActivityForResult(intent, GAMEPLAY_ACTIVITY_REQUEST);
+	}
+	
+	@Click(R.id.start_date)
+	void onStartDateClicked() {
+		Log.i(TAG, "onStartDateClicked()");
+		
+		hideKeyboard();
+		
+	    DialogFragment newFragment = 
+	    		DatePickerDialogFragment.newInstance("Start Date");
+	    ((DatePickerDialogFragment)newFragment).setOnDatePickedListener(this);
+	    newFragment.show(getFragmentManager(), "start date dialog");
+	}
+	
+	@Click(R.id.start_time)
+	void onStartTimeClicked() {
+		Log.i(TAG, "onStartTimeClicked()");
+		
+		hideKeyboard();
+		
+	    DialogFragment newFragment = 
+	    		TimePickerDialogFragment.newInstance("Start Time");
+	    ((TimePickerDialogFragment)newFragment).setOnTimePickedListener(this);
+	    newFragment.show(getFragmentManager(), "start time dialog");
 	}
 	
 	@Click(R.id.create_match)
@@ -131,13 +197,10 @@ public class CreateMatchFragment extends SherlockFragment {
 		MatchResponse response = null;
 		
 		try {	
-			//TODO: handle exceptions
 			response = restClient.createMatch(msg);		
 		}
 		catch(Exception e) {
 			Log.i(TAG, "EXCEPTION: " + e.toString());
-			//for(StackTraceElement el : e.getStackTrace())
-			//	Log.e(TAG, el.toString());
 		}
 		
 		matchCreatedResult(response);
@@ -167,5 +230,62 @@ public class CreateMatchFragment extends SherlockFragment {
 			btnCreate.setEnabled(true);	
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
 		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		
+		Log.d(TAG, "onActivityResult()");
+		
+		if(requestCode == BOUNDS_ACTIVITY_REQUEST) {
+		if(resultCode == getSherlockActivity().RESULT_OK) {
+			String description = data.getStringExtra("description");
+			
+			Parcelable[] points = data.getParcelableArrayExtra("points");
+			LatLng[] latLngPoints = new LatLng[points.length];
+			for(int i = 0; i < points.length; i++) {
+				latLngPoints[i] = ((LatLng)points[i]);
+			}
+			
+			String text = LocationUtils.getMilesAreaString(latLngPoints[0], latLngPoints[1]) +
+					      ((description != null) ? " (" + description + ")" : "");
+			selectBoundaries.setText(text);
+			selectBoundaries.setTextColor(getResources().getColor(R.color.abs__bright_foreground_holo_light));
+		}
+		} else if (requestCode == GAMEPLAY_ACTIVITY_REQUEST) {
+			
+			int wait = data.getIntExtra("wait", -1);
+			double aRange = data.getDoubleExtra("aRange",-1.0d);
+			double hRange = data.getDoubleExtra("hRange",-1.0d);
+			
+			gameplaySettings.setText("hunt: "   + hRange + "mi, " +
+									 "attack: " + aRange + "mi, " +
+									 wait   + "s" );
+			gameplaySettings.setTextColor(getResources()
+					.getColor(R.color.abs__bright_foreground_holo_light));
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+	
+	private void hideKeyboard() {
+		InputMethodManager inputManager = (InputMethodManager)
+                getSherlockActivity().getSystemService(Context.INPUT_METHOD_SERVICE); 
+
+		inputManager.hideSoftInputFromWindow(getSherlockActivity().getCurrentFocus().getWindowToken(),
+		                   InputMethodManager.HIDE_NOT_ALWAYS);
+	}
+
+	@Override
+	public void onDatePicked(int year, int monthOfYear, int dayOfMonth) {
+		startDate.setText("Start " + monthOfYear + " " + dayOfMonth + " " + year);
+		startDate.setTextColor(getResources()
+				.getColor(R.color.abs__bright_foreground_holo_light));
+	}
+
+	@Override
+	public void onTimePicked(int hourOfDay, int minute) {
+		startTime.setText(hourOfDay + " " + minute);
+		startTime.setTextColor(getResources()
+				.getColor(R.color.abs__bright_foreground_holo_light));
 	}
 }

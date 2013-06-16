@@ -45,6 +45,8 @@ public class LocationService extends Service {
 	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
 	public static final String STOP_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
 	public static final String START_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
+	public static final String SEND_LOCATION_NOW = "com.nbs.android.client.SEND_LOCATION_NOW";
+
 	
 	public static final float SEARCH_MIN_DISPLACEMENT = 100.0f;
 	public static final float HUNT_MIN_DISPLACEMENT   = 10.0f;
@@ -121,6 +123,8 @@ public class LocationService extends Service {
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		Log.d(TAG, "onStartCommand("+intent+")");
+		
 		String action = intent.getAction();
 		
 		Log.d(TAG, "onStartCommand("+action+")");
@@ -133,11 +137,22 @@ public class LocationService extends Service {
 			else if(action != null && action.equals(LocationService.START_UPDATES)) {
 				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 			}
+			else if(action.equals(GCMMessages.MATCH_REMINDER)) {
+    			Location lastLocation = locationClient.getLastLocation();
+				Log.d(TAG, "last location ["+lastLocation.toString()+"]");
+				if(lastLocation != null) {
+					updateLocation(lastLocation);
+				}
+    		}
 			
 			LocalBroadcastManager.getInstance(this).registerReceiver(intentReceiver, intentFilter);
 			
 		} else if (locationClient.isConnecting() && action != null && action.equals(LocationService.STOP_UPDATES)) {
-			locationClient.disconnect();
+			try {
+				locationClient.disconnect();
+			} catch(Exception e) {
+				Log.d(TAG, e.getMessage());
+			}
 		}
 		return super.onStartCommand(intent, flags, startId);
 	}
@@ -172,9 +187,10 @@ public class LocationService extends Service {
 				public void onConnected(Bundle arg0) {
 					Location lastLocation = locationClient.getLastLocation();
 					
-					Log.d(TAG, "LocationClient connected, location ["+lastLocation.toString()+"]");
+					Log.d(TAG, "LocationClient connected");
 					
 					if(lastLocation != null) {
+						Log.d(TAG, "LocationClient connected, location ["+lastLocation.toString()+"]");
 						updateLocation(lastLocation);
 					}
 					
@@ -226,7 +242,9 @@ public class LocationService extends Service {
 	@Background
 	public void updateLocation(Location newLocation)
 	{
-		if(UserModel.hasToken(this))
+		Log.d(TAG, "location [" + (newLocation != null ? newLocation.toString() : null) + "]");
+
+		if(newLocation != null && UserModel.hasToken(this))
 		{
 			current = newLocation;
 

@@ -135,8 +135,5 @@ class Player
         enemy_range: range_to(my_target)
       })
     end
-    
-  end
-
-    
+  end   
 end

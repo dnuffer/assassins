@@ -67,6 +67,9 @@ public class GameFragment extends SherlockFragment{
 
 	@Override
 	public void onResume() {
+		bearingSource = new BearingProviderImpl(getActivity());
+		mapFragment.setBearingProvider(bearingSource);
+		hudFragment.setBearingProvider(bearingSource);
 		super.onResume();
 	}
 	

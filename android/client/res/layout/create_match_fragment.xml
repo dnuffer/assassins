@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="25dp"
@@ -37,7 +43,54 @@
         android:hint="Password (optional)"
         android:layout_gravity="center_horizontal"
         android:inputType="textPassword" />
+
+    <Button
+        android:id="@+id/boundaries"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:gravity="left"
+        android:text="Boundaries"
+        android:textAlignment="gravity"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/DimGray" />
+
+    <Button
+        android:id="@+id/gameplay"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="left"
+        android:text="Gameplay"
+        android:textAlignment="gravity"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/DimGray"  />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
     
+	    <Button
+	        android:id="@+id/start_date"
+	        android:layout_weight="3"
+	        android:layout_width="0px"
+	        android:layout_height="40dp"
+	        android:text="Start Date"
+	        android:textAlignment="gravity"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	        android:textColor="@color/DimGray"  />
+	
+	    <Button
+	        android:id="@+id/start_time"
+	        android:layout_weight="2"
+	        android:layout_width="0px"
+	        android:layout_height="40dp"
+	        android:text="Time"
+	        android:textAlignment="gravity"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	        android:textColor="@color/DimGray"  />
+
+    </LinearLayout>
     <Button
         android:id="@+id/create_match"
         android:layout_width="match_parent"
@@ -49,3 +102,4 @@
 
 
 </LinearLayout>
+</ScrollView>

@@ -333,7 +333,6 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		LocationManager locationManager = (LocationManager) (getSherlockActivity().getSystemService(Context.LOCATION_SERVICE));
 		
 		Location location = null;
-		
 		if((location = locationManager
 				.getLastKnownLocation(LocationManager.GPS_PROVIDER)) != null)
 			return location;

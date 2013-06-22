@@ -16,6 +16,8 @@ public class Loc{
 	@JsonProperty("lng")
 	public double lng;
 	
+	public Loc() {}
+	
 	public Loc(LatLng latLng) {
 		lat = latLng.latitude;
 		lng = latLng.longitude;

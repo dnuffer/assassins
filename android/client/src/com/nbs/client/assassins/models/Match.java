@@ -16,20 +16,24 @@ import com.google.android.gms.maps.model.LatLng;
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
 
-	public Match(String name, String pw, LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
-		this.name = name; this.password = pw; 
-		this.attackRange = aRange; this.huntRange = hRange; this.escapeTime = tEscape;
+	public Match(String name, String pw, long tStart, LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
+		this.name = name; 
+		this.password = pw; 
+		this.startTime = tStart;
+		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;
 		this.nwCorner = new Loc(nw); this.seCorner = new Loc(se);
 	}
 	
-	public Match() {
-	}
+	public Match() {}
 
 	@JsonProperty("token")
 	public String token;
 	
 	@JsonProperty("name")
 	public String name;
+	
+	@JsonProperty("start_time")
+	public long startTime;
 	
 	@JsonProperty("players")
 	public Player[] players;
@@ -52,16 +56,15 @@ public class Match {
 	@JsonProperty("escape_time")
 	public int escapeTime;
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		return "Match [token=" + token + ", name=" + name + ", players="
-				+ Arrays.toString(players) + ", password=" + password
-				+ ", nwCorner=" + nwCorner + ", seCorner=" + seCorner
-				+ ", attackRange=" + attackRange + ", huntRange=" + huntRange
-				+ ", escapeTime=" + escapeTime + "]";
+		return "Match [token=" + token + ", name=" + name + ", startTime="
+				+ startTime + ", players=" + Arrays.toString(players)
+				+ ", password=" + password + ", nwCorner=" + nwCorner
+				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
+				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
+				+ "]";
 	}
+
 	
 }

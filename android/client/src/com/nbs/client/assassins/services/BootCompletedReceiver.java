@@ -12,30 +12,15 @@ import android.util.Log;
 
 public class BootCompletedReceiver extends BroadcastReceiver {
 
-	private static final int FIVE_MINUTES = 60*5*1000;
 	private static final String TAG = "BootCompletedReceiver";
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Log.d(TAG, "onReceive");
-		
 		context.startService(new Intent(context, LocationService_.class));
-	
-		Long matchStartTimeUTC = UserModel.getMatchStartTimeUTC(context);
-		
-		if(matchStartTimeUTC != null) {
-			
-			matchStartTimeUTC -= FIVE_MINUTES;
-			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-			
-			Intent matchReminderIntent = new Intent(context, LocationService_.class)
-												.setAction(GCMMessages.MATCH_REMINDER);
-			PendingIntent startService = PendingIntent.getService(context, 0, matchReminderIntent, 
-					 						PendingIntent.FLAG_UPDATE_CURRENT);
-			//if the match has already begun,  it will fire immediately
-			alarmMngr.set(AlarmManager.RTC_WAKEUP, matchStartTimeUTC, startService);
-			Log.d(TAG, "registered alarm for time: " + matchStartTimeUTC);
-		}
+		context.startService(new Intent(context, NotificationService_.class)
+			.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
+			.putExtra("start_time", UserModel.getMatchStartTimeUTC(context)));
 	}
 
 }

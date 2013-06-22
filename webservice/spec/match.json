@@ -2,6 +2,10 @@
   "token" : "token1",
   "match" : {
     "id" : 3,
-    "name" : "testmatch1"
+    "name" : "testmatch1",
+    "start_time" : 1000,
+    "hunt_range" : 0.25,
+    "attack_range" : 0.05,
+    "escape_time" : 180
   }
 }

@@ -45,6 +45,10 @@ FactoryGirl.define do
     token     'token'
     players  { [ association(:player), association(:player), association(:player) ] } 
     player_ids { [ players[0].id, players[1].id, players[2].id ] }
+    start_time 10000000
+    hunt_range 0.25
+    attack_range 0.05
+    escape_time 180
   end
   
 end

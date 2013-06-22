@@ -1,10 +1,11 @@
 require 'mongoid'
 require 'securerandom'
 require 'bcrypt'
+require 'mongoid_spacial'
 
 class Match
   include Mongoid::Document
-  #include Mongoid::Spacial::Document
+  include Mongoid::Spacial::Document
   
   #has_one :creator, class_name: "User"
   #has_one :winner,  class_name: "User"
@@ -23,15 +24,15 @@ class Match
   
   #field :type, String
   
-  #field :start_time, type: Integer, default: -> { Time.now.utc._to_i + 100 } #TODO start match in 1 min (just for testing)
+  field :start_time, type: Integer
   #field :max_players, Integer
   
   field :nw_corner, type: Array, spacial: true
   field :se_corner, type: Array, spacial: true
   
-  field :hunt_range, Float
-  field :attack_range, Float
-  field :escape_time, Integer
+  field :hunt_range,   type: Float
+  field :attack_range, type: Float
+  field :escape_time,  type: Integer
   
   spacial_index :nw_corner
   
@@ -103,7 +104,7 @@ class Match
   end
   
   def in_progress?
-    players.length > 1 and winner.nil? #TODO starting match at a min # of players instead of time
+    Time.now.utc.to_i > start_time and players.length > 1 and winner.nil?
   end
   
   def is_public?

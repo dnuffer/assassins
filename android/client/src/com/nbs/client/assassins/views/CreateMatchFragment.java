@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Parcelable;
 import android.support.v4.app.DialogFragment;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -21,6 +22,7 @@ import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
+import com.googlecode.androidannotations.annotations.TextChange;
 import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
@@ -84,6 +86,24 @@ public class CreateMatchFragment extends SherlockFragment
 	
 	private ProgressDialog asyncProgress;
 
+	//match parameters
+	
+	//start time
+	private Integer minute;
+	private Integer hourOfDay;
+	private Integer monthDay;
+	private Integer month;
+	private Integer year;
+
+	//bounds
+	private LatLng nwCorner;
+	private LatLng seCorner;
+
+	//gameplay settings
+	private Double aRange;
+	private Double hRange;
+	private Integer tEscape;
+
 	public CreateMatchFragment() {
 	}
 	
@@ -103,6 +123,11 @@ public class CreateMatchFragment extends SherlockFragment
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
 				new HttpComponentsClientHttpRequestFactory());
+	}
+	
+	@TextChange({R.id.edit_match_name, R.id.edit_match_password})
+	void onTextChangesOnSomeTextViews(TextView tv, CharSequence text) {	
+	 
 	}
 	
 	@Click(R.id.boundaries)
@@ -155,21 +180,28 @@ public class CreateMatchFragment extends SherlockFragment
 		//TODO: validate name and password before allowing button to be enabled
 		//TODO: show visual indication if there are validation issues
 		Log.i(TAG, password.getText().toString());
-		String passwordStr = password.getText().toString();
-		if((passwordStr.length() >= MIN_PASSWORD_LEN || passwordStr.length() == 0)  && 
-		   matchName.getText().toString().length() >= MIN_MATCH_NAME_LEN) {
-			
-			
+		
+		if(validateSettings()) {
+
 			InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
 				      Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
 			btnCreate.setEnabled(false);
 			
-			CreateMatchMessage msg = new CreateMatchMessage();
-			msg.match = new Match();			
-			msg.match.password = passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null;
-			msg.match.name = matchName.getText().toString();
-			msg.token = UserModel.getToken(getActivity());
+			Time startTime = new Time();
+			startTime.set(0, minute, hourOfDay, monthDay, month, year);
+			
+			String passwordStr = password.getText().toString();
+			
+			CreateMatchMessage msg = 
+				new CreateMatchMessage(UserModel.getToken(getActivity()),
+					new Match(matchName.getText().toString(), 
+						passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null, 
+						startTime.toMillis(false), 
+						nwCorner, seCorner, 
+						aRange, hRange, tEscape));			
+			
+			Log.i(TAG, "Creating Match " + msg.toString());
 			
 			asyncProgress = new ProgressDialog(getActivity());
 			asyncProgress.setIndeterminate(true);
@@ -180,15 +212,41 @@ public class CreateMatchFragment extends SherlockFragment
 			
 			createMatchInBackground(msg);
 		}
-		else {
-			//TODO: provide earlier and better validation information to user
-			Toast.makeText(
-				getActivity(), 
-				"Match name at least " + MIN_MATCH_NAME_LEN +
-				" chars, Password at least " + MIN_PASSWORD_LEN + " chars", 
-				Toast.LENGTH_LONG
-			).show();
+	}
+
+	private boolean validateSettings() {
+		
+		String passwordStr = password.getText().toString();
+		
+		String  validationMsg = "";
+		
+		if(passwordStr.length() < MIN_PASSWORD_LEN && passwordStr.length() != 0) {
+			validationMsg += "Password at least " + MIN_PASSWORD_LEN + " chars ";
 		}
+		
+		if(matchName.getText().toString().length() < MIN_MATCH_NAME_LEN) {
+			validationMsg += "Match name at least " + MIN_MATCH_NAME_LEN +" chars "; 
+		}
+		
+		if(minute == null) {
+			validationMsg += "Choose a start time "; 
+		}
+
+		if(nwCorner == null) {
+			validationMsg += "Choose boundaries ";
+		}
+		
+		if(aRange == null) {
+			validationMsg += "Set Gameplay settings";
+		}
+		
+		boolean isValid = (validationMsg == "");
+		
+		if(!isValid) {
+			Toast.makeText(getActivity(), validationMsg, Toast.LENGTH_LONG).show();
+		}
+		
+		return isValid;
 	}
 	
 	@Background
@@ -247,6 +305,9 @@ public class CreateMatchFragment extends SherlockFragment
 				latLngPoints[i] = ((LatLng)points[i]);
 			}
 			
+			nwCorner = latLngPoints[0];
+			seCorner = latLngPoints[1];
+			
 			String text = LocationUtils.getMilesAreaString(latLngPoints[0], latLngPoints[1]) +
 					      ((description != null) ? " (" + description + ")" : "");
 			selectBoundaries.setText(text);
@@ -254,13 +315,13 @@ public class CreateMatchFragment extends SherlockFragment
 		}
 		} else if (requestCode == GAMEPLAY_ACTIVITY_REQUEST) {
 			
-			int wait = data.getIntExtra("wait", -1);
-			double aRange = data.getDoubleExtra("aRange",-1.0d);
-			double hRange = data.getDoubleExtra("hRange",-1.0d);
+			tEscape = data.getIntExtra("wait", -1);
+			aRange = data.getDoubleExtra("aRange",-1.0d);
+			hRange = data.getDoubleExtra("hRange",-1.0d);
 			
 			gameplaySettings.setText("hunt: "   + hRange + "mi, " +
 									 "attack: " + aRange + "mi, " +
-									 wait   + "s" );
+									 tEscape   + "s" );
 			gameplaySettings.setTextColor(getResources()
 					.getColor(R.color.abs__bright_foreground_holo_light));
 		}
@@ -277,9 +338,12 @@ public class CreateMatchFragment extends SherlockFragment
 
 	@Override
 	public void onDatePicked(int year, int monthOfYear, int dayOfMonth) {
-		startDate.setText("Start " + monthOfYear + " " + dayOfMonth + " " + year);
+		startDate.setText(monthOfYear + "/" + dayOfMonth + "/" + year);
 		startDate.setTextColor(getResources()
 				.getColor(R.color.abs__bright_foreground_holo_light));
+		this.year = year;
+		this.monthDay = dayOfMonth;
+		this.month = monthOfYear;
 	}
 
 	@Override
@@ -287,5 +351,7 @@ public class CreateMatchFragment extends SherlockFragment
 		startTime.setText(hourOfDay + " " + minute);
 		startTime.setTextColor(getResources()
 				.getColor(R.color.abs__bright_foreground_holo_light));
+		this.hourOfDay = hourOfDay;
+		this.minute = minute;
 	}
 }

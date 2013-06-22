@@ -146,7 +146,7 @@ post '/api/matches' do
     return {
       status: 'ok',
       message: 'match created',
-      match: match.as_json(only: [:name, :token])
+      match: match.as_json(except: [:salt, :password, :player_ids])
     }.to_json 
   end
   
@@ -168,7 +168,7 @@ post '/api/matches/:name/players' do
     return {
         status: 'ok',
         message: 'joined match',
-        match: match.as_json(only: [:name, :token])
+        match: match.as_json(except: [:salt, :password, :player_ids])
       }.to_json
   end
   
@@ -278,13 +278,15 @@ post '/api/users/:token/attack' do
   
   if user.in_match?
     player = user.player
+    target = player.get_target
 
     if player.attack_target
+      target.reload
       return {
         status: 'ok',
         message: 'attack successful',
         hit: true,
-        target_life: player.get_target.life
+        target_life: target.life
       }.to_json 
     end
   end

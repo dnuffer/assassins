@@ -30,6 +30,8 @@
         android:layout_height="wrap_content"
         android:hint="Match Name"
         android:layout_gravity="center_horizontal"
+        android:imeOptions="actionNext"
+        android:nextFocusDown="@+id/edit_match_password"
         android:ems="10" >
 
         <requestFocus />
@@ -42,6 +44,7 @@
         android:ems="10"
         android:hint="Password (optional)"
         android:layout_gravity="center_horizontal"
+        android:imeOptions="actionDone"
         android:inputType="textPassword" />
 
     <Button

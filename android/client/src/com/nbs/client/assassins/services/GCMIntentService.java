@@ -85,11 +85,11 @@ public class GCMIntentService extends GCMBaseIntentService {
 			PlayerModel.onEnemyEvent(c, extras);
 		}
 		else if(type.equals(GCMMessages.PLAYER_JOINED_MATCH)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.PLAYER_JOINED_MATCH, new Bundle());
 		}
 		else if(type.equals(GCMMessages.MATCH_START)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.MATCH_START, new Bundle());
 		}
 		else if(type.equals(GCMMessages.MATCH_REMINDER)) {
@@ -97,54 +97,28 @@ public class GCMIntentService extends GCMBaseIntentService {
 				.sendBroadcast(new Intent().setAction(GCMMessages.MATCH_REMINDER));
 		}
 		else if(type.equals(GCMMessages.MATCH_START)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.MATCH_START, new Bundle());
 		}
 		else if(type.equals(GCMMessages.MATCH_END)) {
 			PlayerModel.onMatchEnd(c, extras);
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.MATCH_END, new Bundle());
 		}
 		else if(type.equals(GCMMessages.PLAYER_ELIMINATED)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.PLAYER_ELIMINATED, new Bundle());
 		}
 		else if(type.equals(GCMMessages.INVITE)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.INVITE, new Bundle());
 		}
 		else if(type.equals(GCMMessages.ACHIEVEMENT)) {
-			postNotification(UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.ACHIEVEMENT, new Bundle());
 		}
 	}
-	
-	private void postNotification(int id, int res, String title, String message, Bundle extras)
-	{
-		try {
-			//the intent to launch when the notification is touched
-		    Intent notificationIntent = new Intent(this, MainActivity_.class);
-		    notificationIntent.putExtras(extras);
-		    
-		    NotificationCompat.Builder builder = 
-		    		new NotificationCompat.Builder(this)  
-		            .setSmallIcon(res)  
-		            .setContentTitle(title)  
-		            .setContentText(message)
-		        	.setAutoCancel(true)
-	        		.setContentIntent(PendingIntent.getActivity(
-	        				this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
-	        // Add as notification  
-	        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);  
-	        manager.notify(id, builder.build());  
-		}
-		catch (IllegalArgumentException e) {
-			Log.v(TAG, e.getMessage());
-		}
-	}
-
-	
 	@Override
 	protected void onRegistered(Context context, String registrationId) {
 		Log.i(TAG, "OnRegistered() received: " + registrationId);

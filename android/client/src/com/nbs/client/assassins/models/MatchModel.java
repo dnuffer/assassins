@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.gms.maps.model.LatLng;
 
 public class MatchModel {
@@ -183,6 +184,10 @@ public class MatchModel {
 
 	public static boolean hasPendingMatch(Context context) {
 		return MatchModel.inMatch(context) && MatchModel.getStartTime(context) > System.currentTimeMillis();
+	}
+
+	public static boolean inActiveMatch(Context context) {
+		return MatchModel.inMatch(context) && MatchModel.getStartTime(context) < System.currentTimeMillis();
 	}
 
 

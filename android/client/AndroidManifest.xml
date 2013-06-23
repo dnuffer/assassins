@@ -53,7 +53,6 @@
                 <category android:name="com.nbs.client.assassins" />
             </intent-filter>
         </receiver>
-        
         <receiver android:name="com.nbs.client.assassins.services.BootCompletedReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -66,6 +65,7 @@
 
         <activity
             android:name=".controllers.MainActivity_"
+            android:configChanges="orientation|keyboardHidden"
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -73,17 +73,29 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".controllers.LoginActivity_" >
+        <activity
+            android:name=".controllers.LoginActivity_"
+            android:configChanges="orientation|keyboardHidden" >
         </activity>
-        <activity android:name=".controllers.CreateAccountActivity_" >
+        <activity
+            android:name=".controllers.CreateAccountActivity_"
+            android:configChanges="orientation|keyboardHidden" >
         </activity>
-        <activity android:name=".controllers.CreateMatchActivity_" >
+        <activity
+            android:name=".controllers.CreateMatchActivity_"
+            android:configChanges="orientation|keyboardHidden" >
         </activity>
-        <activity android:name=".controllers.JoinMatchActivity_" >
+        <activity
+            android:name=".controllers.JoinMatchActivity_"
+            android:configChanges="orientation|keyboardHidden" >
         </activity>
-        <activity android:name=".controllers.MatchBoundsActivity" >
+        <activity
+            android:name=".controllers.MatchBoundsActivity"
+            android:configChanges="orientation" >
         </activity>
-        <activity android:name=".controllers.GameplayActivity" >
+        <activity
+            android:name=".controllers.GameplayActivity"
+            android:configChanges="orientation|keyboardHidden" >
         </activity>
     </application>
 

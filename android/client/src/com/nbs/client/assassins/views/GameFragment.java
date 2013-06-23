@@ -13,6 +13,7 @@ import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.nbs.client.assassins.R;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
@@ -43,21 +44,22 @@ public class GameFragment extends SherlockFragment{
 		ft.replace(R.id.game_fragment_container, mapFragment);
 		ft.commit();
 		
-		hudFragment = new HUDFragment_();
-		ft = getActivity().getSupportFragmentManager().beginTransaction();
-		ft.add(R.id.game_fragment_container, hudFragment);
-		ft.commit();
-		
-		hudFragment.setBearingProvider(bearingSource);
-		
 		bearingSource = new BearingProviderImpl(getActivity());
-		mapFragment.setBearingProvider(bearingSource);
-		
+		mapFragment.setBearingProvider(bearingSource);		
 	}
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
+		if(MatchModel.inActiveMatch(getSherlockActivity())) {
+			hudFragment = new HUDFragment_();
+			hudFragment.setBearingProvider(bearingSource);
+			getActivity()
+				.getSupportFragmentManager()
+					.beginTransaction()
+					.add(R.id.game_fragment_container, hudFragment)
+					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+					.commit();
+		}
 		super.onViewCreated(view, savedInstanceState);
 
 	}

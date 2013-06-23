@@ -121,6 +121,27 @@ class Match
   def eliminate target
     self.player_ids.delete target.id.to_s
     self.save
+    
+    the_winner = winner
+    
+    #TODO this may still block in which case try: $gem install delayed_job
+    Thread.new do 
+      players.each do |player|    
+        player.user.send_push_notification({
+          type: :player_eliminated,
+          match: self.name,
+          player_eliminated: target.user.username
+        })
+        
+        unless the_winner.nil?
+          player.user.send_push_notification({
+            type:  :match_end,
+            match: self.name,
+            winner: the_winner.user.username
+          })
+        end
+      end
+    end  
   end
   
   def target_of player
@@ -129,6 +150,11 @@ class Match
       unless index.nil? 
         target_index = (index == player_ids.length - 1) ? 0 : index + 1
         target = players.find(player_ids[target_index])
+        if target.location.nil?
+          # dropped from match because no location reported by start_time
+          eliminate target
+          return target_of player
+        end
         return target
       end
     end
@@ -139,7 +165,12 @@ class Match
       index = player_ids.index player.id.to_s
       unless index.nil?
         target_index = (index == 0) ? player_ids.length-1 : index-1
-        return players.find(player_ids[target_index])
+        enemy = players.find(player_ids[target_index])
+        if enemy.location.nil?
+          eliminate enemy
+          return enemy_of player
+        end
+        return enemy
       end
     end
   end
@@ -149,10 +180,9 @@ class Match
     if in_progress? and target != nil and attacker.alive? and attacker.distance_to(target) < attack_range
       target.take_hit 1
       attacker.notify_target
-      # sends a message to all users if a player is eliminated
+      
       if target.life < 1
-        eliminate target
-        the_winner = winner
+        eliminate target    
         
         #TODO: for efficiency, just return this in http attack request
         Thread.new do
@@ -161,29 +191,9 @@ class Match
               type: :new_target,
               match: self.name
             }.merge!(attacker.state)
-            
             attacker.user.send_push_notification(new_target_notif)
           end
         end
-        
-        #TODO this may still block in which case try: $gem install delayed_job
-        Thread.new do 
-          players.each do |player|    
-            player.user.send_push_notification({
-              type: :player_eliminated,
-              match: self.name,
-              player_eliminated: target.user.username
-            })
-            
-            unless the_winner.nil?
-              player.user.send_push_notification({
-                type:  :match_end,
-                match: self.name,
-                winner: the_winner.user.username
-              })
-            end
-          end
-        end      
       end
       return true
     end

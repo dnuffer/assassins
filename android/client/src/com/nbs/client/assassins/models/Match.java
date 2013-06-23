@@ -21,7 +21,7 @@ public class Match {
 		this.password = pw; 
 		this.startTime = tStart;
 		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;
-		this.nwCorner = new Loc(nw); this.seCorner = new Loc(se);
+		this.nwCorner = new LatLngData(nw); this.seCorner = new LatLngData(se);
 	}
 	
 	public Match() {}
@@ -42,10 +42,10 @@ public class Match {
 	public String password;
 	
 	@JsonProperty("nw_corner")
-	public Loc nwCorner;
+	public LatLngData nwCorner;
 	
 	@JsonProperty("se_corner")
-	public Loc seCorner;
+	public LatLngData seCorner;
 	
 	@JsonProperty("attack_range")
 	public double attackRange;
@@ -64,6 +64,14 @@ public class Match {
 				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
 				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
 				+ "]";
+	}
+
+	public LatLng getSECornerLatLng() {
+		return seCorner != null ? seCorner.toLatLng() : null;
+	}
+
+	public LatLng getNWCornerLatLng() {
+		return nwCorner != null ? nwCorner.toLatLng() : null;
 	}
 
 	

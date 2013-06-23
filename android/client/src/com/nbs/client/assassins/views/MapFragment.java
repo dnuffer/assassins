@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
@@ -79,8 +80,10 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	private Circle rangeCircle; 
 	private Polygon boundsPolygon;
  	private Marker myLocationMarker;
- 	private int circleColor = Color.argb(100, Color.red(Color.RED), Color.green(Color.RED), Color.blue(Color.RED));
- 	private int boundsColor = Color.argb(100, Color.red(Color.BLUE), Color.green(Color.BLUE), Color.blue(Color.BLUE));
+ 	private int circleColor = Color.argb(100, 
+ 		Color.red(Color.RED), Color.green(Color.RED), Color.blue(Color.RED));
+ 	private int boundsColor = Color.argb(100, 
+ 		Color.red(Color.BLUE), Color.green(Color.BLUE), Color.blue(Color.BLUE));
 	
  	private boolean animating = false;
 
@@ -120,7 +123,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		
 		showMyLocation(lastLatLng); 
 		
-		if(UserModel.inMatch(getSherlockActivity()))
+		if(MatchModel.inMatch(getSherlockActivity()))
 		{
 			showGameBoundary();
 			showAttackRangeCircle(lastLatLng);
@@ -143,7 +146,6 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		else if (MODE == MODE_NORTH) {
 			stopSensorUpdates();
 		}
-		
 	}
 
 	@Override

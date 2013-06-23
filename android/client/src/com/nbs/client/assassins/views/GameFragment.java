@@ -48,9 +48,11 @@ public class GameFragment extends SherlockFragment{
 		ft.add(R.id.game_fragment_container, hudFragment);
 		ft.commit();
 		
+		hudFragment.setBearingProvider(bearingSource);
+		
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
-		hudFragment.setBearingProvider(bearingSource);
+		
 	}
 	
 	@Override

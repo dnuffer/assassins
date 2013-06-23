@@ -297,6 +297,7 @@ post '/api/users/:token/attack' do
 end
 
 
+
 #return wrapped response to allow for error handling like twitter api
 # {"response" : null, "type" : "error", "errors":[{"message":"Bad Authentication data","code":215}]}
 

@@ -45,6 +45,7 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.AttackResponse;
@@ -55,6 +56,8 @@ import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.services.LocationService_;
+import com.nbs.client.assassins.services.NotificationService;
+import com.nbs.client.assassins.services.NotificationService_;
 import com.nbs.client.assassins.views.CreateAccountFragment;
 import com.nbs.client.assassins.views.CreateMatchFragment;
 import com.nbs.client.assassins.views.GameFragment;
@@ -190,7 +193,7 @@ public class MainActivity extends SherlockFragmentActivity {
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentActionReceiver);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver);
 		
-		if(!UserModel.inMatch(this)) {
+		if(!MatchModel.inMatch(this)) {
 			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
 		}
 		
@@ -288,8 +291,8 @@ public class MainActivity extends SherlockFragmentActivity {
 			addLoggedInOptionsMenuItems(menu);
 			menu.removeGroup(NEW_USER_ITEMS);
 			
-			if(UserModel.inMatch(this)) {
-				Log.d(TAG, UserModel.getMatch(this).toString());
+			if(MatchModel.inMatch(this)) {
+				Log.d(TAG, MatchModel.getMatch(this).toString());
 				addInMatchOptionsMenuItems(menu);
 				menu.removeGroup(NOT_IN_MATCH_ITEMS);
 				
@@ -392,6 +395,8 @@ public class MainActivity extends SherlockFragmentActivity {
 			Log.d(TAG, response.toString());
 
 			UserModel.signOut(this);
+			this.startService(new Intent(this, NotificationService_.class)
+									.setAction(NotificationService.CANCEL_MATCH_ALARMS));
 			GCMRegistrar.setRegisteredOnServer(this, false);
 			GCMRegistrar.unregister(this);
 
@@ -536,7 +541,7 @@ public class MainActivity extends SherlockFragmentActivity {
     				winner = "you";
     			}
     			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
-    			UserModel.setMatch(context, null);
+    			MatchModel.setMatch(context, null);
     			PlayerModel.clearTarget(context);
     			PlayerModel.clearEnemy(context);
     		}

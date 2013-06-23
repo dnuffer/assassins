@@ -2,6 +2,8 @@ package com.nbs.client.assassins.models;
 
 import java.util.UUID;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
@@ -126,66 +128,14 @@ public class UserModel {
         editor.commit();
 	}  
 
-	public synchronized static void setMatch(Context context, Match match) {
-
-		if(match == null) {
-			setMatchName(context, null);
-			setMatchToken(context, null);
-		} else {
-			setMatchName(context, match.name);
-			setMatchToken(context, match.token);
-		}	
-	}
-	
-	private static void setMatchToken(Context context, String matchId) {
-    	if(context == null) return;
-    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-    	editor.putString("match_token", matchId);
-        editor.commit();
-		
-	}
-
-	private synchronized static void setMatchName(Context context, String name) {
-    	if(context == null) return;
-    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-    	editor.putString("match_name", name);
-        editor.commit();
-	}
-
-	public static Match getMatch(Context context) {
-		Match match = new Match();
-		match.name = getMatchName(context);
-		match.token = getMatchToken(context);
-		//TODO: store more of match's properties
-		
-		if(match.token == null) return null;
-		
-		return match;
-	}
-	
-	private static String getMatchToken(Context context) {
-    	if(context == null) return null;
-    	SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        return pref.getString("match_token", null);
-	}
-
-	private static String getMatchName(Context context) {
-    	if(context == null) return null;
-    	SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        return pref.getString("match_name", null);
-	}
-
-	public static boolean inMatch(Context context) {
-		return UserModel.getMatch(context) != null;
-	}
-
 	public static boolean loggedIn(Context context) {
 		// TODO Auto-generated method stub
 		return UserModel.hasToken(context) && UserModel.hasUsername(context);
 	}
-
+	
+	
 	public synchronized static void signOut(Context context) {
-		UserModel.setMatch(context, null);
+		MatchModel.setMatch(context, null);
 		UserModel.setUsername(context, null);
 		UserModel.setToken(context, null);
 	}
@@ -193,11 +143,8 @@ public class UserModel {
 	public static String _toString(Context c) {
 		
 		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
-				"match=" + getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
+				"match=" + MatchModel.getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
 	}
 
-	public static Long getMatchStartTimeUTC(Context context) {
-		//TODO make this a real start time
-		return System.currentTimeMillis() + 30000;
-	}
+
 }

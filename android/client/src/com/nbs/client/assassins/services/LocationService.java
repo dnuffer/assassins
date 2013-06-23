@@ -15,9 +15,8 @@ import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.rest.RestService;
-import com.nbs.client.assassins.controllers.MainActivity;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.PlayerState;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
@@ -270,7 +269,7 @@ public class LocationService extends Service {
 					Log.i(TAG,"location successfully sent to server.");
 					UserModel.setLocation(this, response.latitude, response.longitude);
 					
-					if(UserModel.inMatch(this)) {
+					if(MatchModel.inMatch(this)) {
 						PlayerModel.setPlayerState(this, response.playerState);
 					}
 

@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-public class Loc{
+public class LatLngData{
 
 	@JsonProperty("lat")
 	public double lat;
@@ -16,11 +16,15 @@ public class Loc{
 	@JsonProperty("lng")
 	public double lng;
 	
-	public Loc() {}
+	public LatLngData() {}
 	
-	public Loc(LatLng latLng) {
+	public LatLngData(LatLng latLng) {
 		lat = latLng.latitude;
 		lng = latLng.longitude;
+	}
+	
+	public LatLng toLatLng() {
+		return new LatLng(lat, lng);
 	}
 
 	/* (non-Javadoc)

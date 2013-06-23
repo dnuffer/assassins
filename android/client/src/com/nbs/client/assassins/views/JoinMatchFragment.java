@@ -6,6 +6,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -23,11 +24,14 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.id;
 import com.nbs.client.assassins.R.layout;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.JoinMatchMessage;
 import com.nbs.client.assassins.network.MatchResponse;
 import com.nbs.client.assassins.network.Response;
+import com.nbs.client.assassins.services.NotificationService;
+import com.nbs.client.assassins.services.NotificationService_;
 
 @EFragment(R.layout.join_match_fragment)
 public class JoinMatchFragment extends SherlockFragment {
@@ -155,7 +159,11 @@ public class JoinMatchFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				UserModel.setMatch(getActivity(), response.match);
+				MatchModel.setMatch(getActivity(), response.match);
+				getSherlockActivity().startService(
+					new Intent(getSherlockActivity(), NotificationService_.class)
+							.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
+							.putExtra("start_time", response.match.startTime));
 				mListener.onMatchJoined(true);
 				return;
 			}

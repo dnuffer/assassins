@@ -65,21 +65,16 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	@ViewById(R.id.hud_escape_time_remaining)
 	TextView escapeTimeText;
 	
-	@ViewById(R.id.hud_erange)
+	@ViewById(R.id.hud_trange)
 	TextView targetRange;
 	
-	@ViewById(R.id.hud_trange)
+	@ViewById(R.id.hud_erange)
 	TextView enemyRange;
 
 	public HUDFragment() {}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		
-		targetRange.setText(PlayerModel.getTargetProximity(getSherlockActivity()));
-		enemyRange.setText(PlayerModel.getEnemyProximity(getSherlockActivity()));
-		lifeView.setProgress(PlayerModel.getMyLife(getSherlockActivity()));
-		tLifeView.setProgress(PlayerModel.getTargetLife(getSherlockActivity()));
 		
 		super.onCreate(savedInstanceState);
 	}
@@ -96,6 +91,11 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
 				new HttpComponentsClientHttpRequestFactory());
+		
+		targetRange.setText(PlayerModel.getTargetProximity(getSherlockActivity()));
+		enemyRange.setText(PlayerModel.getEnemyProximity(getSherlockActivity()));
+		lifeView.setProgress(PlayerModel.getMyLife(getSherlockActivity()));
+		tLifeView.setProgress(PlayerModel.getTargetLife(getSherlockActivity()));
 	}
 
 	@Override

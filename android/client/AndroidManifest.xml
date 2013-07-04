@@ -94,7 +94,7 @@
             android:configChanges="orientation" >
         </activity>
         <activity
-            android:name=".controllers.GameplayActivity"
+            android:name=".controllers.MatchParamsActivity"
             android:configChanges="orientation|keyboardHidden" >
         </activity>
     </application>

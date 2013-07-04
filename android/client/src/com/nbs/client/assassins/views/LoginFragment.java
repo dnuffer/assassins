@@ -152,6 +152,8 @@ public class LoginFragment extends SherlockFragment {
 			}
 		} else {
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
+			UserModel.setUsername(getActivity(), null);
+			UserModel.setToken(getActivity(), null);
 		}
 		
 		btnLogin.setEnabled(true);	

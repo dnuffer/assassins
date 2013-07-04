@@ -3,6 +3,9 @@
  */
 package com.nbs.client.assassins.controllers;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import net.simonvt.menudrawer.MenuDrawer;
@@ -20,6 +23,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 
 import android.util.Log;
@@ -105,10 +109,8 @@ public class MainActivity extends SherlockFragmentActivity {
 	private static final int NEW_USER_ITEMS = 7;
 	
 	private static final int IN_MATCH_ITEMS = 8;
-	private static final int ATTACK_ID = 9;
 	private static final int NOTIF_ID = 10;
 
-	IntentFilter intentActionFilter;
 	IntentFilter intentLocationUpdateFilter;
 
 	private boolean notificationsShowing = false;
@@ -128,17 +130,6 @@ public class MainActivity extends SherlockFragmentActivity {
         
         registerForPushNotifications();
 
-        intentActionFilter = new IntentFilter();
-        intentActionFilter.addAction(PlayerModel.NEW_TARGET);   
-        intentActionFilter.addAction(PlayerModel.TARGET_EVENT);
-        intentActionFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
-        intentActionFilter.addAction(PlayerModel.TARGET_LIFE_CHANGED); 
-        intentActionFilter.addAction(PlayerModel.TARGET_LOCATION_CHANGED); 
-        intentActionFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
-        intentActionFilter.addAction(PlayerModel.ATTACKED); 
-        intentActionFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
-        intentActionFilter.addAction(PlayerModel.MATCH_END);
-        
         intentLocationUpdateFilter = new IntentFilter();
         intentLocationUpdateFilter.addAction(LocationService.LOCATION_UPDATED);   
         
@@ -188,9 +179,7 @@ public class MainActivity extends SherlockFragmentActivity {
     }
 
 	@Override
-	protected void onPause() 
-	{
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentActionReceiver);
+	protected void onPause() {
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver);
 		
 		if(!MatchModel.inMatch(this)) {
@@ -203,15 +192,12 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	protected void onResume() 
 	{
-	    super.onResume();
-
-	    LocalBroadcastManager.getInstance(this)
-	    	.registerReceiver(intentActionReceiver, intentActionFilter);
-	   
 	    LocalBroadcastManager.getInstance(this)
 	    	.registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
 	    
 	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
+	    
+	    super.onResume();
 	}
 
 	@Override
@@ -242,10 +228,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	
 	private void addInMatchOptionsMenuItems(Menu menu) {
-		if(menu.findItem(ATTACK_ID) == null) {
-			menu.add(IN_MATCH_ITEMS, ATTACK_ID, Menu.NONE, "Attack")
-				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);	
-		}
 	}
 	
 	private void addNotInMatchOptionsMenuItems(Menu menu) {
@@ -342,47 +324,12 @@ public class MainActivity extends SherlockFragmentActivity {
 				asyncProgress.show();
 	    		signOut(asyncProgress);
 	    		return true;
-	    	case ATTACK_ID:
-	    		item.setEnabled(false);
-	    		attack(item);
-	    		return true;
 			default:
 	    }
 	    
 		return super.onOptionsItemSelected(item);
 	}
 
-	@Background
-	public void attack(MenuItem attackMenuItem) {
-		
-		Log.d(TAG, "attack in background");
-		
-		try {
-			LocationMessage msg = new LocationMessage();
-			LatLng latlng = UserModel.getLocation(this);
-			msg.latitude = latlng.latitude;
-			msg.longitude = latlng.longitude;
-			msg.installId = UserModel.getInstallId(this);
-			
-			AttackResponse response = restClient.attack(UserModel.getToken(this), msg);
-			attackFinished(response, attackMenuItem);
-		}
-		catch(Exception e) {
-			Log.d(TAG, e.getMessage());
-		}
-	}
-	
-	@UiThread
-	public void attackFinished(AttackResponse response, MenuItem attackMenuItem)
-	{
-		Log.d(TAG, "attackFinished status:" + response.ok());
-		attackMenuItem.setEnabled(true);
-
-		if(response.ok()) {
-			PlayerModel.setTargetLife(this, Integer.parseInt(response.targetLife));
-			Toast.makeText(this, "Attack " + response.ok(), Toast.LENGTH_SHORT).show();
-		}
-	}
 
 	@Background
 	public void signOut(ProgressDialog asyncProgress)
@@ -499,53 +446,6 @@ public class MainActivity extends SherlockFragmentActivity {
     		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
     		gameFragment.onLocationChanged(UserModel.getLocation(context));
 	    }
-	};
-	
-	private BroadcastReceiver intentActionReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        	String action = intent.getAction();
-        	
-        	Log.d(TAG, "received event [" + action + "]");
-    		
-    		if(action.equals(PlayerModel.NEW_TARGET)) {
-    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.TARGET_EVENT)) {
-    			String tRange = PlayerModel.getTargetProximity(context);
-    			gameFragment.onTargetRangeChanged(tRange);
-    		}
-    		else if(action.equals(PlayerModel.TARGET_BEARING_CHANGED)) {
-    			float tBearing = PlayerModel.getTargetBearing(context);
-    			gameFragment.onTargetBearingChanged(Math.round(tBearing));
-    		}
-    		else if(action.equals(PlayerModel.TARGET_LIFE_CHANGED)) {
-    			gameFragment.onTargetLifeChanged(PlayerModel.getTargetLife(context));
-    			Toast.makeText(context, "your target has suffered a blow.", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED)) {
-    			Toast.makeText(context, "your target is within " + 
-						PlayerModel.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.ATTACKED)) {
-    			gameFragment.onMyLifeChanged(PlayerModel.getMyLife(context));
-    			Toast.makeText(context, "you were attacked.", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
-    			Toast.makeText(context, "your enemy has entered " + 
-    									PlayerModel.getEnemyProximity(context) + ".", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.MATCH_END)) {
-    			String winner = intent.getStringExtra("winner");
-    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
-    				winner = "you";
-    			}
-    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
-    			MatchModel.setMatch(context, null);
-    			PlayerModel.clearTarget(context);
-    			PlayerModel.clearEnemy(context);
-    		}
-        }
 	};
 
 }

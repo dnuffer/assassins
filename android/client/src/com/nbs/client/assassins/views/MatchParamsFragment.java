@@ -19,7 +19,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 @EFragment(R.layout.gameplay_dialog)
-public class GameplayFragment extends SherlockFragment {
+public class MatchParamsFragment extends SherlockFragment {
 
 	private static final String TAG = "GameplayFragment";
 	
@@ -59,7 +59,7 @@ public class GameplayFragment extends SherlockFragment {
     	public void onGameplaySettingsCancelled();
     }
 	
-	public GameplayFragment(){}
+	public MatchParamsFragment(){}
 
  	@Override
     public void onAttach(Activity activity) {

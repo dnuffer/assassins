@@ -54,7 +54,6 @@ public class NotificationService extends Service {
 			
 			long reportLocationReminderTime = matchStartTimeUTC-FIVE_MINUTES;
 			long postNotifReminderTime = matchStartTimeUTC-ONE_MINUTE;
-			
 			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			//if the match has already begun,  it will fire immediately
 			alarmMngr.set(AlarmManager.RTC_WAKEUP, reportLocationReminderTime, 

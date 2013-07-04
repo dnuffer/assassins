@@ -16,12 +16,19 @@ import com.google.android.gms.maps.model.LatLng;
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
 
-	public Match(String name, String pw, long tStart, LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
+	public Match(String name, String pw, long tStart, 
+			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
 		this.name = name; 
 		this.password = pw; 
 		this.startTime = tStart;
 		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;
 		this.nwCorner = new LatLngData(nw); this.seCorner = new LatLngData(se);
+	}
+	
+	public Match(String token, String name, String pw, long tStart, 
+			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
+		this(name, pw, tStart, nw, se, aRange, hRange, tEscape);
+		this.token = token;
 	}
 	
 	public Match() {}
@@ -33,7 +40,7 @@ public class Match {
 	public String name;
 	
 	@JsonProperty("start_time")
-	public long startTime;
+	public Long startTime;
 	
 	@JsonProperty("players")
 	public Player[] players;
@@ -48,13 +55,13 @@ public class Match {
 	public LatLngData seCorner;
 	
 	@JsonProperty("attack_range")
-	public double attackRange;
+	public Double attackRange;
 	
 	@JsonProperty("hunt_range")
-	public double huntRange;
+	public Double huntRange;
 	
 	@JsonProperty("escape_time")
-	public int escapeTime;
+	public Integer escapeTime;
 
 	@Override
 	public String toString() {

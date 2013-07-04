@@ -2,56 +2,94 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent" android:layout_height="wrap_content"
 	android:background="@color/gray" android:orientation="horizontal"
-	android:layout_gravity="bottom" android:padding="8dp">
+	android:layout_gravity="bottom" android:padding="12dp">
 	<LinearLayout android:layout_width="wrap_content"
 		android:layout_height="match_parent" android:orientation="horizontal"
 		android:layout_weight=".66">
 		<LinearLayout android:layout_width="wrap_content"
-			android:layout_height="match_parent" android:orientation="vertical">
-			<TextView android:id="@+id/hud_tbearing" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:orientation="vertical">
+			<TextView android:id="@+id/hud_trange" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:textColor="@color/white"
-				android:textSize="30dp" android:textStyle="bold" android:text="88.5" />
-			<TextView android:id="@+id/hud_label_tbearing"
+				android:textSize="14dp" android:textStyle="bold" android:text="unknown" />
+			<TextView android:id="@+id/hud_label_trange"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:textColor="@color/white" android:textSize="10dp"
-				android:text="bearing to target" />
+				android:textColor="@color/white" android:textSize="12dp"
+				android:text="target range" />
+			<TextView android:id="@+id/hud_erange" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textColor="@color/white"
+				android:textSize="14dp" android:textStyle="bold" android:text="unknown"
+				android:paddingTop="4dp" />
+			<TextView android:id="@+id/hud_label_erange"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textColor="@color/white" android:textSize="12dp"
+				android:text="enemy range" />
 		</LinearLayout>
-		<FrameLayout android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:paddingLeft="8dp">
-			<View android:layout_width="2dp" android:layout_height="50dp"
-				android:layout_gravity="center" android:background="@drawable/needle" />
-			<View android:layout_width="50dp" android:layout_height="50dp"
-				android:background="@drawable/circle" android:gravity="right" />
-		</FrameLayout>
+		<LinearLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:orientation="vertical" 
+			android:paddingLeft="8dp"
+			android:layout_gravity="center"	>		
+
+			<TextView
+			    android:id="@+id/hud_attack"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:textColor="@color/white"
+			    android:text="Attack"
+			    android:textSize="20dp"
+			    android:textStyle="bold" />
+
+			<TextView
+			    android:id="@+id/hud_escape_time_remaining"
+			    android:layout_height="wrap_content"
+			    android:layout_width="wrap_content"
+			    android:text=""
+			    android:textColor="@color/white"
+			    android:textSize="20dp"
+			    android:textStyle="bold" />
+			<TextView android:id="@+id/hud_tbearing"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:textColor="@color/DarkGray" android:textSize="12dp"
+				android:text="target_bearing" />
+		</LinearLayout>
 	</LinearLayout>
 	<LinearLayout android:layout_width="wrap_content"
 		android:layout_height="match_parent" android:orientation="horizontal">
 		<LinearLayout android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:orientation="vertical">
+			android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginRight="8dp">
 			<TextView android:id="@+id/hud_label_life" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:textColor="@color/white"
-				android:layout_gravity="right" android:textSize="12dp" android:text="me" />
+				android:layout_gravity="right" android:textSize="14dp" android:text="me" />
 			<TextView android:id="@+id/hud_label_target_life"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:text="target" android:layout_gravity="right"
-				android:textColor="@color/white" android:textSize="12dp" />
+				android:textColor="@color/white" android:textSize="14dp" />
 		</LinearLayout>
 		<LinearLayout android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:orientation="vertical">
-			<ProgressBar android:id="@+id/hud_my_life"
-				style="?android:attr/progressBarStyleHorizontal"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_gravity="right" android:max="3" android:progress="3" />
-			<ProgressBar android:id="@+id/hud_target_life"
-				style="?android:attr/progressBarStyleHorizontal"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_gravity="right" android:max="3" android:progress="3" />
+
+			<ProgressBar
+			    android:id="@+id/hud_my_life"
+			    style="?android:attr/progressBarStyleHorizontal"
+			    android:layout_width="40dp"
+			    android:layout_height="wrap_content"
+			    android:layout_gravity="right"
+			    android:max="3"
+			    android:progress="0" />
+
+			<ProgressBar
+			    android:id="@+id/hud_target_life"
+			    style="?android:attr/progressBarStyleHorizontal"
+			    android:layout_width="40dp"
+			    android:layout_height="wrap_content"
+			    android:layout_gravity="right"
+			    android:max="3"
+			    android:progress="0" />
 
 			<TextView android:id="@+id/hud_label_life_remaining"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="life remaining" android:layout_gravity="right|bottom"
+				android:text="life" android:layout_gravity="right|bottom"
 				android:paddingTop="4dp" android:textColor="@color/white"
-				android:textSize="10dp" />
+				android:textSize="14dp" />
 		</LinearLayout>
 	</LinearLayout>
 </LinearLayout>

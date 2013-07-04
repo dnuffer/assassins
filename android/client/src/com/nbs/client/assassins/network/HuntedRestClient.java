@@ -8,7 +8,7 @@ import com.googlecode.androidannotations.annotations.rest.Rest;
 import com.googlecode.androidannotations.annotations.rest.Post;
 import com.googlecode.androidannotations.api.rest.MediaType;
 
-@Rest(rootUrl = "https://hunted.cloudfoundry.com/api", converters = { MappingJacksonHttpMessageConverter.class })
+@Rest(rootUrl = "https://hunted.cfapps.io/api", converters = { MappingJacksonHttpMessageConverter.class })
 public interface HuntedRestClient {
 
 	@Post("/provisional-users")

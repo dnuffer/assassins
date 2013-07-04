@@ -18,17 +18,17 @@ require 'models/player'
 enable :logging
 
 #Android device push notification API KEY for google cloud messaging (GCM)
-GCM.key = "AIzaSyCo6BoZUN9WwccMUPkUC69IcVp23YldgBY"
-
+GCM.key = File.open('gcm_key', &:readline)
 
 configure :production do
   services = JSON.parse(ENV['VCAP_SERVICES'])
-  mongoKey = services.keys.select{|s| s =~ /mongodb/i}.first
-  mongo = services[mongoKey].first['credentials']
-
+  mongoKey = services.keys.select{|s| s =~ /mongo/i}.first
+  mongo = services[mongoKey].first['credentials']['uri']
+  conn = Hash[[:user, :pass, :host, :port, :db].zip(mongo.split('//')[1].split(/[\/:@]/))]
+  puts conn.to_json
   Mongoid.configure do |config|
-    config.database = Mongo::Connection.new(mongo['host'], mongo['port']).db(mongo['db'])
-    config.database.authenticate(mongo['username'], mongo['password'])
+    config.database = Mongo::Connection.new(conn[:host], conn[:port]).db(conn[:db])
+    config.database.authenticate(conn[:user], conn[:pass])
   end
 end
 
@@ -265,7 +265,7 @@ post '/api/users/:token/gcm/unregister' do
   user.save
   
   { status:  'ok',
-    message: 'cleared gcm registration id' }.to_json 
+    message: 'unregistered gcm registration id' }.to_json 
 end
 
 
@@ -286,6 +286,7 @@ post '/api/users/:token/attack' do
         status: 'ok',
         message: 'attack successful',
         hit: true,
+        time: Time.now.utc.to_i,
         target_life: target.life
       }.to_json 
     end

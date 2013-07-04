@@ -5,11 +5,11 @@ import android.os.Bundle;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.views.GameplayFragment;
-import com.nbs.client.assassins.views.GameplayFragment.GameplaySettingsListener;
-import com.nbs.client.assassins.views.GameplayFragment_;
+import com.nbs.client.assassins.views.MatchParamsFragment;
+import com.nbs.client.assassins.views.MatchParamsFragment.GameplaySettingsListener;
+import com.nbs.client.assassins.views.MatchParamsFragment_;
 
-public class GameplayActivity extends SherlockFragmentActivity implements GameplaySettingsListener {
+public class MatchParamsActivity extends SherlockFragmentActivity implements GameplaySettingsListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -20,7 +20,7 @@ public class GameplayActivity extends SherlockFragmentActivity implements Gamepl
         if (savedInstanceState == null) {
             //Bundle fragmentArgs = new Bundle();
             //fragmentArgs.putString(CreateAccountFragment.WHATEVER, whatever);
-            GameplayFragment gpFragment = new GameplayFragment_();
+            MatchParamsFragment gpFragment = new MatchParamsFragment_();
             //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, gpFragment)

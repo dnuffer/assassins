@@ -21,6 +21,7 @@ import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.network.LocationResponse;
+import com.nbs.client.assassins.utils.LocationUtils;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -253,10 +254,9 @@ public class LocationService extends Service {
 			} else {
 				Log.v(TAG, "Already registered");
 
-				LocationMessage msg = new LocationMessage(); 
-				msg.latitude  = current.getLatitude();
-				msg.longitude = current.getLongitude();
-				msg.installId = UserModel.getInstallId(this);
+				LocationMessage msg = 
+					new LocationMessage(LocationUtils.locationToLatLng(current), 
+						UserModel.getInstallId(this));
 				
 				Log.v(TAG, msg.toString());
 				

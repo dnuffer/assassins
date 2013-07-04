@@ -1,14 +1,14 @@
 --- 
 applications: 
 - name: hunted
-  framework: sinatra
-  runtime: ruby19
-  memory: 64M
+  memory: 256M
   instances: 1
-  url: hunted.${target-base}
+  host: hunted
+  domain: cfapps.io
   path: .
   services: 
-    mongodb-5b677: 
-      vendor: mongodb
-      version: "2.0"
-      tier: free
+    hunted_mongo_service: 
+      label: mongolab
+      provider: mongolab
+      version: n/a
+      plan: sandbox

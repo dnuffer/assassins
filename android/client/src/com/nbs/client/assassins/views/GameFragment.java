@@ -1,11 +1,18 @@
 package com.nbs.client.assassins.views;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -15,14 +22,16 @@ import com.googlecode.androidannotations.annotations.ViewById;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
+import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
-import com.nbs.client.assassins.sensors.BearingReceiver;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
+import com.nbs.client.assassins.services.GCMMessages;
 
 @EFragment(R.layout.game_fragment)
 public class GameFragment extends SherlockFragment{
 
 	private static final String TAG = null;
+	private static final String HUD_FRAGMENT = null;
 	MapFragment_ mapFragment;
 	HUDFragment_ hudFragment;
 
@@ -30,7 +39,7 @@ public class GameFragment extends SherlockFragment{
 	ImageView toggleCompass;
 	
 	private BearingProvider bearingSource;
-	
+	private IntentFilter intentFilter;
 	
 	public GameFragment() { }
 
@@ -45,27 +54,74 @@ public class GameFragment extends SherlockFragment{
 		ft.commit();
 		
 		bearingSource = new BearingProviderImpl(getActivity());
-		mapFragment.setBearingProvider(bearingSource);		
+		mapFragment.setBearingProvider(bearingSource);
+		
+        intentFilter = new IntentFilter();
+        
+        intentFilter.addAction(PlayerModel.NEW_TARGET);   
+        intentFilter.addAction(PlayerModel.TARGET_EVENT);
+        intentFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
+        intentFilter.addAction(PlayerModel.TARGET_LIFE_CHANGED); 
+        intentFilter.addAction(PlayerModel.TARGET_LOCATION_CHANGED); 
+        intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
+        intentFilter.addAction(PlayerModel.ATTACKED); 
+        intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
+        intentFilter.addAction(PlayerModel.MATCH_END);
 	}
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		if(MatchModel.inActiveMatch(getSherlockActivity())) {
+			showHUD();
+		} else if(MatchModel.inMatch(getActivity()) && 
+                !MatchModel.inActiveMatch(getActivity())) {
+			scheduleMatchStartTimeAlarm();
+        }
+		super.onViewCreated(view, savedInstanceState);
+	}
+
+	private boolean hudIsShowing() {
+		return getActivity().getSupportFragmentManager()
+				.findFragmentByTag(HUD_FRAGMENT) != null;
+	}
+	
+	private void showHUD() {
+		if(!hudIsShowing()) {
 			hudFragment = new HUDFragment_();
 			hudFragment.setBearingProvider(bearingSource);
-			getActivity()
+			getSherlockActivity()
 				.getSupportFragmentManager()
 					.beginTransaction()
-					.add(R.id.game_fragment_container, hudFragment)
+					.add(R.id.game_fragment_container, hudFragment, HUD_FRAGMENT)
 					.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
 					.commit();
 		}
-		super.onViewCreated(view, savedInstanceState);
-
+	}
+	
+	private void hideHUD() {
+		if(hudIsShowing()) {
+			getSherlockActivity().getSupportFragmentManager()
+				.beginTransaction()
+				.remove(hudFragment)
+				.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+				.commit();
+		}
+	}
+	
+	public void scheduleMatchStartTimeAlarm()
+	{
+		Context context = getSherlockActivity();
+		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+		//if the match has already begun,  it will fire immediately
+		alarmMngr.set(AlarmManager.RTC_WAKEUP, MatchModel.getStartTime(context), 
+			PendingIntent.getBroadcast(context, 0, new Intent(GCMMessages.MATCH_START), 
+					PendingIntent.FLAG_UPDATE_CURRENT));
 	}
 	
 	@Override
 	public void onPause() {
+		LocalBroadcastManager.getInstance(getSherlockActivity())
+			.unregisterReceiver(getBroadcastReceiver());
 		super.onPause();
 	}
 
@@ -73,12 +129,10 @@ public class GameFragment extends SherlockFragment{
 	public void onResume() {
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
-		hudFragment.setBearingProvider(bearingSource);
+		if(hudFragment != null) hudFragment.setBearingProvider(bearingSource);
+	    LocalBroadcastManager.getInstance(getSherlockActivity())
+	    	.registerReceiver(getBroadcastReceiver(), getIntentFilter());
 		super.onResume();
-	}
-	
-	public void onGameEvent(Intent intent) {
-		
 	}
 	
 	@Click(R.id.toggle_compass)
@@ -89,7 +143,10 @@ public class GameFragment extends SherlockFragment{
 					R.drawable.north : R.drawable.compass);
 	}
 	
-	public void onTargetRangeChanged(String tRange) {
+	public void onTargetRangeChanged(Context c, String tRange) {
+		Toast.makeText(c, "your enemy has entered " + tRange
+				 + ".", Toast.LENGTH_SHORT).show();
+		if(hudFragment != null) hudFragment.onTargetRangeChanged(tRange);
 		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
 		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
 			mapFragment.showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
@@ -98,20 +155,79 @@ public class GameFragment extends SherlockFragment{
 		}
 	}
 	
+	public void onEnemyRangeChanged(Context c, String eRange) {
+		Toast.makeText(c, "your target is within " + eRange
+				 + ".", Toast.LENGTH_SHORT).show();
+		if(hudFragment != null) hudFragment.onEnemyRangeChanged(eRange);
+	}
+	
 	public void onTargetBearingChanged(float tBearing) {
 		mapFragment.onTargetBearingChanged(tBearing);
-		hudFragment.onTargetBearingChanged(tBearing);
+		if(hudFragment != null) hudFragment.onTargetBearingChanged(tBearing);
 	}
 	
 	public void onTargetLifeChanged(int tLife) {
-		hudFragment.onTargetLifeChanged(tLife);
+		if(hudFragment != null) hudFragment.onTargetLifeChanged(tLife);
 	}
 	
 	public void onMyLifeChanged(int life) {
-		hudFragment.onMyLifeChanged(life);
+		if(hudFragment != null) hudFragment.onMyLifeChanged(life);
 	}
 	
 	public void onLocationChanged(LatLng location) {
 		mapFragment.onLocationChanged(location);
 	}
+	
+	public BroadcastReceiver getBroadcastReceiver() {
+		return gameBroadcastReceiver;
+	}
+	
+	public IntentFilter getIntentFilter() {
+		return intentFilter;
+	}
+	
+	private BroadcastReceiver gameBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        	String action = intent.getAction();
+        	
+        	Log.d(TAG, "received event [" + action + "]");
+    		
+    		if(action.equals(PlayerModel.NEW_TARGET)) {
+    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
+    		}
+    		else if(action.equals(PlayerModel.TARGET_BEARING_CHANGED)) {
+    			float tBearing = PlayerModel.getTargetBearing(context);
+    			onTargetBearingChanged(Math.round(tBearing));
+    		}
+    		else if(action.equals(PlayerModel.TARGET_LIFE_CHANGED)) {
+    			onTargetLifeChanged(PlayerModel.getTargetLife(context));
+    			Toast.makeText(context, "your target has suffered a blow.", Toast.LENGTH_SHORT).show();
+    		}
+    		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED)) {
+    			onTargetRangeChanged(context, PlayerModel.getTargetProximity(context));
+    		}
+    		else if(action.equals(PlayerModel.ATTACKED)) {
+    			onMyLifeChanged(PlayerModel.getMyLife(context));
+    			Toast.makeText(context, "you were attacked.", Toast.LENGTH_SHORT).show();
+    		}
+    		else if(action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
+    			onEnemyRangeChanged(context, PlayerModel.getEnemyProximity(context));
+    		}
+    		else if(action.equals(PlayerModel.MATCH_END)) {
+    			hideHUD();
+    			String winner = intent.getStringExtra("winner");
+    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
+    				winner = "you";
+    			}
+    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
+    			MatchModel.setMatch(context, null);
+    			PlayerModel.clearTarget(context);
+    			PlayerModel.clearEnemy(context);
+    		}
+    		else if(action.equals(GCMMessages.MATCH_START)) {
+    			showHUD();
+    		}
+        }
+	};
 }

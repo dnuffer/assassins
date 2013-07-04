@@ -27,7 +27,7 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.controllers.GameplayActivity;
+import com.nbs.client.assassins.controllers.MatchParamsActivity;
 import com.nbs.client.assassins.controllers.MatchBoundsActivity;
 import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.UserModel;
@@ -146,7 +146,7 @@ public class CreateMatchFragment extends SherlockFragment
 		
 		hideKeyboard();
 		
-		Intent intent = new Intent(getSherlockActivity(), GameplayActivity.class);
+		Intent intent = new Intent(getSherlockActivity(), MatchParamsActivity.class);
         startActivityForResult(intent, GAMEPLAY_ACTIVITY_REQUEST);
 	}
 	

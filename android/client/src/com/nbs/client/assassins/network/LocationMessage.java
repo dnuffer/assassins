@@ -6,6 +6,8 @@ package com.nbs.client.assassins.network;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.google.android.gms.maps.model.LatLng;
+
 
 /**
  * @author cam
@@ -25,6 +27,12 @@ public class LocationMessage {
 	@JsonProperty("longitude")
 	public Double longitude;
 	
+	public LocationMessage(LatLng location, String installId) {
+		this.installId = installId;
+		this.latitude = location.latitude;
+		this.longitude = location.longitude;
+	}
+
 	@Override
 	public String toString() {
 		return "LocationMessage [installId=" + installId + ", latitude="

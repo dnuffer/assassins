@@ -91,11 +91,14 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
 		restClient.getRestTemplate().setRequestFactory(
 				new HttpComponentsClientHttpRequestFactory());
-		
-		targetRange.setText(PlayerModel.getTargetProximity(getSherlockActivity()));
-		enemyRange.setText(PlayerModel.getEnemyProximity(getSherlockActivity()));
-		lifeView.setProgress(PlayerModel.getMyLife(getSherlockActivity()));
-		tLifeView.setProgress(PlayerModel.getTargetLife(getSherlockActivity()));
+		String tRange = PlayerModel.getTargetProximity(getSherlockActivity());
+		String eRange = PlayerModel.getEnemyProximity(getSherlockActivity());
+		Integer myLife = PlayerModel.getMyLife(getSherlockActivity());
+		Integer tLife = PlayerModel.getTargetLife(getSherlockActivity());
+		targetRange.setText(tRange != null ? tRange : "unknown");
+		enemyRange.setText(eRange != null ? eRange : "unknown");
+		lifeView.setProgress(myLife != null ? myLife : 0);
+		tLifeView.setProgress(tLife != null ? tLife : 0);
 	}
 
 	@Override

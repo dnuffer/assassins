@@ -160,8 +160,9 @@ public class JoinMatchFragment extends SherlockFragment {
 			
 			if(response.ok()) {
 				MatchModel.setMatch(getActivity(), response.match);
+				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
 				getSherlockActivity().startService(
-					new Intent(getSherlockActivity(), NotificationService_.class)
+					new Intent(getActivity(), NotificationService_.class)
 							.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
 							.putExtra("start_time", response.match.startTime));
 				mListener.onMatchJoined(true);

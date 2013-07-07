@@ -51,7 +51,7 @@ public class NotificationService extends Service {
 	
 	public static void setMatchReminderAlarms(Context context, Long matchStartTimeUTC) {	
 		if(matchStartTimeUTC != null && matchStartTimeUTC > 0) {
-			
+			Log.d(TAG, "setMatchReminderAlarms(context, "+matchStartTimeUTC+")");
 			long reportLocationReminderTime = matchStartTimeUTC-FIVE_MINUTES;
 			long postNotifReminderTime = matchStartTimeUTC-ONE_MINUTE;
 			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);

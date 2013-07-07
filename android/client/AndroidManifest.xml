@@ -42,6 +42,7 @@
         android:theme="@style/AppTheme" >
         <service android:name="com.nbs.client.assassins.services.GCMIntentService_" />
         <service android:name="com.nbs.client.assassins.services.LocationService_" />
+        <service android:name="com.nbs.client.assassins.services.NotificationService_" />
 
         <receiver
             android:name="com.nbs.client.assassins.services.GCMBroadcastReceiverImpl"

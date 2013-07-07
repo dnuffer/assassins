@@ -41,6 +41,8 @@ public class GameFragment extends SherlockFragment{
 	private BearingProvider bearingSource;
 	private IntentFilter intentFilter;
 	
+	private IntentFilter matchStartFilter;
+	
 	public GameFragment() { }
 
 	@Override
@@ -56,6 +58,9 @@ public class GameFragment extends SherlockFragment{
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
 		
+		//matchStartFilter = new IntentFilter();
+		//matchStartFilter.addAction(GCMMessages.MATCH_START);
+		
         intentFilter = new IntentFilter();
         
         intentFilter.addAction(PlayerModel.NEW_TARGET);   
@@ -67,6 +72,7 @@ public class GameFragment extends SherlockFragment{
         intentFilter.addAction(PlayerModel.ATTACKED); 
         intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
         intentFilter.addAction(PlayerModel.MATCH_END);
+        intentFilter.addAction(GCMMessages.MATCH_START);
 	}
 	
 	@Override
@@ -108,9 +114,10 @@ public class GameFragment extends SherlockFragment{
 		}
 	}
 	
-	public void scheduleMatchStartTimeAlarm()
-	{
-		Context context = getSherlockActivity();
+	public void scheduleMatchStartTimeAlarm() {
+		
+		Context context = getActivity();
+		Log.d(TAG, "schedulingMatchStartTimeAlarm() " + MatchModel.getStartTime(context));
 		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 		//if the match has already begun,  it will fire immediately
 		alarmMngr.set(AlarmManager.RTC_WAKEUP, MatchModel.getStartTime(context), 
@@ -186,6 +193,23 @@ public class GameFragment extends SherlockFragment{
 		return intentFilter;
 	}
 	
+	private BroadcastReceiver gameStartReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			
+			String action = intent.getAction();
+        	
+        	Log.d(TAG, "received event [" + action + "]");
+			
+        	if(action.equals(GCMMessages.MATCH_START)) {
+    			showHUD();
+    		}
+			
+		}
+		
+	};
+	
 	private BroadcastReceiver gameBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -224,8 +248,7 @@ public class GameFragment extends SherlockFragment{
     			MatchModel.setMatch(context, null);
     			PlayerModel.clearTarget(context);
     			PlayerModel.clearEnemy(context);
-    		}
-    		else if(action.equals(GCMMessages.MATCH_START)) {
+    		} else if(action.equals(GCMMessages.MATCH_START)) {
     			showHUD();
     		}
         }

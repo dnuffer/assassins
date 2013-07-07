@@ -1,6 +1,8 @@
 package com.nbs.client.assassins.models;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.googlecode.androidannotations.annotations.sharedpreferences.SharedPref;
+import com.googlecode.androidannotations.api.sharedpreferences.SharedPreferencesHelper;
 import com.nbs.client.assassins.controllers.MainActivity;
 
 import android.content.Context;
@@ -178,9 +180,18 @@ public class PlayerModel {
     	return new LatLng(Double.parseDouble(latStr), Double.parseDouble(lngStr));
 	}
 
-	public static synchronized  void setTargetLocation(Context c, double lat, double lng) {
+	public static synchronized  void setTargetLocation(Context c, Double lat, Double lng) {
     	if(c == null) return;
-    	setTargetLocation(c, Double.toString(lat), Double.toString(lng));
+    	
+    	if(lat == null || lng == null) {
+			PreferenceManager.getDefaultSharedPreferences(c)		
+			.edit()
+	    	.remove("target_lat")
+	    	.remove("target_lng")
+	        .commit();
+    	} else {
+    		setTargetLocation(c, Double.toString(lat), Double.toString(lng));
+    	}
 	}
 	
 	public static synchronized  void setTargetLocation(Context c, String lat, String lng) {

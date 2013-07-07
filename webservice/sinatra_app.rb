@@ -25,7 +25,6 @@ configure :production do
   mongoKey = services.keys.select{|s| s =~ /mongo/i}.first
   mongo = services[mongoKey].first['credentials']['uri']
   conn = Hash[[:user, :pass, :host, :port, :db].zip(mongo.split('//')[1].split(/[\/:@]/))]
-  puts conn.to_json
   Mongoid.configure do |config|
     config.database = Mongo::Connection.new(conn[:host], conn[:port]).db(conn[:db])
     config.database.authenticate(conn[:user], conn[:pass])

@@ -89,7 +89,7 @@ class Player
       enemy_range:    range_to(my_target)
     }
     enemy_distance = self.distance_to(my_enemy)
-    unless my enemy.nil? or enemy_distance.nil? or enemy_distance > match.hunt_range
+    unless my_enemy.nil? or enemy_distance.nil? or enemy_distance > match.hunt_range
       playerstate.merge!({
         target_lat: my_target.location[:lat],
         target_lng: my_target.location[:lng]

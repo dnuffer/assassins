@@ -29,7 +29,7 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="18" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -95,7 +95,7 @@
             android:configChanges="orientation" >
         </activity>
         <activity
-            android:name=".controllers.MatchParamsActivity"
+            android:name=".controllers.CustomizeMatchActivity"
             android:configChanges="orientation|keyboardHidden" >
         </activity>
     </application>

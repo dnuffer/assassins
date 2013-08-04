@@ -3,12 +3,8 @@
  */
 package com.nbs.client.assassins.controllers;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
-import net.simonvt.menudrawer.MenuDrawer;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.app.ProgressDialog;
@@ -16,18 +12,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.preference.PreferenceManager;
-
 import android.util.Log;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -36,40 +22,24 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
 
 import com.google.android.gcm.GCMRegistrar;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
-import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.UiThread;
-import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.MatchModel;
-import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
-import com.nbs.client.assassins.network.AttackResponse;
 import com.nbs.client.assassins.network.HuntedRestClient;
-import com.nbs.client.assassins.network.LocationMessage;
-import com.nbs.client.assassins.network.LocationResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.services.NotificationService;
 import com.nbs.client.assassins.services.NotificationService_;
-import com.nbs.client.assassins.views.CreateAccountFragment;
-import com.nbs.client.assassins.views.CreateMatchFragment;
+import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.views.GameFragment;
 import com.nbs.client.assassins.views.GameFragment_;
-import com.nbs.client.assassins.views.HUDFragment_;
-import com.nbs.client.assassins.views.JoinMatchFragment;
-import com.nbs.client.assassins.views.MapFragment;
-import com.nbs.client.assassins.views.MapFragment_;
 import com.nbs.client.assassins.views.MenuFragment;
 import com.nbs.client.assassins.views.NotificationFragment;
 
@@ -111,16 +81,17 @@ public class MainActivity extends SherlockFragmentActivity {
 	private static final int IN_MATCH_ITEMS = 8;
 	private static final int NOTIF_ID = 10;
 
-	IntentFilter intentLocationUpdateFilter;
-
-	private boolean notificationsShowing = false;
+	IntentFilter locationUpdatedIntentFilter;
 	
-	//MenuDrawer mDrawer;
-
-	private boolean sideNavMenuShowing;
+	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+    		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
+    		gameFragment.onLocationChanged(UserModel.getLocation(context));
+	    }
+	};
 	
-	public MainActivity() {
-	}
+	public MainActivity() {}
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -130,15 +101,10 @@ public class MainActivity extends SherlockFragmentActivity {
         
         registerForPushNotifications();
 
-        intentLocationUpdateFilter = new IntentFilter();
-        intentLocationUpdateFilter.addAction(LocationService.LOCATION_UPDATED);   
+        locationUpdatedIntentFilter = new IntentFilter(LocationService.LOCATION_UPDATED); 
         
         startService(new Intent(this, LocationService_.class));
-		
-        //TODO: once google map v2 bug is fixed, use MenuDrawer lib for side menu navigation
-        //mDrawer = MenuDrawer.attach(this, MenuDrawer.MENU_DRAG_WINDOW);
-        //mDrawer.setContentView(R.layout.activity_main);
-        //mDrawer.setMenuView(R.layout.menu_list);
+
         setContentView(R.layout.activity_main);
 
     	FragmentTransaction ft;
@@ -148,65 +114,9 @@ public class MainActivity extends SherlockFragmentActivity {
     	ft.commit();
 
  		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		
     }
     
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
-		Log.i(TAG, "onActivityResult");
-		supportInvalidateOptionsMenu();
-		super.onActivityResult(requestCode, resultCode, arg2);
-	}
-	
-    @Override
-    public void onDestroy() 
-    {
-        try {
-        	GCMRegistrar.onDestroy(this);
-        }
-        catch(RuntimeException e) {
-        	Log.v(TAG, e.getMessage());
-        }
-    	super.onDestroy();
-    }
-
-	@Override
-	protected void onPause() {
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdateReceiver);
-		
-		if(!MatchModel.inMatch(this)) {
-			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
-		}
-		
-	    super.onPause();
-	}
-	
-	@Override
-	protected void onResume() 
-	{
-	    LocalBroadcastManager.getInstance(this)
-	    	.registerReceiver(locationUpdateReceiver, intentLocationUpdateFilter);
-	    
-	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
-	    
-	    super.onResume();
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {		
-		return super.onCreateOptionsMenu(menu);
-	}
-
 	private void registerForPushNotifications() {
-        
     	GCMRegistrar.checkDevice(this);
         GCMRegistrar.checkManifest(this);
 		
@@ -227,6 +137,48 @@ public class MainActivity extends SherlockFragmentActivity {
     	Log.e(TAG, "Gcm Registered with google, but apparently not on server...");
 	}
 	
+	private void toggleNotificationFragment() {
+	}
+	
+	private void toggleSideNavMenu() {
+	}
+	
+    @Override
+    public void onDestroy() {
+        try {
+        	GCMRegistrar.onDestroy(this);
+        }
+        catch(RuntimeException e) {
+        	Log.v(TAG, e.getMessage());
+        }
+    	super.onDestroy();
+    }
+
+	@Override
+	protected void onPause() {
+		Bus.unregister(this,locationUpdateReceiver);
+		
+		if(!MatchModel.inMatch(this)) {
+			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
+		}
+		
+	    super.onPause();
+	}
+	
+	@Override
+	protected void onResume()  {
+	    Bus.register(this,locationUpdateReceiver, locationUpdatedIntentFilter);
+	    
+	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
+	    
+	    super.onResume();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {		
+		return super.onCreateOptionsMenu(menu);
+	}
+	
 	private void addInMatchOptionsMenuItems(Menu menu) {
 	}
 	
@@ -241,10 +193,6 @@ public class MainActivity extends SherlockFragmentActivity {
 		}
 	}
 	
-	private void removeInMatchOptionsMenuItems(Menu menu) {
-		menu.removeGroup(IN_MATCH_ITEMS);
-	}
-
 	private void addNewUserOptionsMenuItems(Menu menu) {
 		if(menu.findItem(CREATE_ACCOUNT_ID) == null) {
 			menu.add(NEW_USER_ITEMS, CREATE_ACCOUNT_ID, 2, "Create Account")
@@ -269,21 +217,17 @@ public class MainActivity extends SherlockFragmentActivity {
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
 		if(UserModel.loggedIn(this)) {
-			
 			addLoggedInOptionsMenuItems(menu);
 			menu.removeGroup(NEW_USER_ITEMS);
-			
 			if(MatchModel.inMatch(this)) {
 				Log.d(TAG, MatchModel.getMatch(this).toString());
 				addInMatchOptionsMenuItems(menu);
 				menu.removeGroup(NOT_IN_MATCH_ITEMS);
-				
-				menu.add(Menu.NONE, NOTIF_ID, 1, "Messages")
-				.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				//menu.add(Menu.NONE, NOTIF_ID, 1, "Messages").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 				
 			} else {
 				addNotInMatchOptionsMenuItems(menu);
-				removeInMatchOptionsMenuItems(menu);
+				menu.removeGroup(IN_MATCH_ITEMS);
 			}
 				
 		} else {
@@ -317,12 +261,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	    		showSignInFragment();
 	    		return true;
 	    	case SIGN_OUT_ID:
-	    		ProgressDialog asyncProgress = new ProgressDialog(this);
-				asyncProgress.setIndeterminate(true);
-				asyncProgress.setTitle("Signing out...");
-				asyncProgress.setCancelable(false);
-				asyncProgress.show();
-	    		signOut(asyncProgress);
+	    		signOut(ProgressDialog.show(this, "Please Wait", "Signing out...", true, false));
 	    		return true;
 			default:
 	    }
@@ -330,10 +269,8 @@ public class MainActivity extends SherlockFragmentActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
 	@Background
-	public void signOut(ProgressDialog asyncProgress)
-	{
+	public void signOut(ProgressDialog asyncProgress) {
 		Response response = null;
 		
 		try {
@@ -355,34 +292,13 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	
 	@UiThread
-	public void onSignOutFinished(ProgressDialog asyncProgress, Response response)
-	{
+	public void onSignOutFinished(ProgressDialog asyncProgress, Response response) {
 		supportInvalidateOptionsMenu();
 		asyncProgress.dismiss();
-		
 		String message = response == null ? "Network error." : response.message;
-		
 		Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 	}
 	
-	private void toggleNotificationFragment() {
-		FragmentTransaction ft;
-		if(notificationsShowing) {
-			removeNotificationFragment();
-			//this.toggleCompass.setVisibility(ImageView.VISIBLE);
-		} else {
-			hideSideNavMenuFragment();
-			//this.toggleCompass.setVisibility(ImageView.INVISIBLE);
-			notificationsShowing = true;
-			notifFrag = new NotificationFragment();
-			ft = getSupportFragmentManager().beginTransaction();
-			//ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
-			ft.add(R.id.fragment_container, notifFrag);
-		    //ft.show(createAccountFragment);
-		    ft.commit();
-		}
-	}
-
 	private void showCreateMatchFragment() {
 		Intent createMatchIntent = new Intent(this, CreateMatchActivity_.class);
         startActivityForResult(createMatchIntent, CREATE_MATCH_ID);
@@ -402,50 +318,19 @@ public class MainActivity extends SherlockFragmentActivity {
 		Intent loginIntent = new Intent(this, LoginActivity_.class);
 		startActivityForResult(loginIntent, SIGN_IN_ID);
 	}
-
-	private void toggleSideNavMenu() {
-		FragmentTransaction ft;
-		if(sideNavMenuShowing) {
-			hideSideNavMenuFragment();
-		} else {
-			removeNotificationFragment();
-			sideNavMenuShowing = true;
-			menuFrag = new MenuFragment();
-			ft = getSupportFragmentManager().beginTransaction();
-			//ft.setCustomAnimations(R.animator.slide_in_right, R.animator.slide_out_left);
-			ft.add(R.id.fragment_container, menuFrag);
-		    //ft.show(createAccountFragment);
-		    ft.commit();
-		}
+	    
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
 	}
 	
-	private void hideSideNavMenuFragment() {
-		if(sideNavMenuShowing) {
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.remove(menuFrag);
-		    ft.commit();
-		    sideNavMenuShowing = false;
-		    supportInvalidateOptionsMenu();
-		}
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
+		Log.i(TAG, "onActivityResult");
+		supportInvalidateOptionsMenu();
+		super.onActivityResult(requestCode, resultCode, arg2);
 	}
-	
-	
-	private void removeNotificationFragment() {
-		if(notificationsShowing && notifFrag != null) {
-			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.remove(notifFrag);
-		    ft.commit();
-		    notificationsShowing = false;
-		    supportInvalidateOptionsMenu();
-		}	
-	}
-
-	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-    		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
-    		gameFragment.onLocationChanged(UserModel.getLocation(context));
-	    }
-	};
-
 }

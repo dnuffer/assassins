@@ -4,34 +4,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.nbs.client.assassins.utils.SharedPref;
+import com.nbs.client.assassins.utils.KeyValueStore;
 
 import android.content.Context;
 
-public class Notifications {
+public class Notifications extends KeyValueStore {
 	public static List<Notification> getAll(Context c) {
-		Set<String> notificationIds = SharedPref.getStringSet(c, "notifications");
+		Set<String> notificationIds = getStringSet(c, "notifications");
 
 		List<Notification> nList = new ArrayList<Notification>();
 		
 		for(String id : notificationIds) {
-			nList.add(new Notification(id, SharedPref.getString(c, id)));
+			nList.add(new Notification(id, getString(c, id)));
 		}
 		
 		return nList;
 	}
 	public static void delete(Context c, String id) {
-		SharedPref.putString(c, id, null);
-		SharedPref.removeStringFromSet(c, "notifications", id);
+		putString(c, id, null);
+		removeStringFromSet(c, "notifications", id);
 	}
 	
 	public static void add(Context c, Notification n) {
-		SharedPref.addStringToSet(c, "notifications", n.id);
-		SharedPref.putString(c, n.id, n.msg);
+		addStringToSet(c, "notifications", n.id);
+		putString(c, n.id, n.msg);
 	}
 	
 	public static void deleteAll(Context c) {
-		SharedPref.putStringSet(c, "notifications", null);
+		putStringSet(c, "notifications", null);
 	}
 	
 	

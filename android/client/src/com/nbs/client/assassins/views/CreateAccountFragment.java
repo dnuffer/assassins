@@ -30,12 +30,12 @@ import com.nbs.client.assassins.network.UserLoginResponse;
 @EFragment(R.layout.create_account_fragment)
 public class CreateAccountFragment extends SherlockFragment {
 
-    // Container Activity must implement this interface
+	private static final String TAG = "CreateAccountFragment";
+	
+	// Container Activity must implement this interface
     public interface OnAccountCreatedListener {
         public void onAccountCreated(boolean wasCreated);
     }
-
-	private static final String TAG = "CreateAccountFragment";
 	
     OnAccountCreatedListener mListener;
 	
@@ -51,11 +51,7 @@ public class CreateAccountFragment extends SherlockFragment {
 	@RestService
 	HuntedRestClient restClient;
 	
-	private ProgressDialog asyncProgress;
-	
-	public CreateAccountFragment() {
-		
-	}
+	public CreateAccountFragment() {}
 	
     @Override
     public void onAttach(Activity activity) {
@@ -66,20 +62,12 @@ public class CreateAccountFragment extends SherlockFragment {
             throw new ClassCastException(activity.toString() + " must implement OnAccountCreatedListener");
         }
     }
-    
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
 
 	@Click(R.id.create_account)
 	void onCreateAccountClicked() {
 		
 		//TODO: validate username and password before allowing button to be enabled
-		//TODO: show dialog if there are validation issues
+		//TODO: draw border around edit text if invalid
 		Log.i(TAG, password.getText().toString());
 
 		if(password.getText().toString().length() > 5 && 
@@ -99,13 +87,9 @@ public class CreateAccountFragment extends SherlockFragment {
 			msg.password = password.getText().toString();
 			msg.username = username.getText().toString();
 
-			asyncProgress = new ProgressDialog(getActivity());
-			asyncProgress.setIndeterminate(true);
-			asyncProgress.setTitle("Creating account...");
-			asyncProgress.setCancelable(false);
-			asyncProgress.show();
-			
-			createAccountInBackground(UserModel.getToken(getActivity()), msg);
+			createAccountInBackground(UserModel.getToken(getActivity()), msg, 
+				ProgressDialog.show(getActivity(), 
+					"Please Wait", "Creating account...", true, false));
 		}
 		else {
 			//TODO: provide earlier and better validation information to user
@@ -118,7 +102,7 @@ public class CreateAccountFragment extends SherlockFragment {
 	}
 	
 	@Background
-	void createAccountInBackground(String token, UserLoginMessage msg) {
+	void createAccountInBackground(String token, UserLoginMessage msg, ProgressDialog prog) {
 		
 		UserLoginResponse response = null;
 		
@@ -135,22 +119,18 @@ public class CreateAccountFragment extends SherlockFragment {
 			Log.i(TAG, e.getMessage());
 		}
 		
-		accountCreatedResult(response);
+		accountCreatedResult(response, prog);
 	}
 	
 	@UiThread
-	void accountCreatedResult(UserLoginResponse response) {
-		
-		asyncProgress.dismiss();
+	void accountCreatedResult(UserLoginResponse response, ProgressDialog prog) {
+		prog.dismiss();
 		
 		if(response != null) {
-			
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
-			
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				
 				UserModel.setUsername(getActivity(), username.getText().toString());
 				UserModel.setToken(getActivity(), response.token);
 				
@@ -164,5 +144,13 @@ public class CreateAccountFragment extends SherlockFragment {
 		}
 		
 		btnCreate.setEnabled(true);	
+	}
+    
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
 	}
 }

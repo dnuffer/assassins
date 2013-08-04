@@ -26,8 +26,7 @@ public class NotificationFragment extends SherlockListFragment {
 		MenuRowData[] items = new MenuRowData[] {
 			new MenuHeaderData("Notifications"),
 			new MenuEventData("Title 1", "Sub title 1", R.drawable.ic_coins_s),
-			new MenuEventData("Title 2", "Sub title 2", R.drawable.ic_coins_s)
-				
+			new MenuEventData("Title 2", "Sub title 2", R.drawable.ic_coins_s)		
 		};
 			
 		MenuAdapter adapter = new MenuAdapter(getActivity(), items);

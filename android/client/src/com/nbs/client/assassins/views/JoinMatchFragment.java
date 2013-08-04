@@ -36,12 +36,12 @@ import com.nbs.client.assassins.services.NotificationService_;
 @EFragment(R.layout.join_match_fragment)
 public class JoinMatchFragment extends SherlockFragment {
 
+	private static final String TAG = "JoinMatchFragment";
+	
     // Container Activity must implement this interface
     public interface OnMatchJoinedListener {
         public void onMatchJoined(boolean wasJoind);
     }
-
-	private static final String TAG = "JoinMatchFragment";
 
 	private static final int MIN_PASSWORD_LEN = 6;
 	private static final int MIN_MATCH_NAME_LEN = 6;
@@ -57,17 +57,10 @@ public class JoinMatchFragment extends SherlockFragment {
 	@ViewById(R.id.edit_join_match_password)
 	EditText password;
 	
-	//@ViewById(R.id.join_when_join_match)
-	//Switch join;
-	
 	@RestService
 	HuntedRestClient restClient;
 	
-	private ProgressDialog asyncProgress;
-	
-	public JoinMatchFragment() {
-		
-	}
+	public JoinMatchFragment() {}
 	
     @Override
     public void onAttach(Activity activity) {
@@ -78,18 +71,9 @@ public class JoinMatchFragment extends SherlockFragment {
             throw new ClassCastException(activity.toString() + " must implement OnMatchJoindListener");
         }
     }
-    
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
 
 	@Click(R.id.join_match)
 	void onJoinMatchClicked() {
-
 		//TODO: validate name and password before allowing button to be enabled
 		//TODO: show visual indication if there are validation issues
 		Log.i(TAG, password.getText().toString());
@@ -97,25 +81,17 @@ public class JoinMatchFragment extends SherlockFragment {
 		if((passwordStr.length() >= MIN_PASSWORD_LEN || passwordStr.length() == 0)  && 
 		   matchName.getText().toString().length() >= MIN_MATCH_NAME_LEN) {
 			
-			InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
-				      Context.INPUT_METHOD_SERVICE);
-			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+			hideKeyboard();
+			
 			btnJoin.setEnabled(false);
 			
 			JoinMatchMessage msg = new JoinMatchMessage();
-			
 			msg.userToken = UserModel.getToken(getActivity());
 			msg.matchPassword = passwordStr.length() > 0 ? passwordStr : null;
 			msg.matchName = matchName.getText().toString();
 			
-			asyncProgress = new ProgressDialog(getActivity());
-			asyncProgress.setIndeterminate(true);
-			asyncProgress.setTitle("Please Wait");
-			asyncProgress.setMessage("Joining match...");
-			asyncProgress.setCancelable(false);
-			asyncProgress.show();
-			
-			joinMatchInBackground(msg);
+			joinMatchInBackground(msg, 
+				ProgressDialog.show(getActivity(),"Please Wait","Joining match...", true, false));
 		}
 		else {
 			//TODO: provide earlier and better validation information to user
@@ -127,35 +103,32 @@ public class JoinMatchFragment extends SherlockFragment {
 			).show();
 		}
 	}
+
+	private void hideKeyboard() {
+		InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
+			      Context.INPUT_METHOD_SERVICE);
+		imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+	}
 	
 	@Background
-	void joinMatchInBackground(JoinMatchMessage msg) {
-		
+	void joinMatchInBackground(JoinMatchMessage msg, ProgressDialog progress) {
 		MatchResponse response = null;
 		
 		try {	
-			//TODO: handle exceptions
 			response = restClient.joinMatch(msg.matchName, msg);		
 		}
 		catch(Exception e) {
 			Log.i(TAG, "EXCEPTION: " + e.toString());
-			//Log.i(TAG, e.getMessage());
-			//Log.i(TAG, e.getCause().getMessage());
-			//for(StackTraceElement el : e.getStackTrace())
-			//	Log.e(TAG, el.toString());
 		}
 		
-		matchJoinedResult(response);
+		matchJoinedResult(response, progress);
 	}
 	
 	@UiThread
-	void matchJoinedResult(MatchResponse response) {
-		asyncProgress.dismiss();
-		
+	void matchJoinedResult(MatchResponse response, ProgressDialog progress) {
+		progress.dismiss();
 		if(response != null) {
-			
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
-			
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
@@ -168,13 +141,18 @@ public class JoinMatchFragment extends SherlockFragment {
 				mListener.onMatchJoined(true);
 				return;
 			}
-			
-				
-			
 		} else {
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
 		}
 		
 		btnJoin.setEnabled(true);
+	}
+    
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
 	}
 }

@@ -1,23 +1,20 @@
-/**
- * 
- */
 package com.nbs.client.assassins.views;
 
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.MenuItem;
-import com.google.android.gms.maps.model.LatLng;
+
 import com.googlecode.androidannotations.annotations.AfterInject;
+import com.googlecode.androidannotations.annotations.AfterViews;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
@@ -34,10 +31,6 @@ import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 
-/**
- * @author cam
- *
- */
 @EFragment(R.layout.hud)
 public class HUDFragment extends SherlockFragment implements BearingReceiver {
 
@@ -75,30 +68,27 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		
 		super.onCreate(savedInstanceState);
 	}
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onViewCreated(view, savedInstanceState);
 	}
 	
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
+	@AfterViews
+	public void afterViewsInjected() {
 		String tRange = PlayerModel.getTargetProximity(getSherlockActivity());
 		String eRange = PlayerModel.getEnemyProximity(getSherlockActivity());
 		Integer myLife = PlayerModel.getMyLife(getSherlockActivity());
 		Integer tLife = PlayerModel.getTargetLife(getSherlockActivity());
-		targetRange.setText(tRange != null ? tRange : "unknown");
-		enemyRange.setText(eRange != null ? eRange : "unknown");
-		lifeView.setProgress(myLife != null ? myLife : 0);
-		tLifeView.setProgress(tLife != null ? tLife : 0);
+		
+		Log.d(TAG, "targetRange[control:"+targetRange+", value:"+tRange+"]");
+		
+		targetRange.setText((tRange != null ? tRange : "unknown"));
+		enemyRange.setText((eRange != null ? eRange : "unknown"));
+		lifeView.setProgress((myLife != null ? myLife : 0));
+		tLifeView.setProgress((tLife != null ? tLife : 0));
 	}
 
 	@Override
@@ -114,11 +104,11 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	private void stopSensorUpdates() {
-		bearingProvider.unregisterForBearingUpdates(this);
+		if(bearingProvider != null) bearingProvider.unregisterForBearingUpdates(this);
 	}
 
 	private void registerForSensorUpdates() {
-		bearingProvider.registerForBearingUpdates(this);
+		if(bearingProvider != null) bearingProvider.registerForBearingUpdates(this);
 	}
 	
 	@Override
@@ -126,7 +116,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		bearingProvider = provider;	
 	}
 	
-	private void setAttackButtonEnabled(boolean enabled) {
+	private void setAttackEnabled(boolean enabled) {
 		attackButton.setEnabled(enabled);
 		if(enabled) {
 			escapeTimeText.setText("");
@@ -155,7 +145,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	
 	public void onTargetRangeChanged(String tRange) {
 		targetRange.setText(tRange);
-		setAttackButtonEnabled(tRange.equals(PlayerModel.ATTACK_RANGE));
+		setAttackEnabled(tRange.equals(PlayerModel.ATTACK_RANGE));
 	}
 	
 	public void onEnemyRangeChanged(String eRange) {
@@ -166,13 +156,13 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		if(escapeTimeRemaining > 1000) {
 			escapeTimeText.setText(escapeTimeRemaining+" s");
 		} else {
-			setAttackButtonEnabled(true);
+			setAttackEnabled(true);
 		}
 	}
 	
 	@Click(R.id.hud_attack)
 	public void onAttackClicked() {
-		setAttackButtonEnabled(false);
+		setAttackEnabled(false);
 		attack();
 	}
 	
@@ -180,14 +170,13 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void attack() {
 		Log.d(TAG, "attack in background");
 		
+		Context c  = getSherlockActivity();
 		AttackResponse response = null;
 		
 		try {
-			LocationMessage msg = 
-				new LocationMessage(UserModel.getLocation(getSherlockActivity()),
-									UserModel.getInstallId(getSherlockActivity()));
-			response = restClient.attack(UserModel.getToken(getSherlockActivity()), msg);
-			
+			response = restClient.attack(UserModel.getToken(c),
+				new LocationMessage(UserModel.getLocation(c),
+						UserModel.getInstallId(c)));	
 		}
 		catch(Exception e) {
 			Log.d(TAG, e.getMessage());
@@ -201,7 +190,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	{
 		Log.d(TAG, "attackFinished status:" + response.ok());
 		
-		attackButton.setEnabled(!(response != null && response.ok() && response.hit && response.targetLife > 0));
+		attackButton.setEnabled(response == null || response.targetLife > 0);
 		
 		if(response != null && response.ok() && MatchModel.inActiveMatch(getSherlockActivity())) {
 				
@@ -229,4 +218,12 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		}
 	}
 	
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
+
+	}
 }

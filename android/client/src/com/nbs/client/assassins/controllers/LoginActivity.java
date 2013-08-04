@@ -19,10 +19,7 @@ public class LoginActivity extends SherlockFragmentActivity implements OnLoginLi
         this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
-            //Bundle fragmentArgs = new Bundle();
-            //fragmentArgs.putString(LoginFragment.WHATEVER, whatever);
             LoginFragment loginFragment = new LoginFragment_();
-            //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, loginFragment)
                     .commit();

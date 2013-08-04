@@ -6,32 +6,9 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.google.android.gms.maps.model.LatLng;
 
-
-/**
- * @author cam
- *
- */
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
-
-	public Match(String name, String pw, long tStart, 
-			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
-		this.name = name; 
-		this.password = pw; 
-		this.startTime = tStart;
-		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;
-		this.nwCorner = new LatLngData(nw); this.seCorner = new LatLngData(se);
-	}
-	
-	public Match(String token, String name, String pw, long tStart, 
-			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
-		this(name, pw, tStart, nw, se, aRange, hRange, tEscape);
-		this.token = token;
-	}
-	
-	public Match() {}
 
 	@JsonProperty("token")
 	public String token;
@@ -62,15 +39,21 @@ public class Match {
 	
 	@JsonProperty("escape_time")
 	public Integer escapeTime;
-
-	@Override
-	public String toString() {
-		return "Match [token=" + token + ", name=" + name + ", startTime="
-				+ startTime + ", players=" + Arrays.toString(players)
-				+ ", password=" + password + ", nwCorner=" + nwCorner
-				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
-				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
-				+ "]";
+	
+	public Match() {}
+	
+	public Match(String token, String name, String pw, long tStart, 
+			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
+		this(name, pw, tStart, nw, se, aRange, hRange, tEscape);
+		this.token = token;
+	}
+	public Match(String name, String pw, long tStart, 
+			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
+		this.name = name; 
+		this.password = pw; 
+		this.startTime = tStart;
+		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;
+		this.nwCorner = new LatLngData(nw); this.seCorner = new LatLngData(se);
 	}
 
 	public LatLng getSECornerLatLng() {
@@ -81,5 +64,13 @@ public class Match {
 		return nwCorner != null ? nwCorner.toLatLng() : null;
 	}
 
-	
+	@Override
+	public String toString() {
+		return "Match [token=" + token + ", name=" + name + ", startTime="
+				+ startTime + ", players=" + Arrays.toString(players)
+				+ ", password=" + password + ", nwCorner=" + nwCorner
+				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
+				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
+				+ "]";
+	}
 }

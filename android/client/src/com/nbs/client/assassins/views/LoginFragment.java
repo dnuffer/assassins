@@ -30,12 +30,12 @@ import com.nbs.client.assassins.network.UserLoginResponse;
 @EFragment(R.layout.login_fragment)
 public class LoginFragment extends SherlockFragment {
 
+	private static final String TAG = "CreateAccountFragment";
+	
     // Container Activity must implement this interface
     public interface OnLoginListener {
         public void onLogin(boolean success);
     }
-
-	private static final String TAG = "CreateAccountFragment";
 	
     OnLoginListener mListener;
 	
@@ -53,9 +53,7 @@ public class LoginFragment extends SherlockFragment {
 	
 	private ProgressDialog asyncProgress;
 	
-	public LoginFragment() {
-		
-	}
+	public LoginFragment() {}
 	
     @Override
     public void onAttach(Activity activity) {
@@ -66,14 +64,6 @@ public class LoginFragment extends SherlockFragment {
             throw new ClassCastException(activity.toString() + " must implement OnLoginListener");
         }
     }
-    
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
 
 	@Click(R.id.login)
 	void onLoginClicked() {
@@ -158,4 +148,13 @@ public class LoginFragment extends SherlockFragment {
 		
 		btnLogin.setEnabled(true);	
 	}
+    
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
+	}
+
 }

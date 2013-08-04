@@ -27,9 +27,6 @@ public class LatLngData{
 		return new LatLng(lat, lng);
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "[lat=" + lat + ", lng=" + lng + "]";

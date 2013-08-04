@@ -21,10 +21,7 @@ public class MatchBoundsActivity extends SherlockFragmentActivity implements OnB
         this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
-            //Bundle fragmentArgs = new Bundle();
-            //fragmentArgs.putString(CreateAccountFragment.WHATEVER, whatever);
             MatchBoundsFragment matchBoundsFragment = new MatchBoundsFragment_();
-            //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, matchBoundsFragment)
                     .commit();

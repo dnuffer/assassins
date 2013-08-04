@@ -19,10 +19,7 @@ public class CreateAccountActivity extends SherlockFragmentActivity implements O
         this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
-            //Bundle fragmentArgs = new Bundle();
-            //fragmentArgs.putString(CreateAccountFragment.WHATEVER, whatever);
             CreateAccountFragment createAccountFragment = new CreateAccountFragment_();
-            //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, createAccountFragment)
                     .commit();

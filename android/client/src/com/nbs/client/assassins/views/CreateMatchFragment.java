@@ -27,7 +27,7 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.controllers.MatchParamsActivity;
+import com.nbs.client.assassins.controllers.CustomizeMatchActivity;
 import com.nbs.client.assassins.controllers.MatchBoundsActivity;
 import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.UserModel;
@@ -42,12 +42,12 @@ import com.nbs.client.assassins.views.TimePickerDialogFragment.OnTimePickedListe
 public class CreateMatchFragment extends SherlockFragment 
 	implements OnDatePickedListener, OnTimePickedListener {
 
+	private static final String TAG = "CreateMatchFragment";
+	
     // Container Activity must implement this interface
     public interface OnMatchCreatedListener {
         public void onMatchCreated(boolean wasCreated);
     }
-
-	private static final String TAG = "CreateMatchFragment";
 
 	private static final int MIN_PASSWORD_LEN = 6;
 	private static final int MIN_MATCH_NAME_LEN = 6;
@@ -83,8 +83,6 @@ public class CreateMatchFragment extends SherlockFragment
 	
 	@RestService
 	HuntedRestClient restClient;
-	
-	private ProgressDialog asyncProgress;
 
 	//match parameters
 	
@@ -104,8 +102,7 @@ public class CreateMatchFragment extends SherlockFragment
 	private Double hRange;
 	private Integer tEscape;
 
-	public CreateMatchFragment() {
-	}
+	public CreateMatchFragment() {}
 	
     @Override
     public void onAttach(Activity activity) {
@@ -117,14 +114,6 @@ public class CreateMatchFragment extends SherlockFragment
         }
     }
 
-	@AfterInject
-	public void afterInjection() {
-		//subvert a bug in HttpUrlConnection
-		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-		restClient.getRestTemplate().setRequestFactory(
-				new HttpComponentsClientHttpRequestFactory());
-	}
-	
 	@TextChange({R.id.edit_match_name, R.id.edit_match_password})
 	void onTextChangesOnSomeTextViews(TextView tv, CharSequence text) {	
 	 
@@ -146,7 +135,7 @@ public class CreateMatchFragment extends SherlockFragment
 		
 		hideKeyboard();
 		
-		Intent intent = new Intent(getSherlockActivity(), MatchParamsActivity.class);
+		Intent intent = new Intent(getSherlockActivity(), CustomizeMatchActivity.class);
         startActivityForResult(intent, GAMEPLAY_ACTIVITY_REQUEST);
 	}
 	
@@ -181,8 +170,7 @@ public class CreateMatchFragment extends SherlockFragment
 		//TODO: show visual indication if there are validation issues
 		Log.i(TAG, password.getText().toString());
 		
-		if(validateSettings()) {
-
+		if(settingsAreValid()) {
 			InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
 				      Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
@@ -202,22 +190,13 @@ public class CreateMatchFragment extends SherlockFragment
 						aRange, hRange, tEscape));			
 			
 			Log.i(TAG, "Creating Match " + msg.toString());
-			
-			asyncProgress = new ProgressDialog(getActivity());
-			asyncProgress.setIndeterminate(true);
-			asyncProgress.setTitle("Please Wait");
-			asyncProgress.setMessage("Creating match...");
-			asyncProgress.setCancelable(false);
-			asyncProgress.show();
-			
-			createMatchInBackground(msg);
+			createMatchInBackground(msg,
+				ProgressDialog.show(getActivity(), "Please Wait", "Creating match...", true, false));
 		}
 	}
 
-	private boolean validateSettings() {
-		
+	private boolean settingsAreValid() {
 		String passwordStr = password.getText().toString();
-		
 		String  validationMsg = "";
 		
 		if(passwordStr.length() < MIN_PASSWORD_LEN && passwordStr.length() != 0) {
@@ -250,7 +229,7 @@ public class CreateMatchFragment extends SherlockFragment
 	}
 	
 	@Background
-	void createMatchInBackground(CreateMatchMessage msg) {
+	void createMatchInBackground(CreateMatchMessage msg, ProgressDialog progress) {
 		
 		MatchResponse response = null;
 		
@@ -261,16 +240,15 @@ public class CreateMatchFragment extends SherlockFragment
 			Log.i(TAG, "EXCEPTION: " + e.toString());
 		}
 		
-		matchCreatedResult(response);
+		matchCreatedResult(response, progress);
 	}
 	
 	@UiThread
-	void matchCreatedResult(MatchResponse response) {
+	void matchCreatedResult(MatchResponse response, ProgressDialog progress) {
 
-		asyncProgress.dismiss();
+		progress.dismiss();
 		
 		if(response != null) {
-			
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
 			
 			Log.d(TAG, response.toString());
@@ -292,38 +270,35 @@ public class CreateMatchFragment extends SherlockFragment
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		
-		Log.d(TAG, "onActivityResult()");
-		
-		if(requestCode == BOUNDS_ACTIVITY_REQUEST) {
-		if(resultCode == getSherlockActivity().RESULT_OK) {
-			String description = data.getStringExtra("description");
-			
-			Parcelable[] points = data.getParcelableArrayExtra("points");
-			LatLng[] latLngPoints = new LatLng[points.length];
-			for(int i = 0; i < points.length; i++) {
-				latLngPoints[i] = ((LatLng)points[i]);
+		Log.d(TAG, "onActivityResult(result:"+resultCode+")");
+		if(resultCode == Activity.RESULT_OK) {
+			if(requestCode == BOUNDS_ACTIVITY_REQUEST) {
+				String description = data.getStringExtra("description");
+				Parcelable[] points = data.getParcelableArrayExtra("points");
+				LatLng[] latLngPoints = new LatLng[points.length];
+				
+				for(int i = 0; i < points.length; i++) {
+					latLngPoints[i] = ((LatLng)points[i]);
+				}
+				
+				nwCorner = latLngPoints[0];
+				seCorner = latLngPoints[1];
+				
+				String text = LocationUtils.getMilesAreaString(latLngPoints[0], latLngPoints[1]) +
+						      ((description != null) ? " (" + description + ")" : "");
+				selectBoundaries.setText(text);
+				selectBoundaries.setTextColor(getResources().getColor(R.color.abs__bright_foreground_holo_light));
+			} else if (requestCode == GAMEPLAY_ACTIVITY_REQUEST) {
+				tEscape = data.getIntExtra("wait", -1);
+				aRange = data.getDoubleExtra("aRange",-1.0d);
+				hRange = data.getDoubleExtra("hRange",-1.0d);
+				
+				gameplaySettings.setText("hunt: "   + hRange + "mi, " +
+										 "attack: " + aRange + "mi, " +
+										 tEscape   + "s" );
+				gameplaySettings.setTextColor(getResources()
+						.getColor(R.color.abs__bright_foreground_holo_light));
 			}
-			
-			nwCorner = latLngPoints[0];
-			seCorner = latLngPoints[1];
-			
-			String text = LocationUtils.getMilesAreaString(latLngPoints[0], latLngPoints[1]) +
-					      ((description != null) ? " (" + description + ")" : "");
-			selectBoundaries.setText(text);
-			selectBoundaries.setTextColor(getResources().getColor(R.color.abs__bright_foreground_holo_light));
-		}
-		} else if (requestCode == GAMEPLAY_ACTIVITY_REQUEST) {
-			
-			tEscape = data.getIntExtra("wait", -1);
-			aRange = data.getDoubleExtra("aRange",-1.0d);
-			hRange = data.getDoubleExtra("hRange",-1.0d);
-			
-			gameplaySettings.setText("hunt: "   + hRange + "mi, " +
-									 "attack: " + aRange + "mi, " +
-									 tEscape   + "s" );
-			gameplaySettings.setTextColor(getResources()
-					.getColor(R.color.abs__bright_foreground_holo_light));
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 	}
@@ -354,4 +329,13 @@ public class CreateMatchFragment extends SherlockFragment
 		this.hourOfDay = hourOfDay;
 		this.minute = minute;
 	}
+	
+	@AfterInject
+	public void afterInjection() {
+		//subvert a bug in HttpUrlConnection
+		//see: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
+		restClient.getRestTemplate().setRequestFactory(
+				new HttpComponentsClientHttpRequestFactory());
+	}
+	
 }

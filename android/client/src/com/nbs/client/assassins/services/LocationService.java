@@ -21,6 +21,7 @@ import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.LocationMessage;
 import com.nbs.client.assassins.network.LocationResponse;
+import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.utils.LocationUtils;
 
 import android.app.Service;
@@ -44,10 +45,9 @@ public class LocationService extends Service {
 
 	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
 	public static final String STOP_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
-	public static final String START_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
+	public static final String START_UPDATES = "com.nbs.android.client.START_LOCATION_UPDATES";
 	public static final String SEND_LOCATION_NOW = "com.nbs.android.client.SEND_LOCATION_NOW";
 
-	
 	public static final float SEARCH_MIN_DISPLACEMENT = 100.0f;
 	public static final float HUNT_MIN_DISPLACEMENT   = 10.0f;
 	public static final float ATTACK_MIN_DISPLACEMENT = 0.5f;
@@ -64,7 +64,6 @@ public class LocationService extends Service {
 
 	LocationClient locationClient;
 	LocationListener locationListener;
-	Location current;
 	
 	ActivityRecognitionClient userActivityRecognitionClient;
 	
@@ -76,19 +75,20 @@ public class LocationService extends Service {
         	String action = intent.getAction();
         	Log.d(TAG, "received intent [" + action + "]");
         	
-    		if(action.equals(GCMMessages.MATCH_REMINDER) || 
+    		if(action.equals(GCMMessages.MATCH_COUNTDOWN) || 
     		   action.equals(UserModel.USER_TOKEN_RECEIVED)) {
 				
     			Location lastLocation = locationClient.getLastLocation();
 				Log.d(TAG, "last location ["+lastLocation.toString()+"]");
 				if(lastLocation != null) {
-					updateLocation(lastLocation);
+					reportLocation(lastLocation);
 				}
     		}
     		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED) || 
     				action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
     			
     			//TODO if the user is not moving, do not request location updates
+    			//use activity recognition (in comments below)
     			
     			//throttle location updates based on the nearest of these two ranges
     			String tRange = PlayerModel.getTargetProximity(LocationService.this);
@@ -124,29 +124,17 @@ public class LocationService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand("+intent+")");
-		
 		String action = intent.getAction();
 		
-		Log.d(TAG, "onStartCommand("+action+")");
-		
 		if(locationClient.isConnected()) {
-			
 			if(action != null && action.equals(LocationService.STOP_UPDATES)) {
 				locationClient.removeLocationUpdates(locationListener);
-			}
-			else if(action != null && action.equals(LocationService.START_UPDATES)) {
+			} else if(action != null && action.equals(LocationService.START_UPDATES)) {
 				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-			}
-			else if(action.equals(GCMMessages.MATCH_REMINDER)) {
-    			Location lastLocation = locationClient.getLastLocation();
-				Log.d(TAG, "last location ["+lastLocation.toString()+"]");
-				if(lastLocation != null) {
-					updateLocation(lastLocation);
-				}
+			} else if(action.equals(GCMMessages.MATCH_COUNTDOWN)) {
+    			reportLocation(locationClient.getLastLocation());
     		}
-			
-			LocalBroadcastManager.getInstance(this).registerReceiver(intentReceiver, intentFilter);
-			
+			Bus.register(this,intentReceiver, intentFilter);	
 		} else if (locationClient.isConnecting() && action != null && action.equals(LocationService.STOP_UPDATES)) {
 			try {
 				locationClient.disconnect();
@@ -160,16 +148,15 @@ public class LocationService extends Service {
 	@Override
 	public void onDestroy() {
 		locationClient.disconnect();
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(intentReceiver);
+		Bus.unregister(this,intentReceiver);
 	}
 
 	@Override
 	public void onCreate() {
-		
 		Log.d(TAG, "onCreate");
 		
 		intentFilter = new IntentFilter();
-		intentFilter.addAction(GCMMessages.MATCH_REMINDER);
+		intentFilter.addAction(GCMMessages.MATCH_COUNTDOWN);
         intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
         intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
         intentFilter.addAction(PlayerModel.MATCH_END);
@@ -177,7 +164,7 @@ public class LocationService extends Service {
 		
 		locationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
-				updateLocation(location);
+				reportLocation(location);
 			}
 		};
 		
@@ -191,11 +178,9 @@ public class LocationService extends Service {
 					
 					if(lastLocation != null) {
 						Log.d(TAG, "LocationClient connected, location ["+lastLocation.toString()+"]");
-						updateLocation(lastLocation);
+						reportLocation(lastLocation);
 					}
 					
-					//TODO: if the app is hidden and the player is not in a match, stop the location updates
-					//      the MainActivity should handle this in the onPause
 					requestLocationUpdates(1000, 3.0f, LocationRequest.PRIORITY_HIGH_ACCURACY);
 				}
 				@Override
@@ -213,7 +198,6 @@ public class LocationService extends Service {
 		});
 		
 		locationClient.connect();
-		
 		
 		/*	TODO: implement activity recognition PendingIntent that would broadcast
 		 *        to stop requesting location updates when a user is still for instance
@@ -240,14 +224,14 @@ public class LocationService extends Service {
 	
 	
 	@Background
-	public void updateLocation(Location newLocation)
+	public void reportLocation(Location l)
 	{
-		Log.d(TAG, "location [" + (newLocation != null ? newLocation.toString() : null) + "]");
+		Log.d(TAG, "location [" + (l != null ? l.toString() : null) + "]");
 
-		if(newLocation != null && UserModel.hasToken(this))
+		if(l == null) return;
+		
+		if(UserModel.hasToken(this))
 		{
-			current = newLocation;
-
 			final String regId = GCMRegistrar.getRegistrationId(this);
 			if (regId.equals("")) {
 				GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
@@ -255,7 +239,7 @@ public class LocationService extends Service {
 				Log.v(TAG, "Already registered");
 
 				LocationMessage msg = 
-					new LocationMessage(LocationUtils.locationToLatLng(current), 
+					new LocationMessage(LocationUtils.locationToLatLng(l), 
 						UserModel.getInstallId(this));
 				
 				Log.v(TAG, msg.toString());
@@ -273,15 +257,13 @@ public class LocationService extends Service {
 						PlayerModel.setPlayerState(this, response.playerState);
 					}
 
-		            LocalBroadcastManager.getInstance(this)
-		            	.sendBroadcast(new Intent(LocationService.LOCATION_UPDATED));
+		            Bus.post(this,LocationService.LOCATION_UPDATED);
 				}
 			}
 		} else {
 			//no token yet, but still want to draw user on map
-			UserModel.setLocation(this, newLocation.getLatitude(), newLocation.getLongitude());
-			LocalBroadcastManager.getInstance(this)
-        		.sendBroadcast(new Intent(LocationService.LOCATION_UPDATED));
+			UserModel.setLocation(this, l.getLatitude(), l.getLongitude());
+			Bus.post(this,LocationService.LOCATION_UPDATED);
 		}
 
 	}

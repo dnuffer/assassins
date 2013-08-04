@@ -19,10 +19,7 @@ public class JoinMatchActivity extends SherlockFragmentActivity implements OnMat
         this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
-            //Bundle fragmentArgs = new Bundle();
-            //fragmentArgs.putString(CreateMatchFragment.WHATEVER, whatever);
             JoinMatchFragment createMatchFragment = new JoinMatchFragment_();
-            //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, createMatchFragment)
                     .commit();

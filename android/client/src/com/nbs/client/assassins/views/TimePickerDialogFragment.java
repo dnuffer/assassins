@@ -1,14 +1,11 @@
 package com.nbs.client.assassins.views;
 
-import java.util.Calendar;
-
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.app.TimePickerDialog.OnTimeSetListener;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.text.format.Time;
-import android.widget.DatePicker;
 import android.widget.TimePicker;
 
 public class TimePickerDialogFragment extends DialogFragment implements OnTimeSetListener {

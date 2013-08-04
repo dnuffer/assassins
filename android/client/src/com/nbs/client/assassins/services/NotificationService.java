@@ -1,6 +1,5 @@
 package com.nbs.client.assassins.services;
 
-
 import java.util.UUID;
 
 import com.googlecode.androidannotations.annotations.EService;
@@ -31,8 +30,8 @@ public class NotificationService extends Service {
 
 	private void cancelMatchReminderAlarms(Context context) {
 		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		alarmMngr.cancel(prepareNotificationServicePendingIntent(context, GCMMessages.MATCH_REMINDER));
-		alarmMngr.cancel(prepareLocationServicePendingIntent(context, GCMMessages.MATCH_REMINDER));
+		alarmMngr.cancel(prepareNotificationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
+		alarmMngr.cancel(prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
 	}
 	
 	private static PendingIntent prepareLocationServicePendingIntent(Context context, String action) {
@@ -57,9 +56,9 @@ public class NotificationService extends Service {
 			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			//if the match has already begun,  it will fire immediately
 			alarmMngr.set(AlarmManager.RTC_WAKEUP, reportLocationReminderTime, 
-					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_REMINDER));
+					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
 			alarmMngr.set(AlarmManager.RTC_WAKEUP, postNotifReminderTime, 
-					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_REMINDER));
+					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
 			Log.d(TAG, "registered alarm");
 		}
 	}
@@ -79,8 +78,8 @@ public class NotificationService extends Service {
 		            .setContentTitle(title)  
 		            .setContentText(message)
 		        	.setAutoCancel(true)
-	        		.setContentIntent(PendingIntent.getActivity(
-	        				c, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+	        		.setContentIntent(PendingIntent
+	        			.getActivity(c, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
 
 	        // Add as notification  
 	        NotificationManager manager = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);  
@@ -98,7 +97,7 @@ public class NotificationService extends Service {
 		String action = intent.getAction();
 
 		if(action != null) {
-			if(action.equals(GCMMessages.MATCH_REMINDER)) {
+			if(action.equals(GCMMessages.MATCH_COUNTDOWN)) {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 						TAG, "Your match is about to begin.", intent.getExtras());
 			}

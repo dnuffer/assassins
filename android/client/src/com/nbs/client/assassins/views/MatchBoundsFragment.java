@@ -42,21 +42,26 @@ import com.nbs.client.assassins.utils.LocationUtils;
 
 @EFragment
 public class MatchBoundsFragment extends SherlockMapFragment {
-    private static final double DEFAULT_BOUNDS_HALF_WIDTH = 0.05;
-	private static final int LATLNG_BOUNDS_PADDING = 80;
-
+	private static final String TAG = "MatchBoundsFragment";
+	
 	// Container Activity must implement this interface
     public interface OnBoundsSelectedListener {
         public void onBoundsSelected(String description, List<LatLng> points);
     }
-
+    
 	private OnBoundsSelectedListener mListener;
+    
+	private static final double DEFAULT_BOUNDS_HALF_WIDTH = 0.05;
+	private static final int LATLNG_BOUNDS_PADDING = 80;
+
 	private Marker corner1;
 	private Marker corner2;
-	private static final int BOUNDS_STROKE_COLOR = Color.argb(100, Color.red(Color.RED), Color.green(Color.RED), Color.blue(Color.RED));
-	private static final String TAG = "MatchBoundsFragment";
+	
+	private static final int RED = Color.argb(100, Color.red(Color.RED), Color.green(Color.RED), Color.blue(Color.RED));
 	private static final int DONE_ID = 1;
 	private Polygon matchBounds;
+
+	private ProgressDialog progress;
 
  	public MatchBoundsFragment(){ }
     
@@ -89,11 +94,7 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 		uiSettings.setZoomControlsEnabled(true);
 		getMap().setMyLocationEnabled(true);
 
-		final ProgressDialog locationProgress = new ProgressDialog(getSherlockActivity());
-		locationProgress.setIndeterminate(true);
-		locationProgress.setTitle("Waiting for GPS...");
-		locationProgress.setCancelable(false);
-		locationProgress.show();
+		progress = ProgressDialog.show(getSherlockActivity(), "Please Wait","Waiting for GPS...", true, false);
 		
 		getMap().setOnMarkerDragListener(new OnMarkerDragListener(){
 			@Override
@@ -102,12 +103,10 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 			}
 
 			@Override
-			public void onMarkerDragEnd(Marker m) {
-			}
+			public void onMarkerDragEnd(Marker m) {}
 
 			@Override
-			public void onMarkerDragStart(Marker m) {
-			}
+			public void onMarkerDragStart(Marker m) {}
 		});
 		
 		getMap().setOnMyLocationChangeListener(new OnMyLocationChangeListener() {
@@ -129,19 +128,19 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 				getMap().animateCamera(camUpdate, 1000, new CancelableCallback(){
 					@Override
 					public void onCancel() {
-						locationProgress.dismiss();
+						dismissGpsProgress();
 					}
 
 					@Override
 					public void onFinish() { 
 						corner1 = getMap().addMarker(new MarkerOptions()
-														.draggable(true)
-														.position(cornerA));
+															.draggable(true)
+															.position(cornerA));
 						corner2 = getMap().addMarker(new MarkerOptions()
-														.draggable(true)
-														.position(cornerB));
+															.draggable(true)
+															.position(cornerB));
 						drawBounds();
-						locationProgress.dismiss();
+						dismissGpsProgress();
 					}
 				});
 			}});
@@ -149,6 +148,9 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 		super.onViewCreated(view, savedInstanceState);
 	}
 
+	private void dismissGpsProgress() {
+		if(progress != null) progress.dismiss();
+	}
 	private void drawBounds() {
 		LatLng corner3 = new LatLng(corner2.getPosition().latitude, corner1.getPosition().longitude);
 		LatLng corner4 = new LatLng(corner1.getPosition().latitude, corner2.getPosition().longitude);
@@ -156,7 +158,7 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 		if(matchBounds == null) {		
 			matchBounds = getMap().addPolygon(new PolygonOptions()
 				.add(corner1.getPosition(), corner3, corner2.getPosition(), corner4)
-				.strokeColor(BOUNDS_STROKE_COLOR));
+				.strokeColor(RED));
 		}
 		else {
 			matchBounds.setPoints(Arrays.asList(corner1.getPosition(), corner3, corner2.getPosition(), corner4));
@@ -173,29 +175,20 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		
 		switch (item.getItemId()) {
 	    	case DONE_ID:
-	    		ProgressDialog asyncProgress = new ProgressDialog(getSherlockActivity());
-				asyncProgress.setIndeterminate(true);
-				asyncProgress.setTitle("Computing bounds...");
-				asyncProgress.setCancelable(false);
-				asyncProgress.show();
 	    		reverseGeocodeMatchArea( 
-	    				LocationUtils.midPoint(corner1.getPosition(), corner2.getPosition()),
-	    				asyncProgress);
+    				LocationUtils.midPoint(corner1.getPosition(), corner2.getPosition()),
+    				ProgressDialog.show(getActivity(), "Please wait", "Computing bounds...", true, false));
 	    	    return true;
 	    }
-	    
 		return super.onOptionsItemSelected(item);
 	}
 	
 	@Background
 	public void reverseGeocodeMatchArea(LatLng center, ProgressDialog progress) {
 		Geocoder geo = new Geocoder(this.getSherlockActivity());
-		
 		List<Address> addresses = null;
-		
 		if(Geocoder.isPresent()) {
 			try{
 				addresses = geo.getFromLocation(center.latitude, center.longitude, 1);
@@ -203,12 +196,12 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 				Log.e(TAG, e.getMessage());
 			}
 		}
-		
 		onGeocodeFinished(addresses, progress);
 	}
 	
 	@UiThread
 	public void onGeocodeFinished(List<Address> addresses, ProgressDialog progress) {
+		progress.dismiss();
 		
 		String description = null;
 		
@@ -221,18 +214,17 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 		
 		List<LatLng> s2N = LocationUtils.sortSouthToNorth(matchBounds.getPoints());
 
-		//note, if your gameplay bounds cross the middle of the atlantic ocean, you will
+		//TODO: may need to change how we determine what is the 'most west/east'	
+		//if your gameplay bounds cross the middle of the atlantic ocean, you will
 		//experience unsatisfactory results!
-		//may need to change how we determine what is the 'most west/east'		
 		List<LatLng> e2W = LocationUtils.sortEastToWest(matchBounds.getPoints());
 
+		//match bounds are stored as upper left and lower right corner
 		LatLng n = s2N.get(s2N.size()-1);
 		LatLng w = e2W.get(e2W.size()-1);
 		LatLng s = s2N.get(0);
 		LatLng e = e2W.get(0);
 
-		progress.dismiss();
-		
 		mListener.onBoundsSelected(description, Arrays.asList(
 				new LatLng(n.latitude, w.longitude), 
 				new LatLng(s.latitude, e.latitude)));

@@ -19,10 +19,7 @@ public class CreateMatchActivity extends SherlockFragmentActivity implements OnM
         this.setContentView(R.layout.fragment_container_layout);
         
         if (savedInstanceState == null) {
-            //Bundle fragmentArgs = new Bundle();
-            //fragmentArgs.putString(CreateMatchFragment.WHATEVER, whatever);
             CreateMatchFragment createMatchFragment = new CreateMatchFragment_();
-            //createMatchFragment.setArguments(fragmentArgs);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frag_container, createMatchFragment)
                     .commit();

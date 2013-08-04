@@ -48,18 +48,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-
 		super.onConfigurationChanged(newConfig);
-	}
-
-	@Override
-	public void onHiddenChanged(boolean hidden) {
-		
-		if(hidden) {
-			stopSensorUpdates();
-		}
-		
-		super.onHiddenChanged(hidden);	
 	}
 	
 	BearingProvider bearingProvider;
@@ -77,20 +66,22 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	
 	private Marker targetLocationMarker;
 	
-	private Circle rangeCircle; 
+	private Circle aRangeCircle;
+	private Circle hRangeCircle;
+	
 	private Polygon boundsPolygon;
  	private Marker myLocationMarker;
- 	private int circleColor = Color.argb(100, 
+ 	
+ 	private int RED = Color.argb(100, 
  		Color.red(Color.RED), Color.green(Color.RED), Color.blue(Color.RED));
- 	private int boundsColor = Color.argb(100, 
+ 	private int BLUE = Color.argb(100, 
  		Color.red(Color.BLUE), Color.green(Color.BLUE), Color.blue(Color.BLUE));
 	
  	private boolean animating = false;
 
 	private Float tBearing;
-
 	private Polyline tBearingLine;
- 	
+
  	public MapFragment(){ }
 
 	@Override
@@ -120,13 +111,11 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			}	
 		}
 		
-		
 		showMyLocation(lastLatLng); 
 		
-		if(MatchModel.inMatch(getSherlockActivity()))
-		{
+		if(MatchModel.inMatch(getSherlockActivity())) {
 			showGameBoundary();
-			showAttackRangeCircle(lastLatLng);
+			showRangeCircles(lastLatLng);
 			showDirectionToTarget(tBearing);
 			showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
 		}
@@ -186,7 +175,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 
-		showAttackRangeCircle(location);
+		showRangeCircles(location);
 		showDirectionToTarget(tBearing);
 		moveMapPositionTo(location);
 	}
@@ -196,10 +185,8 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	
 	public void moveMapPositionTo(LatLng location, boolean animate, Integer duration) {
-		CameraPosition currentCamera = map.getCameraPosition();
-		float zoom = currentCamera.zoom;
-		float tilt = currentCamera.tilt;
-		moveMapPositionTo(location, zoom, tilt, animate, duration) ;
+		CameraPosition cam = map.getCameraPosition();
+		moveMapPositionTo(location, cam.zoom, cam.tilt, animate, duration) ;
 	}
 	
 	public void moveMapPositionTo(LatLng location, Float zoom, Float tilt, boolean animate, Integer duration) {
@@ -211,7 +198,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 
 			CameraPosition cameraPosition = new CameraPosition.Builder()
 				.target(location)
-				.zoom(zoom != null ? zoom : 19)              
+				.zoom(zoom != null ? zoom : DEFAULT_ZOOM)              
 				.bearing(MODE == MODE_NORTH  ? 0 : bearing)
 				.tilt(tilt != null ? tilt : DEFAULT_TILT)                
 				.build(); 	
@@ -282,24 +269,49 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		if(boundsPolygon == null) {
 			boundsPolygon = map.addPolygon(new PolygonOptions()
 				.zIndex(0)
+				//TODO: show actual match bounds polygon
 				.add(new LatLng(40.3, -111.6), new LatLng(40.4, -111.6), new LatLng(40.4, -111.7), new LatLng(40.3, -111.7))
-			    .strokeColor(boundsColor)
+			    .strokeColor(BLUE)
 			    .fillColor(Color.TRANSPARENT));
 		}
 	}
 
-	private void showAttackRangeCircle(LatLng location) {
-		if(rangeCircle == null) {
-			rangeCircle = map.addCircle(new CircleOptions()
-			     .center(location)
-			     .radius(50)
-			     .strokeColor(circleColor)
-			     .fillColor(Color.TRANSPARENT));
-		} else {
-			rangeCircle.setCenter(location);
+	private void showRangeCircles(LatLng location) {
+		Double aRange = MatchModel.getAttackRange(getActivity());
+		
+		//if in match with attack range, draw/update the circle position
+		if(aRange != null) {
+			if(aRangeCircle == null) {
+				aRangeCircle = map.addCircle(new CircleOptions()
+				     .center(location)
+				     .radius(aRange)
+				     .strokeColor(RED)
+				     .fillColor(Color.TRANSPARENT));
+			} else {
+				aRangeCircle.setCenter(location);
+			}
+		} else if (aRangeCircle != null) {
+			//if not in a match and showing an attack range circle, clear it
+			aRangeCircle.remove();
 		}
+		
+		Double hRange = MatchModel.getHuntRange(getActivity());
+		
+		if(hRange != null) {
+			if(hRangeCircle == null) {
+				hRangeCircle = map.addCircle(new CircleOptions()
+				     .center(location)
+				     .radius(hRange)
+				     .strokeColor(BLUE)
+				     .fillColor(Color.TRANSPARENT));
+			} else {
+				aRangeCircle.setCenter(location);
+			}
+		} else if (hRangeCircle != null) {
+			hRangeCircle.remove();
+		}
+		
 	}
-	
 
 	private void showDirectionToTarget(Float tBearing) {
 		
@@ -324,7 +336,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			
 			tBearingLine = map.addPolyline(new PolylineOptions()
 					.add(myLocation, new LatLng(Math.toDegrees(lat2), Math.toDegrees(lon2)))
-					.color(circleColor));
+					.color(RED));
 		}
 		else if(tBearingLine != null) {
 			tBearingLine.remove();

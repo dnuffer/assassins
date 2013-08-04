@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -26,12 +25,13 @@ import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
 import com.nbs.client.assassins.services.GCMMessages;
+import com.nbs.client.assassins.utils.Bus;
 
 @EFragment(R.layout.game_fragment)
 public class GameFragment extends SherlockFragment{
 
-	private static final String TAG = null;
-	private static final String HUD_FRAGMENT = null;
+	private static final String TAG = "GameFragment";
+	private static final String HUD_FRAGMENT = "HUDFragment";
 	MapFragment_ mapFragment;
 	HUDFragment_ hudFragment;
 
@@ -58,11 +58,10 @@ public class GameFragment extends SherlockFragment{
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
 		
-		//matchStartFilter = new IntentFilter();
-		//matchStartFilter.addAction(GCMMessages.MATCH_START);
+		matchStartFilter = new IntentFilter();
+		matchStartFilter.addAction(GCMMessages.MATCH_START);
 		
         intentFilter = new IntentFilter();
-        
         intentFilter.addAction(PlayerModel.NEW_TARGET);   
         intentFilter.addAction(PlayerModel.TARGET_EVENT);
         intentFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
@@ -79,8 +78,8 @@ public class GameFragment extends SherlockFragment{
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		if(MatchModel.inActiveMatch(getSherlockActivity())) {
 			showHUD();
-		} else if(MatchModel.inMatch(getActivity()) && 
-                !MatchModel.inActiveMatch(getActivity())) {
+		} else if(MatchModel.inMatch(getSherlockActivity()) && 
+                !MatchModel.inActiveMatch(getSherlockActivity())) {
 			scheduleMatchStartTimeAlarm();
         }
 		super.onViewCreated(view, savedInstanceState);
@@ -127,8 +126,7 @@ public class GameFragment extends SherlockFragment{
 	
 	@Override
 	public void onPause() {
-		LocalBroadcastManager.getInstance(getSherlockActivity())
-			.unregisterReceiver(getBroadcastReceiver());
+		Bus.unregister(getSherlockActivity(),getBroadcastReceiver());
 		super.onPause();
 	}
 
@@ -136,9 +134,9 @@ public class GameFragment extends SherlockFragment{
 	public void onResume() {
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
-		if(hudFragment != null) hudFragment.setBearingProvider(bearingSource);
-	    LocalBroadcastManager.getInstance(getSherlockActivity())
-	    	.registerReceiver(getBroadcastReceiver(), getIntentFilter());
+		//TODO: the bearing is messed up, fix bearing first
+		//if(hudFragment != null) hudFragment.setBearingProvider(bearingSource);
+	    Bus.register(getSherlockActivity(),getBroadcastReceiver(), getIntentFilter());
 		super.onResume();
 	}
 	
@@ -192,23 +190,6 @@ public class GameFragment extends SherlockFragment{
 	public IntentFilter getIntentFilter() {
 		return intentFilter;
 	}
-	
-	private BroadcastReceiver gameStartReceiver = new BroadcastReceiver() {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			
-			String action = intent.getAction();
-        	
-        	Log.d(TAG, "received event [" + action + "]");
-			
-        	if(action.equals(GCMMessages.MATCH_START)) {
-    			showHUD();
-    		}
-			
-		}
-		
-	};
 	
 	private BroadcastReceiver gameBroadcastReceiver = new BroadcastReceiver() {
         @Override

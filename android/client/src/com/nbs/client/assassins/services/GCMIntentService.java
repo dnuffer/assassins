@@ -48,13 +48,10 @@ public class GCMIntentService extends GCMBaseIntentService {
 				new HttpComponentsClientHttpRequestFactory());
 	}
 	
-	
-	public GCMIntentService() {		
-	}
+	public GCMIntentService() {}
 
 	public GCMIntentService(String... senderIds) {
-		super(GCMUtilities.SENDER_ID);
-		
+		super(GCMUtilities.SENDER_ID);	
 	}
 
 	@Override
@@ -68,8 +65,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Log.i(TAG, "  action: " + intent.getAction());
 		Bundle extras = intent.getExtras();
 		
-		for(String key : extras.keySet())
-		{
+		for(String key : extras.keySet()) {
 			Log.i(TAG, "  " + key + " : " + extras.getString(key));
 		}
 		
@@ -92,9 +88,9 @@ public class GCMIntentService extends GCMBaseIntentService {
 			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 					TAG, GCMMessages.MATCH_START, new Bundle());
 		}
-		else if(type.equals(GCMMessages.MATCH_REMINDER)) {
+		else if(type.equals(GCMMessages.MATCH_COUNTDOWN)) {
 			LocalBroadcastManager.getInstance(c)
-				.sendBroadcast(new Intent().setAction(GCMMessages.MATCH_REMINDER));
+				.sendBroadcast(new Intent().setAction(GCMMessages.MATCH_COUNTDOWN));
 		}
 		else if(type.equals(GCMMessages.MATCH_START)) {
 			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
@@ -143,8 +139,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 			}
 		}
 		//provisional user
-		else if(!UserModel.hasUsername(context))
-		{
+		else if(!UserModel.hasUsername(context)) {
 			UserLoginMessage msg = new UserLoginMessage();
 			msg.installId = UserModel.getInstallId(context);
 			msg.gcmRegId = registrationId;
@@ -167,8 +162,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	@Override
 	protected void onUnregistered(Context context, String registrationId) {
         
-		if(UserModel.hasToken(context))
-		{
+		if(UserModel.hasToken(context)) {
 			GCMRegistrationMessage msg = new GCMRegistrationMessage();
 			msg.installId = UserModel.getInstallId(context);
 			msg.gcmRegId = registrationId;

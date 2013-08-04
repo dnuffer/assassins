@@ -1,150 +1,81 @@
 package com.nbs.client.assassins.models;
 
 import java.util.UUID;
-
-import org.codehaus.jackson.annotate.JsonProperty;
-
 import com.google.android.gms.maps.model.LatLng;
-
+import com.nbs.client.assassins.utils.Bus;
+import com.nbs.client.assassins.utils.KeyValueStore;
+import com.nbs.client.assassins.utils.LocationUtils;
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.location.Location;
-import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
-/* 
- * Inspired by Tim Bray's post @ http://android-developers.blogspot.com/2011/03/identifying-app-installations.html
- * This class generates and accesses a UUID for tracking unique installations of an application.
- *
- */
-
-public class UserModel {
-    private static final String INSTALLATION = "INSTALLATION";
+public class UserModel extends KeyValueStore {
     private static final String ID = "install_id";
 	private static final String TOKEN = "token";
 	private static final String USERNAME = "username";
 	private static final String TAG = "UserModel";
 	public  static final String USER_TOKEN_RECEIVED = "com.nbs.client.assassins.USER_TOKEN_CHANGED";
 
-    public synchronized static String getInstallId(Context context) {
-        
-    	if(context == null) return null;
-    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
-        String installId = pref.getString(ID, null);
-    	
+    public synchronized static String getInstallId(Context c) {
+        String installId = getString(c,ID);
     	if (installId == null) {
     		installId = UUID.randomUUID().toString();
-            Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
-            editor.putString(ID, installId);
-            editor.commit();
+            putString(c, ID, installId);
         }
-    	
         return installId;
     }
     
-    public static String getUsername(Context context)
-    {
-    	if(context == null) return null;
-    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
-	    return pref.getString(USERNAME, null);
+    public static String getUsername(Context c) {
+	    return getString(c,USERNAME);
     }
     
-    public synchronized static void setUsername(Context context, String username)
-    {
-    	if(context == null) return;
-    	Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
-        editor.putString(USERNAME, username);
-        editor.commit();
+    public synchronized static void setUsername(Context c, String username) {
+    	putString(c,USERNAME, username);
     }
     
-    public static boolean hasUsername(Context context)
-    {
-    	return getUsername(context) != null;
+    public static boolean hasUsername(Context c) {
+    	return getUsername(c) != null;
     }
     
-    public static String getToken(Context context)
-    {
-    	if(context == null) return null;
-    	SharedPreferences pref = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE);
-        return pref.getString(TOKEN, null);
+    public static String getToken(Context c) {
+        return getString(c,TOKEN);
     }
     
-    public synchronized static void setToken(Context context, String token)
-    {
-    	if(context == null) return;
-        Editor editor = context.getSharedPreferences(INSTALLATION, Context.MODE_PRIVATE).edit();
-        editor.putString(TOKEN, token);
-        editor.commit();
-        
+    public synchronized static void setToken(Context c, String token) {
+        putString(c,TOKEN, token);
         if(token != null) {
-			LocalBroadcastManager.getInstance(context)
-				.sendBroadcast(new Intent().setAction(USER_TOKEN_RECEIVED));
+			Bus.post(c,USER_TOKEN_RECEIVED);
         }
     }
     
-    public static boolean hasToken(Context context)
-    {
-    	return getToken(context) != null;
+    public static boolean hasToken(Context c) {
+    	return getToken(c) != null;
     }
 
 	public static LatLng getLocation(Context c) {
-		
-		if(c == null) return null;
-		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-		
-		String latStr = prefs.getString("my_lat", "");
-		String lngStr = prefs.getString("my_lng", "");
-		
-		Log.d(TAG, "getting location preference [lat=" + latStr + ", lng=" + lngStr + "]");
-		
-		if(latStr != "" && lngStr != "") {
-			double lat = Double.parseDouble(latStr);
-			double lng = Double.parseDouble(lngStr);
-	
-			return new LatLng(lat,lng);
-		}
-		
-		return null;
+		return getLatLng(c, "my");
 	}
 
-	public synchronized static void setLocation(Context context, Location lastLocation) {
-    	if(context == null || lastLocation == null) return;
-    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-    	editor.putString("my_lat", Double.toString(lastLocation.getLatitude()));
-    	editor.putString("my_lng", Double.toString(lastLocation.getLongitude()));
-        editor.commit();
+	public synchronized static void setLocation(Context c, Location lastLocation) {
+    	putLatLng(c, "my", LocationUtils.locationToLatLng(lastLocation));
 	}
 	
-	public synchronized static void setLocation(Context context,
+	public synchronized static void setLocation(Context c,
 			double lat, double lng) {
-    	if(context == null) return;
-    	Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-    	editor.putString("my_lat", Double.toString(lat));
-    	editor.putString("my_lng", Double.toString(lng));
-        editor.commit();
+    	putLatLng(c,"my", new LatLng(lat,lng));
 	}  
 
-	public static boolean loggedIn(Context context) {
-		// TODO Auto-generated method stub
-		return UserModel.hasToken(context) && UserModel.hasUsername(context);
+	public static boolean loggedIn(Context c) {
+		return UserModel.hasToken(c) && UserModel.hasUsername(c);
 	}
 	
-	
-	public synchronized static void signOut(Context context) {
-		MatchModel.setMatch(context, null);
-		UserModel.setUsername(context, null);
-		UserModel.setToken(context, null);
+	public synchronized static void signOut(Context c) {
+		MatchModel.setMatch(c, null);
+		UserModel.setUsername(c, null);
+		UserModel.setToken(c, null);
 	}
 	
 	public static String _toString(Context c) {
-		
 		return "[token=" + getToken(c) + ", username="+ getUsername(c) + ", install_id=" + getInstallId(c) +
 				"match=" + MatchModel.getMatch(c) + ", " + "location=" + getLocation(c) + "]" ;
 	}
-
-
 }

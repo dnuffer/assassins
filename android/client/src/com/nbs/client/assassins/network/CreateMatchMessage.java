@@ -21,9 +21,7 @@ public class CreateMatchMessage {
 	public CreateMatchMessage(String token, Match match) {
 		this.token = token; this.match = match;
 	}
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+
 	@Override
 	public String toString() {
 		return "CreateMatchMessage [token=" + token + ", match=" + match + "]";

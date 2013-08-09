@@ -49,6 +49,20 @@ get '/api/matches/:match_name/targets' do
   match.players.map { |p| p.user.username }.to_json
 end
 
+get '/api/matches/:match_name/details' do
+  content_type :json  
+  match = Match.where(name: params[:match_name]).first
+  
+  {
+    match: match.as_json,
+    is_active: match.in_progress?,
+    has_begun: match.has_begun?,
+    winner_nil: match.winner.nil?,
+    now: Time.now.utc.to_i*1000 
+  }.to_json
+  
+end
+
 
 # TODO send a push notification to client in order to verify the push id
 # Return a temporary limited token (5 mins)

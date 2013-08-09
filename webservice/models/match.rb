@@ -108,7 +108,7 @@ class Match
   end
   
   def has_begun?
-    Time.now.utc.to_i > start_time
+    Time.now.utc.to_i*1000 > start_time
   end
   
   def is_public?

@@ -87,7 +87,7 @@ public class PlayerModel extends KeyValueStore {
 	public  static synchronized void setTargetProximity(Context c, String targetRange) {
     	String oldRange = getTargetProximity(c);
     	putString(c,"target_proximity", targetRange);
-        if(!targetRange.equals(oldRange)) {
+        if(targetRange != null && !targetRange.equals(oldRange)) {
 			Bus.post(c,TARGET_RANGE_CHANGED);
         }
 	}
@@ -99,7 +99,7 @@ public class PlayerModel extends KeyValueStore {
 	public static synchronized void setEnemyProximity(Context c, String enemyRange) {
     	String oldRange = getEnemyProximity(c);
     	putString(c,"enemy_proximity", enemyRange);
-        if(!enemyRange.equals(oldRange)) {
+        if(enemyRange != null && !enemyRange.equals(oldRange)) {
 			Bus.post(c,ENEMY_RANGE_CHANGED);
         }
 	}
@@ -121,7 +121,7 @@ public class PlayerModel extends KeyValueStore {
 		PlayerModel.setMyLife(c, state.myLife);
 		PlayerModel.setEnemyProximity(c, state.enemyRange);
 		PlayerModel.setTargetLife(c, state.targetLife);
-		PlayerModel.setTargetLocation(c, new LatLng(state.targetLat, state.targetLng));
+		PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
 		PlayerModel.setTargetBearing(c, state.targetBearing);
 		PlayerModel.setTargetProximity(c, state.targetRange);
 	}

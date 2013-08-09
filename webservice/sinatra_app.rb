@@ -161,8 +161,13 @@ post '/api/matches/:name/players' do
   data = JSON.parse(request.body.read)
   user = User.authenticate data['token']
 
-  unless user.provisional? or user.in_match?
+  unless user.provisional?
     match = Match.authenticate params[:name], data['password']
+    
+    if user.in_match?
+      user.player.match.eliminate user.player
+    end
+    
     match.add_user user
     return {
         status: 'ok',
@@ -188,13 +193,18 @@ post '/api/users/:token/location' do
     player = user.player
     player.update_location data['latitude'], data['longitude']
 
-    return { 
+    response = { 
       status:   'ok', 
       message:  'location updated',
-      player_state: player.state,
       latitude:  player.location[:lat], 
       longitude: player.location[:lng]
-    }.to_json
+    }
+    
+    if user.in_active_match?
+      response.merge!({ player_state: player.state })
+    end
+    
+    response.to_json
   end
     
   # if they are sending their location and are not in a match,
@@ -275,7 +285,7 @@ post '/api/users/:token/attack' do
   data = JSON.parse(request.body.read)  
   user = User.authenticate params[:token]
   
-  if user.in_match?
+  if user.in_active_match?
     player = user.player
     target = player.get_target
 

@@ -111,7 +111,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			}	
 		}
 		
-		showMyLocation(lastLatLng); 
+		if(lastLatLng != null) showMyLocation(lastLatLng); 
 		
 		if(MatchModel.inMatch(getSherlockActivity())) {
 			showGameBoundary();
@@ -305,7 +305,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 				     .strokeColor(BLUE)
 				     .fillColor(Color.TRANSPARENT));
 			} else {
-				aRangeCircle.setCenter(location);
+				hRangeCircle.setCenter(location);
 			}
 		} else if (hRangeCircle != null) {
 			hRangeCircle.remove();
@@ -359,9 +359,6 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		
 		return location;
 	}
-
-	
-
 
 	@Override
 	public void onBearingChanged(float bearing) {

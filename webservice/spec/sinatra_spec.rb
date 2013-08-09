@@ -282,7 +282,8 @@ describe 'Sinatra App' do
     sleep 0.4
   end
   
-  it "accepts more attacks and sends push notifications for match over" do
+  it "accepts subsequent attacks and sends push notifications for match over" do
+    
     GCM.should_receive(:send_notification).exactly(4).times
     token="newToken1"
     
@@ -298,7 +299,7 @@ describe 'Sinatra App' do
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
-    sleep 0.4
+    sleep 1
   end
   
 end

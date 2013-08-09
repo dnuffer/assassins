@@ -26,6 +26,10 @@ class User
     not player.nil? and not player.match.nil?
   end
 
+  def in_active_match?
+    in_match? and player.match.in_progress?
+  end
+
   def full_user?
     self.provisional == false
   end
@@ -76,7 +80,7 @@ class User
     user = User.where(:username => data['username']).first
     
     if not user.nil? and user.correct_password? data['password']
-      if user.in_match?
+      if user.in_active_match?
         throw :halt, { status: 'error',
                        message: 'cannot login on a different device when in a match' }.to_json
       end

@@ -104,11 +104,11 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	private void stopSensorUpdates() {
-		if(bearingProvider != null) bearingProvider.unregisterForBearingUpdates(this);
+		//if(bearingProvider != null) bearingProvider.unregisterForBearingUpdates(this);
 	}
 
 	private void registerForSensorUpdates() {
-		if(bearingProvider != null) bearingProvider.registerForBearingUpdates(this);
+		//if(bearingProvider != null) bearingProvider.registerForBearingUpdates(this);
 	}
 	
 	@Override

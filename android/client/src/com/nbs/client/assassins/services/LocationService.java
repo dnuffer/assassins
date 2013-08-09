@@ -98,11 +98,18 @@ public class LocationService extends Service {
     			float dist = SEARCH_MIN_DISPLACEMENT;
     			int   priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
     			
-    			if(tRange.equals(PlayerModel.ATTACK_RANGE) || eRange.equals(PlayerModel.ATTACK_RANGE)) {
-    				interval = ATTACK_INTERVAL; dist = ATTACK_MIN_DISPLACEMENT; priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
-    			} else if(tRange.equals(PlayerModel.HUNT_RANGE) || eRange.equals(PlayerModel.HUNT_RANGE)) {
-    				interval = HUNT_INTERVAL; dist = HUNT_MIN_DISPLACEMENT; priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
-    			} 
+    			if(tRange != null && eRange != null) {
+	    			if(tRange.equals(PlayerModel.ATTACK_RANGE) || eRange.equals(PlayerModel.ATTACK_RANGE)) {
+	    				interval = ATTACK_INTERVAL; 
+	    				dist = ATTACK_MIN_DISPLACEMENT; 
+	    				priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+	    			} else if(tRange.equals(PlayerModel.HUNT_RANGE) || eRange.equals(PlayerModel.HUNT_RANGE)) {
+	    				interval = HUNT_INTERVAL; 
+	    				dist = HUNT_MIN_DISPLACEMENT; 
+	    				priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+	    			} 
+    			}
+    			
     			requestLocationUpdates(interval, dist, priority);
     		}
     		else if(action.equals(PlayerModel.MATCH_END)) {
@@ -253,7 +260,7 @@ public class LocationService extends Service {
 					Log.i(TAG,"location successfully sent to server.");
 					UserModel.setLocation(this, response.latitude, response.longitude);
 					
-					if(MatchModel.inMatch(this)) {
+					if(MatchModel.inActiveMatch(this)) {
 						PlayerModel.setPlayerState(this, response.playerState);
 					}
 
@@ -261,7 +268,7 @@ public class LocationService extends Service {
 				}
 			}
 		} else {
-			//no token yet, but still want to draw user on map
+			//no token yet, but still broadcast for provisional-user functionality
 			UserModel.setLocation(this, l.getLatitude(), l.getLongitude());
 			Bus.post(this,LocationService.LOCATION_UPDATED);
 		}

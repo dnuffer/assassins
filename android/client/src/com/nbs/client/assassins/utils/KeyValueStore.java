@@ -76,7 +76,7 @@ public class KeyValueStore {
 		}
 		else {
 			putDouble(c, k+LATITUDE_TRAILER, v.latitude);
-			putDouble(c, k+LONGITUDE_TRAILER, v.latitude);
+			putDouble(c, k+LONGITUDE_TRAILER, v.longitude);
 		}
 	}
 	

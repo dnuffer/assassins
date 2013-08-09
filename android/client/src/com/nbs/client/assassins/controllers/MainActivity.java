@@ -43,7 +43,7 @@ import com.nbs.client.assassins.views.GameFragment_;
 import com.nbs.client.assassins.views.MenuFragment;
 import com.nbs.client.assassins.views.NotificationFragment;
 
-/* other info that may be relevant
+/* other phone hardware info that may be relevant to make cheating/abuse difficult
 String serial = android.os.Build.SERIAL;
 TelephonyManager.getDeviceId();
 WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -97,7 +97,9 @@ public class MainActivity extends SherlockFragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-    	Log.d(TAG, "onCreate() UserModel" + UserModel._toString(this));
+    	ProgressDialog progress = ProgressDialog.show(this, "Please wait...", "Waiting for GPS...");
+
+        Log.d(TAG, "onCreate() UserModel" + UserModel._toString(this));
         
         registerForPushNotifications();
 
@@ -114,6 +116,8 @@ public class MainActivity extends SherlockFragmentActivity {
     	ft.commit();
 
  		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+ 		
+ 		progress.dismiss();
     }
     
 	private void registerForPushNotifications() {

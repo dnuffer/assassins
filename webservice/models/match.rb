@@ -104,7 +104,11 @@ class Match
   end
   
   def in_progress?
-    Time.now.utc.to_i > start_time and players.length > 1 and winner.nil?
+    has_begun? and players.length > 1 and winner.nil?
+  end
+  
+  def has_begun?
+    Time.now.utc.to_i > start_time
   end
   
   def is_public?
@@ -122,26 +126,28 @@ class Match
     self.player_ids.delete target.id.to_s
     self.save
     
-    the_winner = winner
-    
-    #TODO this may still block in which case try: $gem install delayed_job
-    Thread.new do 
-      players.each do |player|    
-        player.user.send_push_notification({
-          type: :player_eliminated,
-          match: self.name,
-          player_eliminated: target.user.username
-        })
-        
-        unless the_winner.nil?
+    if in_progress? or has_begun?
+      the_winner = winner
+      
+      #TODO this may still block in which case try: $gem install delayed_job
+      Thread.new do 
+        players.each do |player|    
           player.user.send_push_notification({
-            type:  :match_end,
+            type: :player_eliminated,
             match: self.name,
-            winner: the_winner.user.username
+            player_eliminated: target.user.username
           })
+          
+          unless the_winner.nil?
+            player.user.send_push_notification({
+              type:  :match_end,
+              match: self.name,
+              winner: the_winner.user.username
+            })
+          end
         end
-      end
-    end  
+      end 
+    end 
   end
   
   def target_of player
@@ -186,7 +192,7 @@ class Match
         
         #TODO: for efficiency, just return this in http attack request
         Thread.new do
-          if the_winner.nil?
+          if winner.nil?
             new_target_notif = {
               type: :new_target,
               match: self.name

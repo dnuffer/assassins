@@ -1,6 +1,7 @@
 package com.nbs.client.assassins.models;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.nbs.client.assassins.services.PushNotifications;
 import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.utils.KeyValueStore;
 
@@ -14,13 +15,11 @@ public class PlayerModel extends KeyValueStore {
 	
 	private static final String TAG = "PlayerState";
 	
-	public static final String NEW_TARGET              = "com.nbs.android.client.NEW_TARGET";	
 	public static final String TARGET_LIFE_CHANGED     = "com.nbs.android.client.TARGET_LIFE_CHANGED";
 	public static final String TARGET_LOCATION_CHANGED = "com.nbs.android.client.TARGET_LOCATION_CHANGED";
 	public static final String TARGET_BEARING_CHANGED  = "com.nbs.android.client.TARGET_BEARING_CHANGED";
 	public static final String TARGET_RANGE_CHANGED    = "com.nbs.android.client.TARGET_RANGE_CHANGED";
-	public static final String TARGET_EVENT            = "com.nbs.android.client.TARGET_EVENT";
-	public static final String MATCH_END               = "com.nbs.android.client.MATCH_END";
+
 	public static final String ENEMY_RANGE_CHANGED     = "com.nbs.android.client.ENEMY_RANGE_CHANGED";
 	public static final String ATTACKED                = "com.nbs.android.client.ATTACKED";
 	
@@ -118,12 +117,14 @@ public class PlayerModel extends KeyValueStore {
 	
 	//TODO the model should not know about a PlayerStateResponse...  try to combine PlayerState and PlayerStateResponse
 	public static void setPlayerState(Context c, PlayerState state) {
-		PlayerModel.setMyLife(c, state.myLife);
-		PlayerModel.setEnemyProximity(c, state.enemyRange);
-		PlayerModel.setTargetLife(c, state.targetLife);
-		PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
-		PlayerModel.setTargetBearing(c, state.targetBearing);
-		PlayerModel.setTargetProximity(c, state.targetRange);
+		if(state != null) {
+			PlayerModel.setMyLife(c, state.myLife);
+			PlayerModel.setEnemyProximity(c, state.enemyRange);
+			PlayerModel.setTargetLife(c, state.targetLife);
+			PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
+			PlayerModel.setTargetBearing(c, state.targetBearing);
+			PlayerModel.setTargetProximity(c, state.targetRange);
+		}
 	}
 	
 	public synchronized static void clearTarget(Context c) {
@@ -143,7 +144,7 @@ public class PlayerModel extends KeyValueStore {
 	public static synchronized void onNewTarget(Context c, Bundle extras) {
 		clearTarget(c);
 		onTargetEvent(c, extras);
-		Bus.post(c,NEW_TARGET);
+		Bus.post(c,PushNotifications.NEW_TARGET);
 	}
 
 	public static synchronized void onTargetEvent(Context c, Bundle extras) {
@@ -176,7 +177,7 @@ public class PlayerModel extends KeyValueStore {
 		}
 		
 		Log.d(TAG, "onTargetEvent");
-		Bus.post(c,TARGET_EVENT);
+		Bus.post(c,PushNotifications.TARGET_EVENT);
 	}
 
 	public static void onEnemyEvent(Context c, Bundle extras) {
@@ -194,7 +195,7 @@ public class PlayerModel extends KeyValueStore {
 	
 	public static void onMatchEnd(Context c, Bundle extras) {
 		//TODO: set match state
-		Bus.post(c,MATCH_END,extras);
+		Bus.post(c,PushNotifications.MATCH_END,extras);
 		
 	}
 }

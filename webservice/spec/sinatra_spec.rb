@@ -45,7 +45,7 @@ FactoryGirl.define do
     token     'token'
     players  { [ association(:player), association(:player), association(:player) ] } 
     player_ids { [ players[0].id, players[1].id, players[2].id ] }
-    start_time 10000000
+    start_time Time.now
     hunt_range 0.25
     attack_range 0.05
     escape_time 180
@@ -84,6 +84,15 @@ describe 'Match' do
       match.players.first
     end
     match.players.last.get_target.should eq match.players[0]
+  end
+  
+  it 'is active after start time' do
+    stub = FactoryGirl.build_stubbed(:match)
+    in_progress = stub.in_progress?
+    in_progress.should eq true
+    
+    in_active_match = stub.players[0].user.in_active_match?
+    in_active_match.should eq true
   end
   
   it 'discloses target location to attacker only when in hunt range' do
@@ -268,6 +277,26 @@ describe 'Sinatra App' do
     sleep 0.4
   end
   
+  it 'includes player_state in UpdateLocationRequest response when match has started' do
+    token="token2" 
+    GCM.should_receive(:send_notification).exactly(2).times
+    
+    post("/api/users/#{token}/location", {
+      install_id: "install2",
+      latitude: 2.0001,
+      longitude: 3.0001
+    }.to_json)
+    
+    last_response.should be_ok
+    actual = JSON.parse(last_response.body)
+    actual.should have_key 'player_state'
+    actual['player_state'].should_not eq nil
+    puts last_response.body
+ 
+    sleep 0.4
+  end
+  
+  
   it "accepts an attack and sends a push notification to target" do
     GCM.should_receive(:send_notification).once
     token="newToken1"
@@ -301,5 +330,6 @@ describe 'Sinatra App' do
     
     sleep 1
   end
+  
   
 end

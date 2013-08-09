@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'sinatra'
+require 'logger'
 require 'sinatra/logger'
 require 'mongoid'
 require 'json'
@@ -14,8 +15,6 @@ $LOAD_PATH.unshift('.')
 require 'models/user'
 require 'models/match'
 require 'models/player'
- 
-enable :logging
 
 #Android device push notification API KEY for google cloud messaging (GCM)
 GCM.key = File.open('gcm_key', &:readline)
@@ -29,12 +28,14 @@ configure :production do
     config.database = Mongo::Connection.new(conn[:host], conn[:port]).db(conn[:db])
     config.database.authenticate(conn[:user], conn[:pass])
   end
+  enable :logging
 end
 
 configure :test do
   Mongoid.configure do |config|
     config.database = Mongo::Connection.new('localhost', '27017').db('testdb')
   end
+  enable :logging
 end
 
 
@@ -203,8 +204,8 @@ post '/api/users/:token/location' do
     if user.in_active_match?
       response.merge!({ player_state: player.state })
     end
-    
-    response.to_json
+
+    return response.to_json
   end
     
   # if they are sending their location and are not in a match,

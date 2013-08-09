@@ -19,8 +19,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		Log.d(TAG, "onReceive");
 		context.startService(new Intent(context, LocationService_.class));
-		
-		if(MatchModel.hasPendingMatch(context)) {
+		context.startService(new Intent(context, NotificationService_.class));
+		if(MatchModel.inPendingMatch(context)) {
 			context.startService(new Intent(context, NotificationService_.class)
 				.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
 				.putExtra("start_time", MatchModel.getStartTime(context)));

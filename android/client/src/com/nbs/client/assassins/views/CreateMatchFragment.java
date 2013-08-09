@@ -31,7 +31,7 @@ import com.nbs.client.assassins.controllers.CustomizeMatchActivity;
 import com.nbs.client.assassins.controllers.MatchBoundsActivity;
 import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.UserModel;
-import com.nbs.client.assassins.network.CreateMatchMessage;
+import com.nbs.client.assassins.network.CreateMatchRequest;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.MatchResponse;
 import com.nbs.client.assassins.utils.LocationUtils;
@@ -181,8 +181,8 @@ public class CreateMatchFragment extends SherlockFragment
 			
 			String passwordStr = password.getText().toString();
 			
-			CreateMatchMessage msg = 
-				new CreateMatchMessage(UserModel.getToken(getActivity()),
+			CreateMatchRequest msg = 
+				new CreateMatchRequest(UserModel.getToken(getActivity()),
 					new Match(matchName.getText().toString(), 
 						passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null, 
 						startTime.toMillis(false), 
@@ -229,7 +229,7 @@ public class CreateMatchFragment extends SherlockFragment
 	}
 	
 	@Background
-	void createMatchInBackground(CreateMatchMessage msg, ProgressDialog progress) {
+	void createMatchInBackground(CreateMatchRequest msg, ProgressDialog progress) {
 		
 		MatchResponse response = null;
 		

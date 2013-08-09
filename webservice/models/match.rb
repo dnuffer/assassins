@@ -87,18 +87,18 @@ class Match
           })
         end
         
-        if in_progress?
-          players.each do |player|
+        #if in_progress?
+        #  players.each do |player|
           #TODO this is only valid if it starts when a minimum number of players
           # is reached.  For a timed start, it may have to be a timer on the client
           # that fires off and intiates all clients reporting their location to begin
           
-            player.user.send_push_notification({
-              type: :match_start,
-              match: name
-            }.merge!(player.state))
-          end
-        end
+        #   player.user.send_push_notification({
+        #      type: :match_start,
+        #      match: name
+        #    }.merge!(player.state))
+        #  end
+        #end
       end 
     end
   end

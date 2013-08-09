@@ -27,7 +27,7 @@ import com.nbs.client.assassins.R.layout;
 import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
-import com.nbs.client.assassins.network.JoinMatchMessage;
+import com.nbs.client.assassins.network.JoinMatchRequest;
 import com.nbs.client.assassins.network.MatchResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.NotificationService;
@@ -85,7 +85,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			
 			btnJoin.setEnabled(false);
 			
-			JoinMatchMessage msg = new JoinMatchMessage();
+			JoinMatchRequest msg = new JoinMatchRequest();
 			msg.userToken = UserModel.getToken(getActivity());
 			msg.matchPassword = passwordStr.length() > 0 ? passwordStr : null;
 			msg.matchName = matchName.getText().toString();
@@ -111,7 +111,7 @@ public class JoinMatchFragment extends SherlockFragment {
 	}
 	
 	@Background
-	void joinMatchInBackground(JoinMatchMessage msg, ProgressDialog progress) {
+	void joinMatchInBackground(JoinMatchRequest msg, ProgressDialog progress) {
 		MatchResponse response = null;
 		
 		try {	

@@ -27,7 +27,7 @@ import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.AttackResponse;
 import com.nbs.client.assassins.network.HuntedRestClient;
-import com.nbs.client.assassins.network.LocationMessage;
+import com.nbs.client.assassins.network.UpdateLocationRequest;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 
@@ -153,6 +153,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	private void onEscapeTimeChanged(long escapeTimeRemaining) {
+		Log.d(TAG, "onEscapeTimeChanged("+escapeTimeRemaining+")");
 		if(escapeTimeRemaining > 1000) {
 			escapeTimeText.setText(escapeTimeRemaining+" s");
 		} else {
@@ -175,7 +176,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		
 		try {
 			response = restClient.attack(UserModel.getToken(c),
-				new LocationMessage(UserModel.getLocation(c),
+				new UpdateLocationRequest(UserModel.getLocation(c),
 						UserModel.getInstallId(c)));	
 		}
 		catch(Exception e) {
@@ -188,9 +189,9 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	@UiThread
 	public void attackFinished(AttackResponse response)
 	{
-		Log.d(TAG, "attackFinished status:" + response.ok());
+		Log.d(TAG, "attackFinished status:" + response);
 		
-		attackButton.setEnabled(response == null || response.targetLife > 0);
+		setAttackEnabled(true);
 		
 		if(response != null && response.ok() && MatchModel.inActiveMatch(getSherlockActivity())) {
 				
@@ -202,12 +203,14 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 			
 			Integer escapeTime = MatchModel.getEscapeTime(getSherlockActivity());
 			
+			Log.d(TAG, "starting escape time countdown: "+ escapeTime + "s");
+			
 			if(response.targetLife > 0 && escapeTime != null) {
 				long escapeTimeRemaining = (response.time + (long)(escapeTime*1000)) - System.currentTimeMillis();
 				
 				escapeTimer = new CountDownTimer(escapeTimeRemaining, 1000/*tick time in millis*/) {
 				     public void onTick(long millisUntilFinished) {
-				         onEscapeTimeChanged(millisUntilFinished);
+				    	 onEscapeTimeChanged(millisUntilFinished); 
 				     }
 	
 				     public void onFinish() {

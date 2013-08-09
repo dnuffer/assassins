@@ -16,4 +16,11 @@ public class AttackResponse extends Response {
 	
 	@JsonProperty("target_life")
 	public int targetLife;
+
+	@Override
+	public String toString() {
+		return "AttackResponse [hit=" + hit + ", time=" + time
+				+ ", targetLife=" + targetLife + ", status=" + status
+				+ ", message=" + message + "]";
+	}
 }

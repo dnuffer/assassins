@@ -24,8 +24,8 @@ import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.Response;
-import com.nbs.client.assassins.network.UserLoginMessage;
-import com.nbs.client.assassins.network.UserLoginResponse;
+import com.nbs.client.assassins.network.LoginRequest;
+import com.nbs.client.assassins.network.LoginResponse;
 
 @EFragment(R.layout.login_fragment)
 public class LoginFragment extends SherlockFragment {
@@ -81,7 +81,7 @@ public class LoginFragment extends SherlockFragment {
 
 			btnLogin.setEnabled(false);
 			
-			UserLoginMessage msg = new UserLoginMessage();
+			LoginRequest msg = new LoginRequest();
 			//TODO: what if they do not have a registrationId yet?
 			msg.gcmRegId = GCMRegistrar.getRegistrationId(getActivity());
 			msg.installId = UserModel.getInstallId(getActivity());		
@@ -108,8 +108,8 @@ public class LoginFragment extends SherlockFragment {
 	}
 	
 	@Background
-	void loginInBackground(UserLoginMessage msg) {
-		UserLoginResponse response = null;
+	void loginInBackground(LoginRequest msg) {
+		LoginResponse response = null;
 		try {
 			response = restClient.login(msg);
 		}
@@ -120,7 +120,7 @@ public class LoginFragment extends SherlockFragment {
 	}
 	
 	@UiThread
-	void loginResult(UserLoginResponse response) {
+	void loginResult(LoginResponse response) {
 		
 		asyncProgress.dismiss();
 		

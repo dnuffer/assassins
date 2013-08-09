@@ -2,25 +2,33 @@ package com.nbs.client.assassins.services;
 
 import java.util.UUID;
 
+import com.google.android.gms.location.LocationRequest;
 import com.googlecode.androidannotations.annotations.EService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.MainActivity_;
+import com.nbs.client.assassins.models.PlayerModel;
+import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.utils.Bus;
 
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.text.format.Time;
 import android.util.Log;
 
 @EService
 public class NotificationService extends Service {
 
-	private static final String TAG = "NotifierService";
+	private static final String TAG = "NotificationService";
 
 	private static final long ONE_MINUTE = 60*1000;
 	private static final long FIVE_MINUTES = ONE_MINUTE*5;
@@ -28,10 +36,65 @@ public class NotificationService extends Service {
 	public static final String SET_MATCH_REMINDER_ALARMS = "com.nbs.client.assassins.SET_MATCH_REMINDER_ALARMS";
 	public static final String CANCEL_MATCH_ALARMS = "com.nbs.client.assassins.CANCEL_MATCH_ALARMS";
 
+	private IntentFilter intentFilter;
+	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+    
+        	if(intent != null) {
+        		String type = intent.getAction();
+        	
+	        	if(type.equals(PushNotifications.PLAYER_JOINED_MATCH)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.PLAYER_JOINED_MATCH, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.MATCH_START)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.MATCH_START, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.MATCH_START)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.MATCH_START, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.MATCH_END)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.MATCH_END, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.PLAYER_ELIMINATED)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.PLAYER_ELIMINATED, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.INVITE)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.INVITE, new Bundle());
+	    		}
+	    		else if(type.equals(PushNotifications.ACHIEVEMENT)) {
+	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	    					TAG, PushNotifications.ACHIEVEMENT, new Bundle());
+	    		}
+        	}
+        }
+	};
+	
+	@Override
+	public void onCreate() {	
+		Log.d(TAG, "onCreate");
+		intentFilter = new IntentFilter();
+		intentFilter.addAction(PushNotifications.PLAYER_JOINED_MATCH);
+		intentFilter.addAction(PushNotifications.MATCH_START);
+		intentFilter.addAction(PushNotifications.MATCH_START);
+		intentFilter.addAction(PushNotifications.MATCH_END);
+		intentFilter.addAction(PushNotifications.PLAYER_ELIMINATED);
+		intentFilter.addAction(PushNotifications.INVITE);
+		intentFilter.addAction(PushNotifications.ACHIEVEMENT);
+		Bus.register(this, intentReceiver, intentFilter);
+		
+	}
+
 	private void cancelMatchReminderAlarms(Context context) {
 		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		alarmMngr.cancel(prepareNotificationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
-		alarmMngr.cancel(prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
+		alarmMngr.cancel(prepareNotificationServicePendingIntent(context, PushNotifications.MATCH_COUNTDOWN));
+		alarmMngr.cancel(prepareLocationServicePendingIntent(context, PushNotifications.MATCH_COUNTDOWN));
 	}
 	
 	private static PendingIntent prepareLocationServicePendingIntent(Context context, String action) {
@@ -50,15 +113,23 @@ public class NotificationService extends Service {
 	
 	public static void setMatchReminderAlarms(Context context, Long matchStartTimeUTC) {	
 		if(matchStartTimeUTC != null && matchStartTimeUTC > 0) {
-			Log.d(TAG, "setMatchReminderAlarms(context, "+matchStartTimeUTC+")");
-			long reportLocationReminderTime = matchStartTimeUTC-FIVE_MINUTES;
+			
+			Time t = new Time(); t.set(matchStartTimeUTC);
+			Log.d(TAG, "setMatchReminderAlarms(context, "+t.toString()+")");
+			
 			long postNotifReminderTime = matchStartTimeUTC-ONE_MINUTE;
+			
 			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 			//if the match has already begun,  it will fire immediately
-			alarmMngr.set(AlarmManager.RTC_WAKEUP, reportLocationReminderTime, 
-					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
 			alarmMngr.set(AlarmManager.RTC_WAKEUP, postNotifReminderTime, 
-					prepareLocationServicePendingIntent(context, GCMMessages.MATCH_COUNTDOWN));
+					prepareLocationServicePendingIntent(context, PushNotifications.MATCH_COUNTDOWN));
+			
+			alarmMngr.set(AlarmManager.RTC_WAKEUP, postNotifReminderTime, 
+					prepareNotificationServicePendingIntent(context, PushNotifications.MATCH_COUNTDOWN));
+			
+			alarmMngr.set(AlarmManager.RTC_WAKEUP, matchStartTimeUTC, 
+					prepareNotificationServicePendingIntent(context, PushNotifications.MATCH_START));
+			
 			Log.d(TAG, "registered alarm");
 		}
 	}
@@ -94,10 +165,13 @@ public class NotificationService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand("+intent+")");	
-		String action = intent.getAction();
+		String action = intent != null ? intent.getAction() : null;
 
 		if(action != null) {
-			if(action.equals(GCMMessages.MATCH_COUNTDOWN)) {
+			if(action.equals(PushNotifications.MATCH_START)) {
+				Bus.post(this, PushNotifications.MATCH_START);
+			}
+			else if(action.equals(PushNotifications.MATCH_COUNTDOWN)) {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 						TAG, "Your match is about to begin.", intent.getExtras());
 			}
@@ -117,11 +191,7 @@ public class NotificationService extends Service {
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
-	}
-
-	@Override
-	public void onCreate() {	
-		Log.d(TAG, "onCreate");
+		Bus.unregister(this, intentReceiver);
 	}
 
 	@Override

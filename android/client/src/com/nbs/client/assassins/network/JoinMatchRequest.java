@@ -4,16 +4,17 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-public class UserLoginResponse extends Response {
+public class JoinMatchRequest {
 
 	@JsonProperty("token")
-	public String token;
+	public String userToken;
+
+	@JsonProperty("match_name")
+	public String matchName;
 	
-	@Override
-	public String toString() {
-		return "UserLoginResponse [token=" + token + ", status=" + status
-				+ ", message=" + message + "]";
-	}
+	@JsonProperty("password")
+	public String matchPassword;
 }

@@ -14,6 +14,7 @@ public class UserModel extends KeyValueStore {
 	private static final String USERNAME = "username";
 	private static final String TAG = "UserModel";
 	public  static final String USER_TOKEN_RECEIVED = "com.nbs.client.assassins.USER_TOKEN_CHANGED";
+	public static final String LOGOUT_COMPLETE = "com.nbs.client.assassins.LOGOUT_COMPLETE";
 
     public synchronized static String getInstallId(Context c) {
         String installId = getString(c,ID);
@@ -69,6 +70,7 @@ public class UserModel extends KeyValueStore {
 	}
 	
 	public synchronized static void signOut(Context c) {
+		Bus.post(c, UserModel.LOGOUT_COMPLETE);
 		MatchModel.setMatch(c, null);
 		UserModel.setUsername(c, null);
 		UserModel.setToken(c, null);

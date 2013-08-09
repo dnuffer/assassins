@@ -27,11 +27,12 @@ import com.nbs.client.assassins.controllers.MainActivity_;
 import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
-import com.nbs.client.assassins.network.GCMRegistrationMessage;
+import com.nbs.client.assassins.network.GCMRegistrationRequest;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.Response;
-import com.nbs.client.assassins.network.UserLoginMessage;
-import com.nbs.client.assassins.network.UserLoginResponse;
+import com.nbs.client.assassins.network.LoginRequest;
+import com.nbs.client.assassins.network.LoginResponse;
+import com.nbs.client.assassins.utils.Bus;
 
 
 @EService
@@ -71,48 +72,22 @@ public class GCMIntentService extends GCMBaseIntentService {
 		
 		String type = extras.getString("type");
 		
-		if(type.equals(GCMMessages.NEW_TARGET)) {
+		if(type.equals(PushNotifications.NEW_TARGET)) {
 			PlayerModel.onNewTarget(c, extras);
 		}
-		else if(type.equals(GCMMessages.TARGET_EVENT)) {
+		else if(type.equals(PushNotifications.TARGET_EVENT)) {
 			PlayerModel.onTargetEvent(c, extras);
 		}
-		else if(type.equals(GCMMessages.ENEMY_EVENT)) {
+		else if(type.equals(PushNotifications.ENEMY_EVENT)) {
 			PlayerModel.onEnemyEvent(c, extras);
-		}
-		else if(type.equals(GCMMessages.PLAYER_JOINED_MATCH)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.PLAYER_JOINED_MATCH, new Bundle());
-		}
-		else if(type.equals(GCMMessages.MATCH_START)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.MATCH_START, new Bundle());
-		}
-		else if(type.equals(GCMMessages.MATCH_COUNTDOWN)) {
-			LocalBroadcastManager.getInstance(c)
-				.sendBroadcast(new Intent().setAction(GCMMessages.MATCH_COUNTDOWN));
-		}
-		else if(type.equals(GCMMessages.MATCH_START)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.MATCH_START, new Bundle());
-		}
-		else if(type.equals(GCMMessages.MATCH_END)) {
+		} 
+		else if(type.equals(PushNotifications.MATCH_END)) {
 			PlayerModel.onMatchEnd(c, extras);
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.MATCH_END, new Bundle());
 		}
-		else if(type.equals(GCMMessages.PLAYER_ELIMINATED)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.PLAYER_ELIMINATED, new Bundle());
+		else {
+			Bus.post(this, type);
 		}
-		else if(type.equals(GCMMessages.INVITE)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.INVITE, new Bundle());
-		}
-		else if(type.equals(GCMMessages.ACHIEVEMENT)) {
-			NotificationService.postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-					TAG, GCMMessages.ACHIEVEMENT, new Bundle());
-		}
+
 	}
 
 	@Override
@@ -121,12 +96,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 		
 		//only send the new id if the user already has created an account
 		if(UserModel.hasToken(this)) {
-			GCMRegistrationMessage msg = new GCMRegistrationMessage();
+			GCMRegistrationRequest msg = new GCMRegistrationRequest();
 			msg.installId = UserModel.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			
 			try {
-				UserLoginResponse response = 
+				LoginResponse response = 
 					restClient.updateGCMRegId(UserModel.getToken(context), msg);
 				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
@@ -140,12 +115,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 		}
 		//provisional user
 		else if(!UserModel.hasUsername(context)) {
-			UserLoginMessage msg = new UserLoginMessage();
+			LoginRequest msg = new LoginRequest();
 			msg.installId = UserModel.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			
 			try {
-				UserLoginResponse response = 
+				LoginResponse response = 
 					restClient.registerProvisionalUser(msg);
 				if(response != null && response.status != Response.ERROR) {
 					Log.i(TAG, response.toString());
@@ -163,7 +138,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	protected void onUnregistered(Context context, String registrationId) {
         
 		if(UserModel.hasToken(context)) {
-			GCMRegistrationMessage msg = new GCMRegistrationMessage();
+			GCMRegistrationRequest msg = new GCMRegistrationRequest();
 			msg.installId = UserModel.getInstallId(context);
 			msg.gcmRegId = registrationId;
 			restClient.unregisterGCMRegId(UserModel.getToken(context), msg);

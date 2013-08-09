@@ -24,7 +24,7 @@ import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
-import com.nbs.client.assassins.services.GCMMessages;
+import com.nbs.client.assassins.services.PushNotifications;
 import com.nbs.client.assassins.utils.Bus;
 
 @EFragment(R.layout.game_fragment)
@@ -41,8 +41,6 @@ public class GameFragment extends SherlockFragment{
 	private BearingProvider bearingSource;
 	private IntentFilter intentFilter;
 	
-	private IntentFilter matchStartFilter;
-	
 	public GameFragment() { }
 
 	@Override
@@ -58,20 +56,22 @@ public class GameFragment extends SherlockFragment{
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
 		
-		matchStartFilter = new IntentFilter();
-		matchStartFilter.addAction(GCMMessages.MATCH_START);
-		
         intentFilter = new IntentFilter();
-        intentFilter.addAction(PlayerModel.NEW_TARGET);   
-        intentFilter.addAction(PlayerModel.TARGET_EVENT);
+        
+        intentFilter.addAction(PushNotifications.NEW_TARGET);   
+        intentFilter.addAction(PushNotifications.TARGET_EVENT);
+        intentFilter.addAction(PushNotifications.MATCH_END);
+        intentFilter.addAction(PushNotifications.MATCH_START);
+
+        intentFilter.addAction(PlayerModel.ATTACKED); 
         intentFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
         intentFilter.addAction(PlayerModel.TARGET_LIFE_CHANGED); 
         intentFilter.addAction(PlayerModel.TARGET_LOCATION_CHANGED); 
-        intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
-        intentFilter.addAction(PlayerModel.ATTACKED); 
-        intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
-        intentFilter.addAction(PlayerModel.MATCH_END);
-        intentFilter.addAction(GCMMessages.MATCH_START);
+        intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED);
+        intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED);
+        
+        intentFilter.addAction(UserModel.LOGOUT_COMPLETE);
+
 	}
 	
 	@Override
@@ -120,7 +120,7 @@ public class GameFragment extends SherlockFragment{
 		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
 		//if the match has already begun,  it will fire immediately
 		alarmMngr.set(AlarmManager.RTC_WAKEUP, MatchModel.getStartTime(context), 
-			PendingIntent.getBroadcast(context, 0, new Intent(GCMMessages.MATCH_START), 
+			PendingIntent.getBroadcast(context, 0, new Intent(PushNotifications.MATCH_START), 
 					PendingIntent.FLAG_UPDATE_CURRENT));
 	}
 	
@@ -196,9 +196,9 @@ public class GameFragment extends SherlockFragment{
         public void onReceive(Context context, Intent intent) {
         	String action = intent.getAction();
         	
-        	Log.d(TAG, "received event [" + action + "]");
+        	Log.d(TAG, "broadcast received [" + action + "]");
     		
-    		if(action.equals(PlayerModel.NEW_TARGET)) {
+    		if(action.equals(PushNotifications.NEW_TARGET)) {
     			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerModel.TARGET_BEARING_CHANGED)) {
@@ -219,7 +219,7 @@ public class GameFragment extends SherlockFragment{
     		else if(action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
     			onEnemyRangeChanged(context, PlayerModel.getEnemyProximity(context));
     		}
-    		else if(action.equals(PlayerModel.MATCH_END)) {
+    		else if(action.equals(PushNotifications.MATCH_END)) {
     			hideHUD();
     			String winner = intent.getStringExtra("winner");
     			if(winner != null && winner.equals(UserModel.getUsername(context))) {
@@ -229,8 +229,10 @@ public class GameFragment extends SherlockFragment{
     			MatchModel.setMatch(context, null);
     			PlayerModel.clearTarget(context);
     			PlayerModel.clearEnemy(context);
-    		} else if(action.equals(GCMMessages.MATCH_START)) {
+    		} else if(action.equals(PushNotifications.MATCH_START)) {
     			showHUD();
+    		} else if(action.equals(UserModel.LOGOUT_COMPLETE)) {
+    			hideHUD();
     		}
         }
 	};

@@ -12,18 +12,18 @@ import com.googlecode.androidannotations.api.rest.MediaType;
 public interface HuntedRestClient {
 
 	@Post("/provisional-users")
-	UserLoginResponse registerProvisionalUser(UserLoginMessage loginMsg);
+	LoginResponse registerProvisionalUser(LoginRequest loginMsg);
 	
 	@Post("/users")
 	@Accept(MediaType.APPLICATION_JSON)
-	UserLoginResponse registerUser(UserLoginMessage loginMsg);
+	LoginResponse registerUser(LoginRequest loginMsg);
 	
 	@Post("/users/{token}")
-	UserLoginResponse registerUser(String token, UserLoginMessage loginMsg);
+	LoginResponse registerUser(String token, LoginRequest loginMsg);
 	
 	@Post("/login")
 	@Accept(MediaType.APPLICATION_JSON)
-	UserLoginResponse login(UserLoginMessage loginMsg);
+	LoginResponse login(LoginRequest loginMsg);
 	
 	@Post("/users/{token}/logout")
 	@Accept(MediaType.APPLICATION_JSON)
@@ -31,27 +31,27 @@ public interface HuntedRestClient {
 	
 	@Post("/users/{token}/gcm/register")
 	@Accept(MediaType.APPLICATION_JSON)
-	UserLoginResponse updateGCMRegId(String token, GCMRegistrationMessage msg);
+	LoginResponse updateGCMRegId(String token, GCMRegistrationRequest msg);
 	
 	@Post("/users/{token}/gcm/unregister")
 	@Accept(MediaType.APPLICATION_JSON)
-	void unregisterGCMRegId(String token, GCMRegistrationMessage msg);
+	void unregisterGCMRegId(String token, GCMRegistrationRequest msg);
 	
 	@Post("/matches")
 	@Accept(MediaType.APPLICATION_JSON)
-	MatchResponse createMatch(CreateMatchMessage msg);	
+	MatchResponse createMatch(CreateMatchRequest msg);	
 	
 	@Post("/matches/{matchName}/players")
 	@Accept(MediaType.APPLICATION_JSON)
-	MatchResponse joinMatch(String matchName, JoinMatchMessage msg);
+	MatchResponse joinMatch(String matchName, JoinMatchRequest msg);
 	
 	@Post("/users/{token}/location")
 	@Accept(MediaType.APPLICATION_JSON)
-	LocationResponse updateLocation(String token, LocationMessage msg);	
+	LocationResponse updateLocation(String token, UpdateLocationRequest msg);	
 	
 	@Post("/users/{token}/attack")
 	@Accept(MediaType.APPLICATION_JSON)
-	AttackResponse attack(String token, LocationMessage msg);
+	AttackResponse attack(String token, UpdateLocationRequest msg);
 	
 	//need access to RestTemplate to subvert a bug in HttpUrlConnection
 	//See: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/

@@ -19,7 +19,7 @@ import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
-import com.nbs.client.assassins.network.LocationMessage;
+import com.nbs.client.assassins.network.UpdateLocationRequest;
 import com.nbs.client.assassins.network.LocationResponse;
 import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.utils.LocationUtils;
@@ -75,7 +75,7 @@ public class LocationService extends Service {
         	String action = intent.getAction();
         	Log.d(TAG, "received intent [" + action + "]");
         	
-    		if(action.equals(GCMMessages.MATCH_COUNTDOWN) || 
+    		if(action.equals(PushNotifications.MATCH_COUNTDOWN) || 
     		   action.equals(UserModel.USER_TOKEN_RECEIVED)) {
 				
     			Location lastLocation = locationClient.getLastLocation();
@@ -112,7 +112,7 @@ public class LocationService extends Service {
     			
     			requestLocationUpdates(interval, dist, priority);
     		}
-    		else if(action.equals(PlayerModel.MATCH_END)) {
+    		else if(action.equals(PushNotifications.MATCH_END)) {
     			requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     		}
 	    }
@@ -131,14 +131,14 @@ public class LocationService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand("+intent+")");
-		String action = intent.getAction();
+		String action = intent != null ? intent.getAction() : null;
 		
 		if(locationClient.isConnected()) {
 			if(action != null && action.equals(LocationService.STOP_UPDATES)) {
 				locationClient.removeLocationUpdates(locationListener);
 			} else if(action != null && action.equals(LocationService.START_UPDATES)) {
 				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-			} else if(action.equals(GCMMessages.MATCH_COUNTDOWN)) {
+			} else if(action != null && action.equals(PushNotifications.MATCH_COUNTDOWN)) {
     			reportLocation(locationClient.getLastLocation());
     		}
 			Bus.register(this,intentReceiver, intentFilter);	
@@ -163,10 +163,10 @@ public class LocationService extends Service {
 		Log.d(TAG, "onCreate");
 		
 		intentFilter = new IntentFilter();
-		intentFilter.addAction(GCMMessages.MATCH_COUNTDOWN);
+		intentFilter.addAction(PushNotifications.MATCH_COUNTDOWN);
         intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
         intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
-        intentFilter.addAction(PlayerModel.MATCH_END);
+        intentFilter.addAction(PushNotifications.MATCH_END);
         intentFilter.addAction(UserModel.USER_TOKEN_RECEIVED);
 		
 		locationListener = new LocationListener() {
@@ -245,8 +245,8 @@ public class LocationService extends Service {
 			} else {
 				Log.v(TAG, "Already registered");
 
-				LocationMessage msg = 
-					new LocationMessage(LocationUtils.locationToLatLng(l), 
+				UpdateLocationRequest msg = 
+					new UpdateLocationRequest(LocationUtils.locationToLatLng(l), 
 						UserModel.getInstallId(this));
 				
 				Log.v(TAG, msg.toString());

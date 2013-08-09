@@ -24,8 +24,8 @@ import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.Response;
-import com.nbs.client.assassins.network.UserLoginMessage;
-import com.nbs.client.assassins.network.UserLoginResponse;
+import com.nbs.client.assassins.network.LoginRequest;
+import com.nbs.client.assassins.network.LoginResponse;
 
 @EFragment(R.layout.create_account_fragment)
 public class CreateAccountFragment extends SherlockFragment {
@@ -79,7 +79,7 @@ public class CreateAccountFragment extends SherlockFragment {
 
 			btnCreate.setEnabled(false);
 			
-			UserLoginMessage msg = new UserLoginMessage();
+			LoginRequest msg = new LoginRequest();
 			//TODO: what if they do not have a registrationId yet?
 			msg.gcmRegId = GCMRegistrar.getRegistrationId(getActivity());
 			msg.installId = UserModel.getInstallId(getActivity());		
@@ -102,9 +102,9 @@ public class CreateAccountFragment extends SherlockFragment {
 	}
 	
 	@Background
-	void createAccountInBackground(String token, UserLoginMessage msg, ProgressDialog prog) {
+	void createAccountInBackground(String token, LoginRequest msg, ProgressDialog prog) {
 		
-		UserLoginResponse response = null;
+		LoginResponse response = null;
 		
 		try {
 		
@@ -123,7 +123,7 @@ public class CreateAccountFragment extends SherlockFragment {
 	}
 	
 	@UiThread
-	void accountCreatedResult(UserLoginResponse response, ProgressDialog prog) {
+	void accountCreatedResult(LoginResponse response, ProgressDialog prog) {
 		prog.dismiss();
 		
 		if(response != null) {

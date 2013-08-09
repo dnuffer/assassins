@@ -7,7 +7,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-public class LocationMessage {
+public class UpdateLocationRequest {
 
 	@JsonProperty("install_id")
 	public String installId;
@@ -18,7 +18,7 @@ public class LocationMessage {
 	@JsonProperty("longitude")
 	public Double longitude;
 	
-	public LocationMessage(LatLng location, String installId) {
+	public UpdateLocationRequest(LatLng location, String installId) {
 		this.installId = installId;
 		this.latitude = location.latitude;
 		this.longitude = location.longitude;
@@ -26,7 +26,7 @@ public class LocationMessage {
 
 	@Override
 	public String toString() {
-		return "LocationMessage [installId=" + installId + ", latitude="
+		return "UpdateLocationRequest [installId=" + installId + ", latitude="
 				+ latitude + ", longitude=" + longitude + "]";
 	}
 }

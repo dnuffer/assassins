@@ -1,6 +1,6 @@
 package com.nbs.client.assassins.services;
 
-public class GCMMessages {
+public class PushNotifications {
 	//player events
 	public static final String TARGET_EVENT = "target_event";
 	public static final String ENEMY_EVENT  = "enemy_event";
@@ -17,6 +17,4 @@ public class GCMMessages {
 	//user events
 	public static final String INVITE        = "invite";
 	public static final String ACHIEVEMENT   = "achievement";
-	
-	
 }

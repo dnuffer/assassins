@@ -167,11 +167,11 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	
 	private void stopSensorUpdates() {
-		bearingProvider.unregisterForBearingUpdates(this);
+		if(bearingProvider != null) bearingProvider.unregisterForBearingUpdates(this);
 	}
 
 	private void registerForSensorUpdates() {
-		bearingProvider.registerForBearingUpdates(this);
+		if(bearingProvider != null) bearingProvider.registerForBearingUpdates(this);
 	}
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 

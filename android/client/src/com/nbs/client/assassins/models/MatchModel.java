@@ -46,7 +46,6 @@ public class MatchModel extends KeyValueStore {
     	return startTime > 0 ? startTime : null;
 	}
 
-
 	public static LatLng getSECorner(Context c) {
     	return getLatLng(c, "se");
 	}
@@ -95,7 +94,7 @@ public class MatchModel extends KeyValueStore {
 		return getToken(c) != null;
 	}
 
-	public static boolean hasPendingMatch(Context c) {
+	public static boolean inPendingMatch(Context c) {
 		return MatchModel.inMatch(c) && MatchModel.getStartTime(c) > System.currentTimeMillis();
 	}
 

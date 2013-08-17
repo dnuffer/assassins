@@ -24,6 +24,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.text.format.Time;
 import android.util.Log;
+import android.widget.Toast;
 
 @EService
 public class NotificationService extends Service {
@@ -31,7 +32,6 @@ public class NotificationService extends Service {
 	private static final String TAG = "NotificationService";
 
 	private static final long ONE_MINUTE = 60*1000;
-	private static final long FIVE_MINUTES = ONE_MINUTE*5;
 
 	public static final String SET_MATCH_REMINDER_ALARMS = "com.nbs.client.assassins.SET_MATCH_REMINDER_ALARMS";
 	public static final String CANCEL_MATCH_ALARMS = "com.nbs.client.assassins.CANCEL_MATCH_ALARMS";
@@ -45,25 +45,31 @@ public class NotificationService extends Service {
         		String type = intent.getAction();
         	
 	        	if(type.equals(PushNotifications.PLAYER_JOINED_MATCH)) {
-	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-	    					TAG, PushNotifications.PLAYER_JOINED_MATCH, new Bundle());
+	    			String msg = intent.getStringExtra("player") + " joined match " + intent.getStringExtra("match") +".";
+	        		NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+	        				"Hunted", msg, new Bundle());
 	    		}
 	    		else if(type.equals(PushNotifications.MATCH_START)) {
+	    			String msg = "The match has started.";
 	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-	    					TAG, PushNotifications.MATCH_START, new Bundle());
-	    		}
-	    		else if(type.equals(PushNotifications.MATCH_START)) {
-	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-	    					TAG, PushNotifications.MATCH_START, new Bundle());
+	    					"Hunted", msg, new Bundle());
 	    		}
 	    		else if(type.equals(PushNotifications.MATCH_END)) {
+	    			String winner = intent.getStringExtra("winner");
+	    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
+	    				winner = "you";
+	    			}
+	    			String msg = "The hunt is over. " + winner  + " won.";
+	    			
 	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-	    					TAG, PushNotifications.MATCH_END, new Bundle());
+	    					"Hunted", msg, new Bundle());
 	    		}
 	    		else if(type.equals(PushNotifications.PLAYER_ELIMINATED)) {
+	    			String msg = intent.getStringExtra("player") + " eliminated.";
 	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-	    					TAG, PushNotifications.PLAYER_ELIMINATED, new Bundle());
+	    					"Hunted", msg, new Bundle());
 	    		}
+	        	/*
 	    		else if(type.equals(PushNotifications.INVITE)) {
 	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 	    					TAG, PushNotifications.INVITE, new Bundle());
@@ -71,7 +77,7 @@ public class NotificationService extends Service {
 	    		else if(type.equals(PushNotifications.ACHIEVEMENT)) {
 	    			NotificationService.postNotification(context, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 	    					TAG, PushNotifications.ACHIEVEMENT, new Bundle());
-	    		}
+	    		}*/
         	}
         }
 	};
@@ -173,7 +179,7 @@ public class NotificationService extends Service {
 			}
 			else if(action.equals(PushNotifications.MATCH_COUNTDOWN)) {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-						TAG, "Your match is about to begin.", intent.getExtras());
+						"Hunted", "The match is about to begin.", intent.getExtras());
 			}
 			else if(action.equals(NotificationService.SET_MATCH_REMINDER_ALARMS)) {
 				setMatchReminderAlarms(this, intent.getLongExtra("start_time", -1));

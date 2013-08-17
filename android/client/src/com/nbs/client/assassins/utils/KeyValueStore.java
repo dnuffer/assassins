@@ -14,7 +14,6 @@ public class KeyValueStore {
 	private static final String LATITUDE_TRAILER = "_lat";
 	private static final String LONGITUDE_TRAILER = "_lng";
 
-
 	public static String getString(Context c, String key) {
 		return PreferenceManager.getDefaultSharedPreferences(c)
 				.getString(key, null);
@@ -112,7 +111,6 @@ public class KeyValueStore {
 		}
 	}
 	
-
 	public static void putDouble(Context c, String k, Double v) {
 		if(v == null) {
 			putFloat(c,k,null);

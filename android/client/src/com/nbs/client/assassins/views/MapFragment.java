@@ -61,6 +61,9 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	
 	private static final float DEFAULT_ZOOM = 18.0f;
 	private static final float DEFAULT_TILT = 67.5f;
+
+	private static final double METERS_PER_MILE = 1609.0d;
+	private static final double RADIUS_OF_EARTH = 6371.0d;
 	
 	private GoogleMap map;
 	
@@ -113,7 +116,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		
 		if(lastLatLng != null) showMyLocation(lastLatLng); 
 		
-		if(MatchModel.inMatch(getSherlockActivity())) {
+		if(MatchModel.inActiveMatch(getSherlockActivity())) {
 			showGameBoundary();
 			showRangeCircles(lastLatLng);
 			showDirectionToTarget(tBearing);
@@ -175,8 +178,16 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 
-		showRangeCircles(location);
-		showDirectionToTarget(tBearing);
+		
+		if(MatchModel.inActiveMatch(getActivity())) {
+			showRangeCircles(location);
+			showDirectionToTarget(tBearing);
+		} else {
+			hideRangeCircles();
+			hideTargetLocation();
+			hideDirectionToTarget();
+		}
+		
 		moveMapPositionTo(location);
 	}
 	
@@ -230,7 +241,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		}
 	}
 
-	private void showMyLocation(LatLng location) {
+	public void showMyLocation(LatLng location) {
 		if(myLocationMarker == null) {	
 			myLocationMarker = map.addMarker(new MarkerOptions()
 				.position(location)
@@ -260,12 +271,8 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			targetLocationMarker.setVisible(true);
 		}
 	}	
-	
-	public void hideTargetLocation() {
-		if(targetLocationMarker != null) targetLocationMarker.setVisible(false);
-	}
 
-	private void showGameBoundary() {
+	public void showGameBoundary() {
 		if(boundsPolygon == null) {
 			boundsPolygon = map.addPolygon(new PolygonOptions()
 				.zIndex(0)
@@ -276,7 +283,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		}
 	}
 
-	private void showRangeCircles(LatLng location) {
+	public void showRangeCircles(LatLng location) {
 		Double aRange = MatchModel.getAttackRange(getActivity());
 		
 		//if in match with attack range, draw/update the circle position
@@ -284,8 +291,9 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			if(aRangeCircle == null) {
 				aRangeCircle = map.addCircle(new CircleOptions()
 				     .center(location)
-				     .radius(aRange)
+				     .radius(aRange*METERS_PER_MILE)
 				     .strokeColor(RED)
+				     .strokeWidth(5)
 				     .fillColor(Color.TRANSPARENT));
 			} else {
 				aRangeCircle.setCenter(location);
@@ -301,8 +309,9 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			if(hRangeCircle == null) {
 				hRangeCircle = map.addCircle(new CircleOptions()
 				     .center(location)
-				     .radius(hRange)
+				     .radius(hRange*METERS_PER_MILE)
 				     .strokeColor(BLUE)
+				     .strokeWidth(5)
 				     .fillColor(Color.TRANSPARENT));
 			} else {
 				hRangeCircle.setCenter(location);
@@ -315,19 +324,22 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 
 	private void showDirectionToTarget(Float tBearing) {
 		
-		if(tBearing != null && myLocationMarker != null) {
+		Double aRange = MatchModel.getAttackRange(this.getActivity());
+		
+		if(tBearing != null && myLocationMarker != null && aRange != null) {
 		
 			LatLng myLocation = this.myLocationMarker.getPosition();
 			
 			tBearing = (float) Math.toRadians(tBearing);
 			
-			double dist = 0.05/6371.0;
+			double dist = aRange/RADIUS_OF_EARTH;
 			double lat1 = Math.toRadians(myLocation.latitude);
 			double lon1 = Math.toRadians(myLocation.longitude);
 	
 			double lat2 = Math.asin( Math.sin(lat1)*Math.cos(dist) + Math.cos(lat1)*Math.sin(dist)*Math.cos(tBearing) );
 			double a = Math.atan2(Math.sin(tBearing)*Math.sin(dist)*Math.cos(lat1), Math.cos(dist)-Math.sin(lat1)*Math.sin(lat2));
 			double lon2 = lon1 + a;
+			//Is this necessary?
 			//lon2 = (lon2+ 3.0*Math.PI) % (2.0*Math.PI) - Math.PI;
 			
 			if(tBearingLine != null) {
@@ -336,7 +348,8 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			
 			tBearingLine = map.addPolyline(new PolylineOptions()
 					.add(myLocation, new LatLng(Math.toDegrees(lat2), Math.toDegrees(lon2)))
-					.color(RED));
+					.color(RED)
+					.width(5));
 		}
 		else if(tBearingLine != null) {
 			tBearingLine.remove();
@@ -370,5 +383,32 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		this.tBearing = tBearing;
 		showDirectionToTarget(tBearing);
 	}
-
+	
+	public void onMatchEnd() {
+		hideRangeCircles();
+		hideDirectionToTarget();
+		hideTargetLocation();
+	}
+	
+	public void hideRangeCircles() {
+		if(aRangeCircle != null) aRangeCircle.remove();
+		if(hRangeCircle != null) hRangeCircle.remove();
+	}
+	
+	public void hideDirectionToTarget() {
+		if(tBearingLine != null) { tBearingLine.remove(); }
+	}
+	
+	public void hideTargetLocation() {
+		if(targetLocationMarker != null) targetLocationMarker.setVisible(false);
+	}
+	
+	public void onTargetLocationChanged(LatLng tLoc) {
+		if(tLoc != null) {
+			showTargetLocation(tLoc);
+		} else {
+			hideTargetLocation();
+		}
+	}
+	
 }

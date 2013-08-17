@@ -1,10 +1,15 @@
 package com.nbs.client.assassins.models;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.nbs.client.assassins.utils.KeyValueStore;
 
 public class MatchModel extends KeyValueStore {
+
+	private static final String TAG = "MatchModel";
 
 	public synchronized static void setMatch(Context c, Match match) {
 		if(match == null) { match = new Match(); } 
@@ -91,15 +96,25 @@ public class MatchModel extends KeyValueStore {
 	}
 
 	public static boolean inMatch(Context c) {
-		return getToken(c) != null;
+		boolean inMatch = getToken(c) != null;
+		Log.d(TAG, "inMatch() " + inMatch);
+		return inMatch;
 	}
 
 	public static boolean inPendingMatch(Context c) {
-		return MatchModel.inMatch(c) && MatchModel.getStartTime(c) > System.currentTimeMillis();
+		return MatchModel.inMatch(c) && MatchModel.getStartTime(c) > (System.currentTimeMillis());
 	}
 
 	public static boolean inActiveMatch(Context c) {
-		return MatchModel.inMatch(c) && MatchModel.getStartTime(c) < System.currentTimeMillis();
+		Long startTime = MatchModel.getStartTime(c);
+		if(startTime == null) return false;
+		long currentTime = (System.currentTimeMillis());
+		Log.d(TAG, "inActiveMatch() ["+(currentTime >= startTime)+"] start_time["+startTime+"] current time ["+currentTime+"]");
+		return MatchModel.inMatch(c) && startTime != null && currentTime >= startTime;
+	}
+	
+	public static void onMatchEnd(Context c, Bundle extras) {
+		MatchModel.setMatch(c, null);	
 	}
 
 

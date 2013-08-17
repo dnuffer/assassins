@@ -24,6 +24,7 @@ import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
+import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.services.PushNotifications;
 import com.nbs.client.assassins.utils.Bus;
 
@@ -61,7 +62,8 @@ public class GameFragment extends SherlockFragment{
         intentFilter.addAction(PushNotifications.NEW_TARGET);   
         intentFilter.addAction(PushNotifications.TARGET_EVENT);
         intentFilter.addAction(PushNotifications.MATCH_END);
-        intentFilter.addAction(PushNotifications.MATCH_START);
+        
+        intentFilter.addAction(LocationService.LOCATION_UPDATED);
 
         intentFilter.addAction(PlayerModel.ATTACKED); 
         intentFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
@@ -149,9 +151,9 @@ public class GameFragment extends SherlockFragment{
 	}
 	
 	public void onTargetRangeChanged(Context c, String tRange) {
-		Toast.makeText(c, "your enemy has entered " + tRange
+		Toast.makeText(c, "your target is in " + tRange
 				 + ".", Toast.LENGTH_SHORT).show();
-		if(hudFragment != null) hudFragment.onTargetRangeChanged(tRange);
+		if(hudIsShowing()) hudFragment.onTargetRangeChanged(tRange);
 		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
 		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
 			mapFragment.showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
@@ -161,22 +163,22 @@ public class GameFragment extends SherlockFragment{
 	}
 	
 	public void onEnemyRangeChanged(Context c, String eRange) {
-		Toast.makeText(c, "your target is within " + eRange
+		Toast.makeText(c, "your enemy is within " + eRange
 				 + ".", Toast.LENGTH_SHORT).show();
-		if(hudFragment != null) hudFragment.onEnemyRangeChanged(eRange);
+		if(hudIsShowing()) hudFragment.onEnemyRangeChanged(eRange);
 	}
 	
 	public void onTargetBearingChanged(float tBearing) {
 		mapFragment.onTargetBearingChanged(tBearing);
-		if(hudFragment != null) hudFragment.onTargetBearingChanged(tBearing);
+		if(hudIsShowing()) hudFragment.onTargetBearingChanged(tBearing);
 	}
 	
 	public void onTargetLifeChanged(int tLife) {
-		if(hudFragment != null) hudFragment.onTargetLifeChanged(tLife);
+		if(hudIsShowing()) hudFragment.onTargetLifeChanged(tLife);
 	}
 	
 	public void onMyLifeChanged(int life) {
-		if(hudFragment != null) hudFragment.onMyLifeChanged(life);
+		if(hudIsShowing()) hudFragment.onMyLifeChanged(life);
 	}
 	
 	public void onLocationChanged(LatLng location) {
@@ -205,9 +207,12 @@ public class GameFragment extends SherlockFragment{
     			float tBearing = PlayerModel.getTargetBearing(context);
     			onTargetBearingChanged(Math.round(tBearing));
     		}
+    		else if(action.equals(PlayerModel.TARGET_LOCATION_CHANGED)) {
+    			LatLng tLoc = PlayerModel.getTargetLocation(context);
+    			mapFragment.onTargetLocationChanged(tLoc);
+    		}
     		else if(action.equals(PlayerModel.TARGET_LIFE_CHANGED)) {
     			onTargetLifeChanged(PlayerModel.getTargetLife(context));
-    			Toast.makeText(context, "your target has suffered a blow.", Toast.LENGTH_SHORT).show();
     		}
     		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED)) {
     			onTargetRangeChanged(context, PlayerModel.getTargetProximity(context));
@@ -226,13 +231,13 @@ public class GameFragment extends SherlockFragment{
     				winner = "you";
     			}
     			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
-    			MatchModel.setMatch(context, null);
-    			PlayerModel.clearTarget(context);
-    			PlayerModel.clearEnemy(context);
-    		} else if(action.equals(PushNotifications.MATCH_START)) {
-    			showHUD();
+    			mapFragment.onMatchEnd();
+    		} else if(action.equals(LocationService.LOCATION_UPDATED)) {
+    			if(MatchModel.inActiveMatch(context)) { showHUD(); }
+    			onLocationChanged(UserModel.getLocation(context));
     		} else if(action.equals(UserModel.LOGOUT_COMPLETE)) {
     			hideHUD();
+    			mapFragment.onMatchEnd();
     		}
         }
 	};

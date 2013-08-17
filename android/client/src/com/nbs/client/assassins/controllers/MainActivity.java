@@ -37,6 +37,7 @@ import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.services.LocationService_;
 import com.nbs.client.assassins.services.NotificationService;
 import com.nbs.client.assassins.services.NotificationService_;
+import com.nbs.client.assassins.services.PushNotifications;
 import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.views.GameFragment;
 import com.nbs.client.assassins.views.GameFragment_;
@@ -81,13 +82,18 @@ public class MainActivity extends SherlockFragmentActivity {
 	private static final int IN_MATCH_ITEMS = 8;
 	private static final int NOTIF_ID = 10;
 
-	IntentFilter locationUpdatedIntentFilter;
+	IntentFilter intentFilter;
 	
-	private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-    		Log.d(TAG, "received LOCATION_UPDATED broadcast.");
-    		gameFragment.onLocationChanged(UserModel.getLocation(context));
+    		String action = intent.getAction();
+    		
+    		Log.d(TAG, "onReceive("+intent+")");
+    		
+        	if(action != null && action.equals(PushNotifications.MATCH_END)) {
+    			supportInvalidateOptionsMenu();
+    		}
 	    }
 	};
 	
@@ -103,7 +109,8 @@ public class MainActivity extends SherlockFragmentActivity {
         
         registerForPushNotifications();
 
-        locationUpdatedIntentFilter = new IntentFilter(LocationService.LOCATION_UPDATED); 
+        intentFilter = new IntentFilter(); 
+        intentFilter.addAction(PushNotifications.MATCH_END);
         
         startService(new Intent(this, LocationService_.class));
 
@@ -160,7 +167,7 @@ public class MainActivity extends SherlockFragmentActivity {
 
 	@Override
 	protected void onPause() {
-		Bus.unregister(this,locationUpdateReceiver);
+		Bus.unregister(this,intentReceiver);
 		
 		if(!MatchModel.inMatch(this)) {
 			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
@@ -171,7 +178,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	
 	@Override
 	protected void onResume()  {
-	    Bus.register(this,locationUpdateReceiver, locationUpdatedIntentFilter);
+	    Bus.register(this,intentReceiver, intentFilter);
 	    
 	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
 	    

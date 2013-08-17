@@ -71,18 +71,13 @@ public class LocationService extends Service {
 	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-    		
         	String action = intent.getAction();
         	Log.d(TAG, "received intent [" + action + "]");
         	
-    		if(action.equals(PushNotifications.MATCH_COUNTDOWN) || 
-    		   action.equals(UserModel.USER_TOKEN_RECEIVED)) {
-				
-    			Location lastLocation = locationClient.getLastLocation();
-				Log.d(TAG, "last location ["+lastLocation.toString()+"]");
-				if(lastLocation != null) {
-					reportLocation(lastLocation);
-				}
+        	if(action.equals(PushNotifications.MATCH_COUNTDOWN) || 
+    		   action.equals(UserModel.USER_TOKEN_RECEIVED) || 
+    		   action.equals(PushNotifications.MATCH_START)) {
+				sendLocationToServer(locationClient.getLastLocation());
     		}
     		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED) || 
     				action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
@@ -109,7 +104,6 @@ public class LocationService extends Service {
 	    				priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
 	    			} 
     			}
-    			
     			requestLocationUpdates(interval, dist, priority);
     		}
     		else if(action.equals(PushNotifications.MATCH_END)) {
@@ -139,7 +133,7 @@ public class LocationService extends Service {
 			} else if(action != null && action.equals(LocationService.START_UPDATES)) {
 				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 			} else if(action != null && action.equals(PushNotifications.MATCH_COUNTDOWN)) {
-    			reportLocation(locationClient.getLastLocation());
+    			sendLocationToServer(locationClient.getLastLocation());
     		}
 			Bus.register(this,intentReceiver, intentFilter);	
 		} else if (locationClient.isConnecting() && action != null && action.equals(LocationService.STOP_UPDATES)) {
@@ -167,11 +161,12 @@ public class LocationService extends Service {
         intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED); 
         intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
         intentFilter.addAction(PushNotifications.MATCH_END);
+        intentFilter.addAction(PushNotifications.MATCH_START);
         intentFilter.addAction(UserModel.USER_TOKEN_RECEIVED);
 		
 		locationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
-				reportLocation(location);
+				sendLocationToServer(location);
 			}
 		};
 		
@@ -185,7 +180,7 @@ public class LocationService extends Service {
 					
 					if(lastLocation != null) {
 						Log.d(TAG, "LocationClient connected, location ["+lastLocation.toString()+"]");
-						reportLocation(lastLocation);
+						sendLocationToServer(lastLocation);
 					}
 					
 					requestLocationUpdates(1000, 3.0f, LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -231,7 +226,7 @@ public class LocationService extends Service {
 	
 	
 	@Background
-	public void reportLocation(Location l)
+	public void sendLocationToServer(Location l)
 	{
 		Log.d(TAG, "location [" + (l != null ? l.toString() : null) + "]");
 
@@ -243,7 +238,7 @@ public class LocationService extends Service {
 			if (regId.equals("")) {
 				GCMRegistrar.register(this, GCMUtilities.SENDER_ID);
 			} else {
-				Log.v(TAG, "Already registered");
+				Log.v(TAG, "GCM already registered. Sending location to server.");
 
 				UpdateLocationRequest msg = 
 					new UpdateLocationRequest(LocationUtils.locationToLatLng(l), 

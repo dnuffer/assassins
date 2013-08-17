@@ -69,40 +69,81 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Log.d(TAG, "onCreate()");
 	}
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		super.onViewCreated(view, savedInstanceState);
+		super.onViewCreated(view, savedInstanceState);	
+		Log.d(TAG, "onViewCreate()");
 	}
 	
 	@AfterViews
-	public void afterViewsInjected() {
-		String tRange = PlayerModel.getTargetProximity(getSherlockActivity());
-		String eRange = PlayerModel.getEnemyProximity(getSherlockActivity());
-		Integer myLife = PlayerModel.getMyLife(getSherlockActivity());
-		Integer tLife = PlayerModel.getTargetLife(getSherlockActivity());
-		
-		Log.d(TAG, "targetRange[control:"+targetRange+", value:"+tRange+"]");
-		
-		targetRange.setText((tRange != null ? tRange : "unknown"));
-		enemyRange.setText((eRange != null ? eRange : "unknown"));
+	public void refreshHUDData()
+	{
+		Log.d(TAG, "refreshHUDData()");
+		String tRange = PlayerModel.getTargetProximity(getActivity());
+		String eRange = PlayerModel.getEnemyProximity(getActivity());
+		Integer myLife = PlayerModel.getMyLife(getActivity());
+		Integer tLife = PlayerModel.getTargetLife(getActivity());
+
+		targetRange.setText((tRange != null ? getRangeString(tRange) : "UNKNOWN"));
+		enemyRange.setText((eRange != null ? getRangeString(eRange) : "UNKNOWN"));
 		lifeView.setProgress((myLife != null ? myLife : 0));
 		tLifeView.setProgress((tLife != null ? tLife : 0));
+		
+		initAttackState(tRange);
 	}
 
 	@Override
 	public void onPause() {
 		stopSensorUpdates();
+		if(escapeTimer != null) escapeTimer.cancel();
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
 		registerForSensorUpdates();
+		refreshHUDData();
 		super.onResume();
 	}
 	
+	private void initAttackState(String targetRange) {
+		Log.d(TAG, "initAttackState("+targetRange+")");
+		long escapeTimeRemaining = getRemainingEscapeTime();
+		if(targetRange != null && escapeTimeRemaining == 0) {
+			setAttackEnabled(targetRange.equals(PlayerModel.ATTACK_RANGE));
+		} else {
+			setAttackEnabled(false);
+			initEscapeTimer(escapeTimeRemaining);
+		}
+	}
+	
+	public long getRemainingEscapeTime() {
+		Integer escapeTimeSeconds = MatchModel.getEscapeTime(getActivity());
+		long lastAttackTime = PlayerModel.getLastSuccessfulAttackTime(getActivity());
+		if(escapeTimeSeconds == null || lastAttackTime == -1) return 0;
+		else return (long)Math.floor(((lastAttackTime/1000) + escapeTimeSeconds) - (System.currentTimeMillis()/1000));
+	}
+
+	private void initEscapeTimer(long seconds) {
+		if(escapeTimer != null) escapeTimer.cancel();
+		
+		if(seconds > 0) {
+			Log.d(TAG, "starting escape time countdown: "+ seconds + "s");
+			escapeTimer = new CountDownTimer(seconds*1000, 1000/*tick time in millis*/) {
+			     public void onTick(long millisUntilFinished) {
+			    	 onEscapeTimeChanged(millisUntilFinished); 
+			     }
+
+			     public void onFinish() {
+			    	 onEscapeTimeChanged(0);
+			     }
+			}.start();
+		}	
+	}
+
 	private void stopSensorUpdates() {
 		//if(bearingProvider != null) bearingProvider.unregisterForBearingUpdates(this);
 	}
@@ -119,7 +160,6 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	private void setAttackEnabled(boolean enabled) {
 		attackButton.setEnabled(enabled);
 		if(enabled) {
-			escapeTimeText.setText("");
 			attackButton.setTextColor(getResources().getColor(R.color.white));
 		} else {
 			attackButton.setTextColor(getResources().getColor(R.color.DarkGray));
@@ -132,6 +172,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	public void onTargetBearingChanged(float tBearing) {
+		Log.d(TAG, "onTargetBearingChanged("+tBearing+")");
 		tBearingView.setText(Float.toString(tBearing));
 	}
 	
@@ -144,19 +185,31 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	public void onTargetRangeChanged(String tRange) {
-		targetRange.setText(tRange);
-		setAttackEnabled(tRange.equals(PlayerModel.ATTACK_RANGE));
+		targetRange.setText(getRangeString(tRange));
+		initAttackState(tRange);
 	}
 	
 	public void onEnemyRangeChanged(String eRange) {
-		enemyRange.setText(eRange);
+		enemyRange.setText(getRangeString(eRange));
+	}
+	
+	private static String getRangeString(String range)
+	{
+		if(range.equals(PlayerModel.ATTACK_RANGE))
+			return "ATTACK";
+		else if (range.equals(PlayerModel.HUNT_RANGE))
+			return "HUNT";
+		else {
+			return range;
+		}
 	}
 	
 	private void onEscapeTimeChanged(long escapeTimeRemaining) {
 		Log.d(TAG, "onEscapeTimeChanged("+escapeTimeRemaining+")");
 		if(escapeTimeRemaining > 1000) {
-			escapeTimeText.setText(escapeTimeRemaining+" s");
+			escapeTimeText.setText(escapeTimeRemaining/1000+" s");
 		} else {
+			escapeTimeText.setText("");
 			setAttackEnabled(true);
 		}
 	}
@@ -169,7 +222,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	
 	@Background
 	public void attack() {
-		Log.d(TAG, "attack in background");
+		Log.d(TAG, "attack()");
 		
 		Context c  = getSherlockActivity();
 		AttackResponse response = null;
@@ -177,7 +230,12 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		try {
 			response = restClient.attack(UserModel.getToken(c),
 				new UpdateLocationRequest(UserModel.getLocation(c),
-						UserModel.getInstallId(c)));	
+						UserModel.getInstallId(c)));
+			
+			if(response != null && response.hit) {
+				PlayerModel.setLastSuccessfulAttackTime(getActivity(), System.currentTimeMillis());
+			}
+			
 		}
 		catch(Exception e) {
 			Log.d(TAG, e.getMessage());
@@ -189,34 +247,13 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	@UiThread
 	public void attackFinished(AttackResponse response)
 	{
-		Log.d(TAG, "attackFinished status:" + response);
-		
-		setAttackEnabled(true);
+		Log.d(TAG, "attackFinished(" + response + ")");
 		
 		if(response != null && response.ok() && MatchModel.inActiveMatch(getSherlockActivity())) {
-				
 			PlayerModel.setTargetLife(getSherlockActivity(), response.targetLife);
-			//TODO set time of last attack in order to initialize escapeTimer on app relaunch
-			//PlayerModel.setTimeOfLastSuccessfulAttack(getSherlockActivity(), response.time);
-			Toast.makeText(getSherlockActivity(), response.message, 
-					Toast.LENGTH_SHORT).show();
-			
-			Integer escapeTime = MatchModel.getEscapeTime(getSherlockActivity());
-			
-			Log.d(TAG, "starting escape time countdown: "+ escapeTime + "s");
-			
-			if(response.targetLife > 0 && escapeTime != null) {
-				long escapeTimeRemaining = (response.time + (long)(escapeTime*1000)) - System.currentTimeMillis();
-				
-				escapeTimer = new CountDownTimer(escapeTimeRemaining, 1000/*tick time in millis*/) {
-				     public void onTick(long millisUntilFinished) {
-				    	 onEscapeTimeChanged(millisUntilFinished); 
-				     }
-	
-				     public void onFinish() {
-				    	 onEscapeTimeChanged(0);
-				     }
-				}.start();
+			Toast.makeText(getSherlockActivity(), response.message, Toast.LENGTH_SHORT).show();
+			if(response.targetLife > 0) {
+				initEscapeTimer(getRemainingEscapeTime());
 			}
 		}
 	}

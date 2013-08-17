@@ -72,8 +72,7 @@ public class LocationUtils {
 		
 		public static Location latLngToLocation(LatLng geo)
 		{	
-			Location loc = newLocation(geo.latitude, geo.longitude);
-			return loc;		
+			return (geo == null) ? null : newLocation(geo.latitude, geo.longitude);
 		}
 
 		private static Location newLocation(double lat, double lng) {

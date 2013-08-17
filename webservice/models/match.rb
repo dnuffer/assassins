@@ -83,7 +83,7 @@ class Match
           player.user.send_push_notification({
             type: :player_joined_match,
             match: name,
-            player_joined_match: new_user.username
+            player: new_user.username
           })
         end
         
@@ -135,7 +135,7 @@ class Match
           player.user.send_push_notification({
             type: :player_eliminated,
             match: self.name,
-            player_eliminated: target.user.username
+            player: target.user.username
           })
           
           unless the_winner.nil?

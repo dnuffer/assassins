@@ -30,10 +30,10 @@ public class PlayerModel extends KeyValueStore {
     	return getInt(c,"my_life", -1);
 	}
 
-	public static synchronized void setMyLife(Context c, int myLife) {
+	public static synchronized void setMyLife(Context c, Integer myLife) {
     	Integer oldLife = getMyLife(c);
     	putInt(c,"my_life", myLife);
-		if(myLife < oldLife) {
+		if(myLife != null && myLife < oldLife) {
 			Bus.post(c,ATTACKED);
 		}
 	}
@@ -51,10 +51,10 @@ public class PlayerModel extends KeyValueStore {
     	return getInt(c,"target_life", -1);
 	}
 
-	public  static synchronized void setTargetLife(Context c, int targetLife) {
+	public  static synchronized void setTargetLife(Context c, Integer targetLife) {
     	Integer oldLife = getTargetLife(c);
     	putInt(c,"target_life", targetLife);
-		if(targetLife < oldLife) {
+		if(targetLife != null && targetLife < oldLife) {
 			Bus.post(c,TARGET_LIFE_CHANGED);
 		}
 	}
@@ -117,14 +117,13 @@ public class PlayerModel extends KeyValueStore {
 	
 	//TODO the model should not know about a PlayerStateResponse...  try to combine PlayerState and PlayerStateResponse
 	public static void setPlayerState(Context c, PlayerState state) {
-		if(state != null) {
-			PlayerModel.setMyLife(c, state.myLife);
-			PlayerModel.setEnemyProximity(c, state.enemyRange);
-			PlayerModel.setTargetLife(c, state.targetLife);
-			PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
-			PlayerModel.setTargetBearing(c, state.targetBearing);
-			PlayerModel.setTargetProximity(c, state.targetRange);
-		}
+		if(state == null) { state = new PlayerState(); }
+		PlayerModel.setMyLife(c, state.myLife);
+		PlayerModel.setEnemyProximity(c, state.enemyRange);
+		PlayerModel.setTargetLife(c, state.targetLife);
+		PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
+		PlayerModel.setTargetBearing(c, state.targetBearing);
+		PlayerModel.setTargetProximity(c, state.targetRange);
 	}
 	
 	public synchronized static void clearTarget(Context c) {
@@ -133,7 +132,10 @@ public class PlayerModel extends KeyValueStore {
 		editor.remove("target_lng");
 		editor.remove("target_life");
 		editor.remove("target_bearing");
-		editor.remove("target_proximity");	
+		editor.remove("target_proximity");
+		//the last attack time applies only to this target
+		//for the 'assassins' game type
+		editor.remove("last_attack_time");
 		editor.commit();
 	}
 	
@@ -194,8 +196,15 @@ public class PlayerModel extends KeyValueStore {
 	}
 	
 	public static void onMatchEnd(Context c, Bundle extras) {
-		//TODO: set match state
-		Bus.post(c,PushNotifications.MATCH_END,extras);
+		PlayerModel.setPlayerState(c, null);
 		
+	}
+
+	public static void setLastSuccessfulAttackTime(Context c, long time) {
+		putLong(c, "last_attack_time", time);
+	}
+	
+	public static long getLastSuccessfulAttackTime(Context c) {
+		return getLong(c, "last_attack_time", -1);
 	}
 }

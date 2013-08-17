@@ -24,6 +24,7 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.MainActivity;
 import com.nbs.client.assassins.controllers.MainActivity_;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.PlayerModel;
 import com.nbs.client.assassins.models.UserModel;
@@ -82,10 +83,12 @@ public class GCMIntentService extends GCMBaseIntentService {
 			PlayerModel.onEnemyEvent(c, extras);
 		} 
 		else if(type.equals(PushNotifications.MATCH_END)) {
+			MatchModel.onMatchEnd(c, extras);
 			PlayerModel.onMatchEnd(c, extras);
+			Bus.post(c,PushNotifications.MATCH_END,extras);
 		}
 		else {
-			Bus.post(this, type);
+			Bus.post(c, type, extras);
 		}
 
 	}

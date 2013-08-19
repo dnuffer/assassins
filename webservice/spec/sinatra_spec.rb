@@ -308,7 +308,7 @@ describe 'Sinatra App' do
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
-    sleep 0.4
+    sleep 1.5
   end
   
   it "accepts subsequent attacks and sends push notifications for match over" do
@@ -323,12 +323,14 @@ describe 'Sinatra App' do
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
+    sleep 1.5
+    
     post "/api/users/#{token}/attack", player_json
     last_response.should be_ok
     actual = JSON.parse(last_response.body)
     puts last_response.body
     
-    sleep 1
+    sleep 1.5
   end
   
   

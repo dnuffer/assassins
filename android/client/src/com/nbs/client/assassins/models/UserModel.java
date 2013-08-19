@@ -2,6 +2,7 @@ package com.nbs.client.assassins.models;
 
 import java.util.UUID;
 import com.google.android.gms.maps.model.LatLng;
+import com.nbs.client.assassins.services.LocationService;
 import com.nbs.client.assassins.utils.Bus;
 import com.nbs.client.assassins.utils.KeyValueStore;
 import com.nbs.client.assassins.utils.LocationUtils;
@@ -62,7 +63,13 @@ public class UserModel extends KeyValueStore {
 	
 	public synchronized static void setLocation(Context c,
 			double lat, double lng) {
-    	putLatLng(c,"my", new LatLng(lat,lng));
+		LatLng oldLoc = UserModel.getLocation(c);
+		LatLng newLoc = new LatLng(lat,lng);
+    	putLatLng(c,"my", newLoc);
+    	
+    	if(oldLoc == null || !oldLoc.equals(newLoc)) {
+    		Bus.post(c,LocationService.LOCATION_UPDATED);
+    	}
 	}  
 
 	public static boolean loggedIn(Context c) {

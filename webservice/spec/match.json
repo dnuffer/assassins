@@ -6,6 +6,6 @@
     "start_time" : 1000,
     "hunt_range" : 0.25,
     "attack_range" : 0.05,
-    "escape_time" : 180
+    "escape_time" : 1
   }
 }

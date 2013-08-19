@@ -14,6 +14,7 @@ import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
+import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.PlayerModel;
@@ -35,6 +36,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 @EService
 public class LocationService extends Service {
@@ -249,17 +251,22 @@ public class LocationService extends Service {
 				LocationResponse response = restClient.updateLocation(
 												UserModel.getToken(this), msg);
 				
-				Log.i(TAG,  response.toString());
+				Log.i(TAG, response.toString());
 				
-				if(response != null && response.ok()) {
-					Log.i(TAG,"location successfully sent to server.");
-					UserModel.setLocation(this, response.latitude, response.longitude);
+				if(response != null) { 
+					if(response.ok()) {
+						Log.i(TAG,"location successfully sent to server.");
+						UserModel.setLocation(this, response.latitude, response.longitude);
+					}
+					else {
+						showToastOnUiThread(response.message);
+					}
 					
+					//even if the location response is not 'ok' (i.e. out of bounds)
+					//there will be a player state if in an active match
 					if(MatchModel.inActiveMatch(this)) {
 						PlayerModel.setPlayerState(this, response.playerState);
 					}
-
-		            Bus.post(this,LocationService.LOCATION_UPDATED);
 				}
 			}
 		} else {
@@ -270,6 +277,10 @@ public class LocationService extends Service {
 
 	}
 	
+	@UiThread
+	public  void showToastOnUiThread(String message) {
+		Toast.makeText(this, message, Toast.LENGTH_SHORT);
+	}
 
 	@AfterInject
 	public void afterInjection() {

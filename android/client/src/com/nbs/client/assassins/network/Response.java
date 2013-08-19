@@ -11,6 +11,7 @@ public class Response {
 
 	@JsonIgnore
 	public static final String ERROR = "error";
+	
 	@JsonIgnore
 	public static final String OK = "ok";
 
@@ -19,6 +20,9 @@ public class Response {
 	
 	@JsonProperty("message")
 	public String message;
+	
+	@JsonProperty("time")
+	public Long time;
 	
 	public boolean ok() {
 		return status != null && status.equalsIgnoreCase(Response.OK);

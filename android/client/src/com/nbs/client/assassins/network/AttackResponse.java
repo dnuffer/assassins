@@ -11,9 +11,6 @@ public class AttackResponse extends Response {
 	@JsonProperty("hit")
 	public boolean hit;
 	
-	@JsonProperty("time")
-	public long time;
-	
 	@JsonProperty("target_life")
 	public int targetLife;
 

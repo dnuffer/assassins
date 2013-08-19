@@ -13,6 +13,8 @@ class Player
   field :location, type: Array,   spacial: true
   field :life,     type: Integer, default: 3
   
+  field :last_attack, type: Integer
+  
   #field :range_to_target, type: Enum[ :search, :hunt, :attack ]
   
   spacial_index :location
@@ -75,13 +77,16 @@ class Player
     notify_target
     notify_enemy
   end
-
+  
+  def in_bounds?
+    match.in_bounds? location[:lat], location[:lng]
+  end
 
   def state
     my_enemy  = self.get_enemy
     my_target = self.get_target
     playerstate = {
-      time:           Time.now.utc.to_i,
+      time:           Time.now.utc.to_i*1000,
       target_life:    life,
       target_bearing: self.bearing_to(my_target),
       target_range:   range_to(my_enemy),
@@ -103,7 +108,7 @@ class Player
     unless my_enemy.nil?
       notification = {
         type:           :target_event,
-        time:           Time.now.utc.to_i,
+        time:           Time.now.utc.to_i*1000,
         target_life:    life,
         target_bearing: my_enemy.bearing_to(self),
         target_range:   range_to(my_enemy) 
@@ -126,7 +131,7 @@ class Player
     unless my_target.nil?
       my_target.user.send_push_notification({
         type:        :enemy_event,
-        time:        Time.now.utc.to_i,
+        time:        Time.now.utc.to_i*1000,
         #an attack is considered an enemy event
         # attack is only indicated by a change in life
         # at the moment, life is always sent, even if life has not changed.

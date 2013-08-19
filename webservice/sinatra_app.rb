@@ -38,6 +38,14 @@ configure :test do
   enable :logging
 end
 
+def make_response(status, message, content={})
+  content.merge({
+    status: status,
+    message: message,
+    time: (Time.now.utc.to_f*1000).round #milliseconds
+  })
+end
+
 
 get '/' do
   'running hunted'
@@ -83,16 +91,11 @@ post '/api/provisional-users' do
     })
     
     if user.persisted?
-      return {
-        status: 'ok',
-        message: 'created provisional user',
-        token: user.token
-      }.to_json 
+      return make_response('ok', 'created provisional user', { token: user.token }).to_json 
     end
   end
   
-  { status: 'error',
-    message: 'failed to create provisional user' }.to_json
+  make_response('error', 'failed to create provisional user').to_json
 end
 
 
@@ -108,17 +111,12 @@ post '/api/users' do
     user = User.create data
     
     if user.persisted?
-      return {
-        status: 'ok',
-        message: 'created user',
-        token: user.token
-      }.to_json 
+      return make_response('ok', 'created user', { token: user.token }).to_json 
     end
 
   end
 
-  { status: 'error',
-    message: 'failed to create user' }.to_json
+  make_response('error', 'failed to create user').to_json
 end
 
 
@@ -132,9 +130,7 @@ post '/api/users/:token' do
   user = User.authenticate params[:token]
   user.upgrade_from_provisional data['username'], data['password']
   
-  { status: 'ok',
-    message: 'created account',
-    token: user.token }.to_json 
+  make_response('ok', 'created account', { token: user.token }).to_json 
 end
 
 
@@ -157,15 +153,13 @@ post '/api/matches' do
   match = Match.create(data['match'])
   
   if match.persisted?
-    return {
-      status: 'ok',
-      message: 'match created',
+    return make_response('ok', 'match created', 
+    {
       match: match.as_json(except: [:salt, :password, :player_ids])
-    }.to_json 
+    }).to_json 
   end
   
-  { status: 'error',
-    message: 'failed to create match' }.to_json
+  make_response('error', 'failed to create match').to_json
 end
 
 
@@ -184,15 +178,11 @@ post '/api/matches/:name/players' do
     end
     
     match.add_user user
-    return {
-        status: 'ok',
-        message: 'joined match',
-        match: match.as_json(except: [:salt, :password, :player_ids])
-      }.to_json
+    return make_response('ok', 'joined match',
+      { match: match.as_json(except: [:salt, :password, :player_ids]) }).to_json
   end
   
-  { status: 'error',
-    message: 'create an account to join a match' }.to_json
+  make_response('error', 'create an account to join a match').to_json
 end
 
 
@@ -206,19 +196,25 @@ post '/api/users/:token/location' do
   
   if user.in_match?
     player = user.player
-    player.update_location data['latitude'], data['longitude']
-
-    response = { 
-      status:   'ok', 
-      message:  'location updated',
-      latitude:  player.location[:lat], 
-      longitude: player.location[:lng]
-    }
+    
+    if player.match.in_bounds? data['latitude'], data['longitude']
+      player.update_location data['latitude'], data['longitude']
+      message = 'location updated'
+      status = :ok
+    else
+      message = 'out of bounds'
+      status = :error
+    end
+    
+    response = make_response(status, message,
+    {
+       latitude:  player.location[:lat], 
+       longitude: player.location[:lng]
+    })
     
     if user.in_active_match?
       response.merge!({ player_state: player.state })
     end
-
     return response.to_json
   end
     
@@ -228,10 +224,11 @@ post '/api/users/:token/location' do
     
   #TODO query for loot, traps, etc.
   
-  { status:    'ok', 
-    message:   'not in a match.', 
+  make_response('ok', 'not in a match.', 
+  { 
     latitude:   data['latitude'], 
-    longitude:  data['longitude'] }.to_json
+    longitude:  data['longitude'] 
+  }).to_json
 end
 
 
@@ -247,9 +244,7 @@ post '/api/login' do
   
   user = User.login(data)
     
-  { status:  'ok',
-    message: 'log in successful.',
-    token:    user.token }.to_json 
+  make_response('ok', 'log in successful.', { token:    user.token }).to_json 
 end
 
 
@@ -259,8 +254,7 @@ post '/api/users/:token/logout' do
   user = User.authenticate params[:token]
   user.logout
   
-  { status:  'ok',
-    message: 'logged out' }.to_json
+  make_response('ok', 'logged out').to_json
 end
 
 #Accepts: GCMRegistrationMessage
@@ -273,9 +267,7 @@ post '/api/users/:token/gcm/register' do
   user.push_id = data['push_id']
   user.save
   
-  { status:  'ok',
-    message: 'updated gcm registration id',
-    token:    user.token }.to_json 
+  make_response('ok', 'updated gcm registration id', { token: user.token }).to_json 
 end
 
 #Accepts: GCMRegistrationMessage
@@ -288,8 +280,7 @@ post '/api/users/:token/gcm/unregister' do
   user.push_id = nil
   user.save
   
-  { status:  'ok',
-    message: 'unregistered gcm registration id' }.to_json 
+  make_response('ok', 'unregistered gcm registration id' ).to_json 
 end
 
 
@@ -306,19 +297,14 @@ post '/api/users/:token/attack' do
 
     if player.attack_target
       target.reload
-      return {
-        status: 'ok',
-        message: 'attack successful',
+      return make_response('ok', 'attack successful', {
         hit: true,
-        time: Time.now.utc.to_i,
         target_life: target.life
-      }.to_json 
+      }).to_json 
     end
   end
   
-  { status:  'error',
-    message: 'attack failed',
-    hit:     false }.to_json 
+  make_response('error', 'attack failed', { hit: false }).to_json 
 end
 
 

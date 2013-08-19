@@ -115,7 +115,21 @@ public class JoinMatchFragment extends SherlockFragment {
 		MatchResponse response = null;
 		
 		try {	
-			response = restClient.joinMatch(msg.matchName, msg);		
+			response = restClient.joinMatch(msg.matchName, msg);	
+			
+			if(response.ok() && response.time != null && response.match != null) {
+				//in order to have clients start at the same time, 
+				//here we account for time discrepancy between server and client
+				//the time it takes to send the message is still NOT accounted for
+				//a server push notification on match start is probably a better solution...
+				long now = System.currentTimeMillis();
+				long serverTimeDifference = response.time - now;
+				response.match.startTime += serverTimeDifference;
+				
+				Log.d(TAG, "time [local:" + now + "], [server:" + response.time + 
+							"], fix local time ["+serverTimeDifference+"]");
+				Log.d(TAG, "corrected match start time ["+response.match.startTime+"]");
+			}	
 		}
 		catch(Exception e) {
 			Log.i(TAG, "EXCEPTION: " + e.toString());
@@ -134,6 +148,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			if(response.ok()) {
 				MatchModel.setMatch(getActivity(), response.match);
 				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
+				
 				getSherlockActivity().startService(
 					new Intent(getActivity(), NotificationService_.class)
 							.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)

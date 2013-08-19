@@ -39,6 +39,19 @@ class Match
   validates_uniqueness_of :name
   before_create :assign_token
 
+  #this will break if match bounds span hemispheres on the high-degrees
+  def in_bounds? lat, lng
+    #if no bounds specified, in bounds always returns true
+    (nw_corner[:lat].nil? and 
+     se_corner[:lat].nil? and 
+     nw_corner[:lng].nil? and 
+     se_corner[:lng].nil?) or
+    (lat <= nw_corner[:lat] and 
+     lat >= se_corner[:lat] and 
+     lng >= nw_corner[:lng] and 
+     lng <= se_corner[:lng])
+  end
+
   def self.authenticate match_name, match_password
     
     match = Match.where({ :name => match_name }).first
@@ -183,13 +196,21 @@ class Match
   
   def attempt_attack attacker
     target = target_of attacker
-    if in_progress? and target != nil and attacker.alive? and attacker.distance_to(target) < attack_range
+    
+    if in_progress? and 
+       not target.nil? and 
+       attacker.alive? and 
+       attacker.in_bounds? and 
+       (escape_time.nil? or attacker.last_attack.nil? or 
+        Time.now.utc.to_i  >= (attacker.last_attack + escape_time)) and
+       attacker.distance_to(target) < attack_range
+
       target.take_hit 1
       attacker.notify_target
       
       if target.life < 1
         eliminate target    
-        
+        attacker.last_attack = nil
         #TODO: for efficiency, just return this in http attack request
         Thread.new do
           if winner.nil?
@@ -200,7 +221,10 @@ class Match
             attacker.user.send_push_notification(new_target_notif)
           end
         end
+      else
+        attacker.last_attack = Time.now.utc.to_i
       end
+      attacker.save
       return true
     end
     false

@@ -197,7 +197,7 @@ post '/api/users/:token/location' do
   if user.in_match?
     player = user.player
     
-    if player.match.in_bounds? data['latitude'], data['longitude']
+    if not user.in_active_match? or player.match.in_bounds? data['latitude'], data['longitude']
       player.update_location data['latitude'], data['longitude']
       message = 'location updated'
       status = :ok

@@ -125,6 +125,8 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 				CameraUpdate camUpdate = CameraUpdateFactory
 					.newLatLngBounds(new LatLngBounds(cornerA, cornerB), LATLNG_BOUNDS_PADDING);
 				
+				dismissGpsProgress();
+				
 				getMap().animateCamera(camUpdate, 1000, new CancelableCallback(){
 					@Override
 					public void onCancel() {
@@ -140,7 +142,7 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 															.draggable(true)
 															.position(cornerB));
 						drawBounds();
-						dismissGpsProgress();
+						
 					}
 				});
 			}});
@@ -227,7 +229,7 @@ public class MatchBoundsFragment extends SherlockMapFragment {
 
 		mListener.onBoundsSelected(description, Arrays.asList(
 				new LatLng(n.latitude, w.longitude), 
-				new LatLng(s.latitude, e.latitude)));
+				new LatLng(s.latitude, e.longitude)));
 	}
 
 }

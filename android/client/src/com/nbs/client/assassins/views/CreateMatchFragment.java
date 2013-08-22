@@ -323,7 +323,7 @@ public class CreateMatchFragment extends SherlockFragment
 
 	@Override
 	public void onTimePicked(int hourOfDay, int minute) {
-		startTime.setText(hourOfDay + " " + minute);
+		startTime.setText(hourOfDay%12 + ":" + minute + (hourOfDay >= 12 ? " pm" : " am"));
 		startTime.setTextColor(getResources()
 				.getColor(R.color.abs__bright_foreground_holo_light));
 		this.hourOfDay = hourOfDay;

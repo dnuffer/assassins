@@ -124,6 +124,8 @@ public class JoinMatchFragment extends SherlockFragment {
 				//a server push notification on match start is probably a better solution...
 				long now = System.currentTimeMillis();
 				long serverTimeDifference = response.time - now;
+				
+				Log.d(TAG, "match start time ["+response.match.startTime+"]");
 				response.match.startTime += serverTimeDifference;
 				
 				Log.d(TAG, "time [local:" + now + "], [server:" + response.time + 

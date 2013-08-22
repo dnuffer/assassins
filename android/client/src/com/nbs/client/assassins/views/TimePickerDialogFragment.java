@@ -35,7 +35,7 @@ public class TimePickerDialogFragment extends DialogFragment implements OnTimeSe
     	t.setToNow();
         
     	int hour = (t.minute > 56) ? ((t.hour > 22) ? 0 : t.hour + 1) : t.hour;
-    	int minute = (t.minute > 56) ? 0 : t.minute + 1;
+    	int minute = (t.minute > 57) ? 0 : t.minute + 2;
     	
     	TimePickerDialog dialog = 
         	new TimePickerDialog(getActivity(), this, hour, minute, false);

@@ -42,6 +42,7 @@ class Match
   #this will break if match bounds span hemispheres on the high-degrees
   def in_bounds? lat, lng
     #if no bounds specified, in bounds always returns true
+
     (nw_corner[:lat].nil? and 
      se_corner[:lat].nil? and 
      nw_corner[:lng].nil? and 

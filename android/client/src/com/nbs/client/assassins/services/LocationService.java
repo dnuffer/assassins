@@ -279,7 +279,7 @@ public class LocationService extends Service {
 	
 	@UiThread
 	public  void showToastOnUiThread(String message) {
-		Toast.makeText(this, message, Toast.LENGTH_SHORT);
+		Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
 	}
 
 	@AfterInject

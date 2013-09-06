@@ -15,6 +15,7 @@ public class MatchModel extends KeyValueStore {
 		if(match == null) { match = new Match(); } 
 		setName(c, match.name);
 		setToken(c, match.token);
+		setCreator(c, match.creator);
 		setStartTime(c, match.startTime);
 		setNWCorner(c, match.getNWCornerLatLng());
 		setSECorner(c, match.getSECornerLatLng());
@@ -31,11 +32,22 @@ public class MatchModel extends KeyValueStore {
 		putString(c, "match_name", name);
 	}
 
+	private synchronized static void setCreator(Context c, String username) {
+		putString(c, "match_creator", username);
+	}	
+	
+	private synchronized static String getCreator(Context c) {
+		return getString(c, "match_creator");
+	}
+	
 	public static Match getMatch(Context c) {
-		return inMatch(c) ?  new Match(getToken(c), getName(c), null,
-									getStartTime(c), getNWCorner(c), 
-									getSECorner(c), getAttackRange(c), 
-									getHuntRange(c), getEscapeTime(c)) : null;
+		return inMatch(c) ?  
+				new Match(getToken(c), getName(c), null, 
+						MatchModel.getCreator(c),
+						getStartTime(c), getNWCorner(c), 
+						getSECorner(c), getAttackRange(c), 
+						getHuntRange(c), getEscapeTime(c)) : 
+				null;
 	}
 	
 	private static String getToken(Context c) {

@@ -153,10 +153,17 @@ post '/api/matches' do
   match = Match.create(data['match'])
   
   if match.persisted?
-    return make_response('ok', 'match created', 
-    {
-      match: match.as_json(except: [:salt, :password, :player_ids])
-    }).to_json 
+    if data['join_on_create'] == true    
+      # currently can only be in one match at a time
+      if user.in_match?
+        user.player.match.eliminate user.player
+      end
+      match.add_user user
+    end
+    message = "match created #{data['join_on_create'] == true ? 'and joined' : ''}"
+    return make_response('ok', message, {
+              match: match.as_json(except: [:salt, :password, :player_ids])
+           }).to_json 
   end
   
   make_response('error', 'failed to create match').to_json
@@ -186,6 +193,19 @@ post '/api/matches/:name/players' do
 end
 
 
+
+post '/api/matches/:name/start' do
+  data = JSON.parse(request.body.read)
+  user = User.authenticate data['token']
+  match = Match.where(name: :name)
+  
+  if not match.nil? and user.username == match.creator
+    match.start
+    return make_response('ok', 'match started').to_json
+  end
+  make_response('error', 'failed to start match').to_json
+end
+
 #Accepts: LocationMessage
 #Returns: LocationResponse
 post '/api/users/:token/location' do
@@ -196,6 +216,8 @@ post '/api/users/:token/location' do
   
   if user.in_match?
     player = user.player
+   
+    player.match.end_if_insufficient_players
     
     if not user.in_active_match? or player.match.in_bounds? data['latitude'], data['longitude']
       player.update_location data['latitude'], data['longitude']

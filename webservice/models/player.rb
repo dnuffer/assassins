@@ -79,7 +79,7 @@ class Player
   end
   
   def in_bounds?
-    match.in_bounds? location[:lat], location[:lng]
+    location[:lat].nil? or location[:lng].nil? ? false : match.in_bounds?(location[:lat], location[:lng])
   end
 
   def state

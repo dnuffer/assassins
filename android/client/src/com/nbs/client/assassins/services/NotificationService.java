@@ -35,6 +35,7 @@ public class NotificationService extends Service {
 
 	public static final String SET_MATCH_REMINDER_ALARMS = "com.nbs.client.assassins.SET_MATCH_REMINDER_ALARMS";
 	public static final String CANCEL_MATCH_ALARMS = "com.nbs.client.assassins.CANCEL_MATCH_ALARMS";
+	public static final String WAIT_FOR_MATCH_START = "com.nbs.client.assassins.WAIT_FOR_MATCH_START";
 
 	private IntentFilter intentFilter;
 	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
@@ -183,6 +184,10 @@ public class NotificationService extends Service {
 			}
 			else if(action.equals(NotificationService.SET_MATCH_REMINDER_ALARMS)) {
 				setMatchReminderAlarms(this, intent.getLongExtra("start_time", -1));
+			}
+			else if(action.equals(NotificationService.WAIT_FOR_MATCH_START)) {
+				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
+						"Hunted", "Waiting for match to begin...", intent.getExtras());
 			}
 			else if(action.equals(NotificationService.CANCEL_MATCH_ALARMS)) {
 				cancelMatchReminderAlarms(this);

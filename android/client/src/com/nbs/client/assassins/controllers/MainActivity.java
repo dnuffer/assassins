@@ -5,8 +5,10 @@ package com.nbs.client.assassins.controllers;
 
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.DrawerLayout;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +16,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -26,6 +31,7 @@ import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.EActivity;
 import com.googlecode.androidannotations.annotations.UiThread;
+import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.MatchModel;
@@ -68,6 +74,15 @@ public class MainActivity extends SherlockFragmentActivity {
 	MenuFragment menuFrag;
 	GameFragment gameFragment;
 	
+	@ViewById(R.id.left_drawer)
+	View mNavDrawer;
+	
+	@ViewById(R.id.right_drawer)
+	View mEventDrawer;
+	
+	private final String mEventDrawerTitle = "notifications";
+	private String mTitle;
+	
 	/*options menu items*/
 	private static final int JOIN_ID = 0;
 	private static final int CREATE_ACCOUNT_ID = 1;
@@ -97,6 +112,22 @@ public class MainActivity extends SherlockFragmentActivity {
 	    }
 	};
 	
+	private class NavDrawerItemClickListener implements OnItemClickListener {
+	    @Override
+	    public void onItemClick(AdapterView parent, View view, int position, long id) {
+	        Log.d("NavDrawerItemClickListener", "OnItemClick("+position+")");
+	    }
+	}
+	
+	private class EventDrawerItemClickListener implements OnItemClickListener {
+	    @Override
+	    public void onItemClick(AdapterView parent, View view, int position, long id) {
+	        Log.d("EventDrawerItemClickListener", "OnItemClick("+position+")");
+	    }
+	}
+	
+	private DrawerLayout mDrawerLayout;
+	
 	public MainActivity() {}
 	
     @Override
@@ -116,13 +147,30 @@ public class MainActivity extends SherlockFragmentActivity {
 
         setContentView(R.layout.activity_main);
 
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout.setDrawerListener(new ActionBarDrawerToggle(this, mDrawerLayout,
+        	R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_closed) {
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu();
+            }
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+            	getSupportActionBar().setTitle(drawerView.equals(mNavDrawer) ? 
+            			mTitle : mEventDrawerTitle);
+                invalidateOptionsMenu();
+ 
+            }
+        });
+        
     	FragmentTransaction ft;
     	gameFragment = new GameFragment_();
     	ft = getSupportFragmentManager().beginTransaction();
     	ft.replace(R.id.fragment_container, gameFragment);
     	ft.commit();
-
- 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
  		
  		progress.dismiss();
     }
@@ -226,6 +274,12 @@ public class MainActivity extends SherlockFragmentActivity {
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
+		
+		// If the nav drawer is open, hide action items related to the content view
+        boolean navDrawerOpen = mDrawerLayout.isDrawerOpen(mNavDrawer);
+        boolean eventDrawerOpen = mDrawerLayout.isDrawerOpen(mEventDrawer);
+        //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+		
 		
 		if(UserModel.loggedIn(this)) {
 			addLoggedInOptionsMenuItems(menu);

@@ -14,6 +14,9 @@ public class CreateMatchRequest {
 	@JsonProperty("token")
 	public String token;
 	
+	@JsonProperty("join_on_create")
+	public boolean joinOnCreate;
+	
 	@JsonProperty("match")
 	public Match match;
 	

@@ -7,9 +7,7 @@ class Match
   include Mongoid::Document
   include Mongoid::Spacial::Document
   
-  #has_one :creator, class_name: "User"
-  #has_one :winner,  class_name: "User"
-  
+  field :creator, type: String
   field :name, type: String
   field :salt, type: String
   field :password, type: String
@@ -25,7 +23,6 @@ class Match
   #field :type, String
   
   field :start_time, type: Integer
-  #field :max_players, Integer
   
   field :nw_corner, type: Array, spacial: true
   field :se_corner, type: Array, spacial: true
@@ -81,6 +78,23 @@ class Match
   
   def assign_token
     self.token = SecureRandom.hex
+  end
+  
+  def end_if_insufficient_players
+    if in_progress? and players.length < 2
+      the_winner = winner
+      Thread.new do 
+        players.each do |player|    
+          unless the_winner.nil?
+            player.user.send_push_notification({
+              type:  :match_end,
+              match: self.name,
+              winner: the_winner.user.username
+            })
+          end
+        end
+      end 
+    end
   end
   
   def add_user new_user
@@ -161,6 +175,21 @@ class Match
           end
         end
       end 
+    end 
+  end
+  
+  def start
+    self.start_time = (Time.now.utc.to_i)*1000
+    save
+    Thread.new do 
+      players.each do |player|    
+        player.user.send_push_notification({
+          type: :match_countdown,
+          match: name,
+          time:  start_time,
+          countdown_sec: 30
+        })
+      end
     end 
   end
   

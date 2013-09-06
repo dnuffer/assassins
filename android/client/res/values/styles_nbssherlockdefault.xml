@@ -28,8 +28,8 @@
         <item name="actionModeBackground">@drawable/cab_background_top_nbssherlockdefault</item>
         <item name="actionModeSplitBackground">@drawable/cab_background_bottom_nbssherlockdefault</item>
         <item name="actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Nbssherlockdefault</item>
-   		 <item name="homeAsUpIndicator">@drawable/home_up</item>
-
+   		 <!-- item name="homeAsUpIndicator">@drawable/home_up</item-->
+		<item name="homeAsUpIndicator">@drawable/ic_drawer</item>
                 <!-- Light.DarkActionBar specific -->
         <item name="actionBarWidgetTheme">@style/Theme.Nbssherlockdefault.Widget</item>
 

@@ -126,11 +126,13 @@ public class JoinMatchFragment extends SherlockFragment {
 				long serverTimeDifference = response.time - now;
 				
 				Log.d(TAG, "match start time ["+response.match.startTime+"]");
-				response.match.startTime += serverTimeDifference;
 				
-				Log.d(TAG, "time [local:" + now + "], [server:" + response.time + 
+				if(response.match.startTime != null) {
+					response.match.startTime += serverTimeDifference;
+					Log.d(TAG, "time [local:" + now + "], [server:" + response.time + 
 							"], fix local time ["+serverTimeDifference+"]");
-				Log.d(TAG, "corrected match start time ["+response.match.startTime+"]");
+					Log.d(TAG, "corrected match start time ["+response.match.startTime+"]");
+				}
 			}	
 		}
 		catch(Exception e) {
@@ -151,10 +153,17 @@ public class JoinMatchFragment extends SherlockFragment {
 				MatchModel.setMatch(getActivity(), response.match);
 				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
 				
-				getSherlockActivity().startService(
-					new Intent(getActivity(), NotificationService_.class)
-							.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
-							.putExtra("start_time", response.match.startTime));
+				if(response.match.startTime != null) {
+					getActivity().startService(
+							new Intent(getActivity(), NotificationService_.class)
+								.setAction(NotificationService.SET_MATCH_REMINDER_ALARMS)
+								.putExtra("start_time", response.match.startTime));
+				} else {
+					getActivity().startService(
+							new Intent(getActivity(), NotificationService_.class)
+								.setAction(NotificationService.WAIT_FOR_MATCH_START));
+				}
+				
 				mListener.onMatchJoined(true);
 				return;
 			}

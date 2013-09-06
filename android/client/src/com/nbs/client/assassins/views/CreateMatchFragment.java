@@ -12,6 +12,7 @@ import android.text.format.Time;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +31,7 @@ import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.CustomizeMatchActivity;
 import com.nbs.client.assassins.controllers.MatchBoundsActivity;
 import com.nbs.client.assassins.models.Match;
+import com.nbs.client.assassins.models.MatchModel;
 import com.nbs.client.assassins.models.UserModel;
 import com.nbs.client.assassins.network.CreateMatchRequest;
 import com.nbs.client.assassins.network.HuntedRestClient;
@@ -62,6 +64,12 @@ public class CreateMatchFragment extends SherlockFragment
 	
 	@ViewById(R.id.edit_match_name)
 	EditText matchName;
+
+	@ViewById(R.id.manual_start)
+	CheckBox manualStart;
+	
+	@ViewById(R.id.join_on_create)
+	CheckBox joinOnCreate;
 	
 	@ViewById(R.id.edit_match_password)
 	EditText password;
@@ -119,6 +127,14 @@ public class CreateMatchFragment extends SherlockFragment
 	 
 	}
 	
+	@Click(R.id.manual_start)
+	void onManualStartChanged() {
+		boolean isManualStart = manualStart.isChecked();
+		int textColor = isManualStart ? R.color.gray : R.color.black;
+		startTime.setEnabled(!isManualStart); startTime.setTextColor(textColor);
+		startDate.setEnabled(!isManualStart); startDate.setTextColor(textColor);
+	}
+	
 	@Click(R.id.boundaries)
 	void onSelectBoundariesClicked() {
 		Log.i(TAG, "onSelectBoundariesClicked()");
@@ -170,32 +186,40 @@ public class CreateMatchFragment extends SherlockFragment
 		//TODO: show visual indication if there are validation issues
 		Log.i(TAG, password.getText().toString());
 		
-		if(settingsAreValid()) {
+		if(hasValidSettings()) {
 			InputMethodManager imm = (InputMethodManager)getSherlockActivity().getSystemService(
 				      Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
 			btnCreate.setEnabled(false);
 			
-			Time startTime = new Time();
-			startTime.set(0, minute, hourOfDay, monthDay, month, year);
+			//startTime remains null if manualStart is checked
+			Time startTime = null;
 			
+			if(!manualStart.isChecked()) {
+				startTime = new Time();
+				startTime.set(0, minute, hourOfDay, monthDay, month, year);
+			}
 			String passwordStr = password.getText().toString();
 			
-			CreateMatchRequest msg = 
+			CreateMatchRequest request = 
 				new CreateMatchRequest(UserModel.getToken(getActivity()),
 					new Match(matchName.getText().toString(), 
 						passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null, 
-						startTime.toMillis(false), 
+					    UserModel.getUsername(getActivity()),
+						(startTime != null ? startTime.toMillis(false) : null), 
 						nwCorner, seCorner, 
 						aRange, hRange, tEscape));			
 			
-			Log.i(TAG, "Creating Match " + msg.toString());
-			createMatchInBackground(msg,
+			request.joinOnCreate = joinOnCreate.isChecked();
+			
+			Log.i(TAG, "Creating Match " + request.toString());
+			
+			createMatchInBackground(request,
 				ProgressDialog.show(getActivity(), "Please Wait", "Creating match...", true, false));
 		}
 	}
 
-	private boolean settingsAreValid() {
+	private boolean hasValidSettings() {
 		String passwordStr = password.getText().toString();
 		String  validationMsg = "";
 		
@@ -207,8 +231,8 @@ public class CreateMatchFragment extends SherlockFragment
 			validationMsg += "Match name at least " + MIN_MATCH_NAME_LEN +" chars "; 
 		}
 		
-		if(minute == null) {
-			validationMsg += "Choose a start time "; 
+		if((minute == null || month == null) && !manualStart.isChecked()) {
+			validationMsg += "Choose a start time or select manual start "; 
 		}
 
 		if(nwCorner == null) {
@@ -253,10 +277,8 @@ public class CreateMatchFragment extends SherlockFragment
 			
 			Log.d(TAG, response.toString());
 			
-			if(response.ok()) {
-				//only save if set to join on create
-				//UserModel.setMatch(getActivity(), response.match);
-				Log.d(TAG, "match created.");
+			if(response.ok() && joinOnCreate.isChecked()) {
+				MatchModel.setMatch(getActivity(), response.match);
 			}
 			
 			mListener.onMatchCreated(response.ok());
@@ -283,6 +305,8 @@ public class CreateMatchFragment extends SherlockFragment
 				
 				nwCorner = latLngPoints[0];
 				seCorner = latLngPoints[1];
+				
+				Log.d(TAG, "Bounds [nw:" + nwCorner + "] [se:" +  seCorner + "]");
 				
 				String text = LocationUtils.getMilesAreaString(latLngPoints[0], latLngPoints[1]) +
 						      ((description != null) ? " (" + description + ")" : "");

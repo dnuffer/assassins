@@ -254,8 +254,8 @@ describe 'Sinatra App' do
 
     post("/api/users/#{token}/location", {
       install_id: "install1",
-      latitude: 2,
-      longitude: 3
+      latitude: 40.28366716343217,
+      longitude: -111.73036057502032
     }.to_json)
     
     last_response.should be_ok
@@ -266,8 +266,8 @@ describe 'Sinatra App' do
     
     post("/api/users/#{token}/location", {
       install_id: "install2",
-      latitude: 2,
-      longitude: 3
+      latitude: 40.28366716343217,
+      longitude: -111.73036057502032
     }.to_json)
     
     last_response.should be_ok
@@ -283,8 +283,8 @@ describe 'Sinatra App' do
     
     post("/api/users/#{token}/location", {
       install_id: "install2",
-      latitude: 2.0001,
-      longitude: 3.0001
+      latitude: 40.28366716343217,
+      longitude: -111.73036057502032
     }.to_json)
     
     last_response.should be_ok

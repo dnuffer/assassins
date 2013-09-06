@@ -12,6 +12,9 @@ public class Match {
 
 	@JsonProperty("token")
 	public String token;
+
+	@JsonProperty("creator")
+	public String creator;	
 	
 	@JsonProperty("name")
 	public String name;
@@ -42,14 +45,16 @@ public class Match {
 	
 	public Match() {}
 	
-	public Match(String token, String name, String pw, long tStart, 
+	public Match(String token, String name, String pw, String creator, long tStart, 
 			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
-		this(name, pw, tStart, nw, se, aRange, hRange, tEscape);
+		this(name, pw, creator, tStart, nw, se, aRange, hRange, tEscape);
 		this.token = token;
 	}
-	public Match(String name, String pw, long tStart, 
+	
+	public Match(String name, String pw, String creator, long tStart, 
 			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
 		this.name = name; 
+		this.creator = creator;
 		this.password = pw; 
 		this.startTime = tStart;
 		this.attackRange = aRange;   this.huntRange = hRange; this.escapeTime = tEscape;

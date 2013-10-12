@@ -1,5 +1,7 @@
 package com.nbs.client.assassins.views;
 
+import java.util.List;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -63,13 +65,15 @@ public class GameFragment extends SherlockFragment{
 
 		unregisterReceivers();
 		
-		IntentFilter playerFilter = new IntentFilter();
-		playerFilter.addAction(player.matchId + "." + player.username);
-		Bus.register(context, focusedPlayerRcvr, playerFilter);
-		
-		IntentFilter gameFilter = new IntentFilter();
-		gameFilter.addAction(player.matchId);
-		Bus.register(context, focusedGameRcvr, gameFilter);
+		if(player != null) {
+			IntentFilter playerFilter = new IntentFilter();
+			playerFilter.addAction(player.matchId + "." + player.username);
+			Bus.register(context, focusedPlayerRcvr, playerFilter);
+			
+			IntentFilter gameFilter = new IntentFilter();
+			gameFilter.addAction(player.matchId);
+			Bus.register(context, focusedGameRcvr, gameFilter);
+		}
 		
 		IntentFilter userFilter = new IntentFilter();
         userFilter.addAction(LocationService.LOCATION_UPDATED);
@@ -82,7 +86,7 @@ public class GameFragment extends SherlockFragment{
 	}
 	
 	private void registerReceivers() {
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
         initIntentFilters(model.getMyFocusedPlayer());
 	}
 	
@@ -107,7 +111,7 @@ public class GameFragment extends SherlockFragment{
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		
 		if(model.inActiveMatch()) {
 			showHUD();
@@ -149,22 +153,27 @@ public class GameFragment extends SherlockFragment{
 	public void schedulePendingMatchStartTimeAlarms() {
 		
 		Context context = getActivity();
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		
-		for (Match m : model.getPendingMatches()) {
-			Log.d(TAG, "schedulingMatchStartTimeAlarm() " + m.startTime);
-			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-			//if the match has already begun,  it will fire immediately
-			alarmMngr.set(AlarmManager.RTC_WAKEUP, m.startTime, 
-				PendingIntent.getBroadcast(context, 0, 
-						new Intent(PushNotifications.MATCH_START).putExtra("match_id", m.id), 
-						PendingIntent.FLAG_UPDATE_CURRENT));
+		List<Match> matches = model.getPendingMatches();
+		
+		if(matches != null) {
+			for (Match m : matches) {
+				Log.d(TAG, "schedulingMatchStartTimeAlarm() " + m.startTime);
+				AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+				//if the match has already begun,  it will fire immediately
+				alarmMngr.set(AlarmManager.RTC_WAKEUP, m.startTime, 
+					PendingIntent.getBroadcast(context, 0, 
+							new Intent(PushNotifications.MATCH_START).putExtra("match_id", m.id), 
+							PendingIntent.FLAG_UPDATE_CURRENT));
+			}
 		}
 	}
 	
 	@Override
 	public void onPause() {
-		registerReceivers();
+		unregisterReceivers();
+		
 		super.onPause();
 	}
 
@@ -174,8 +183,7 @@ public class GameFragment extends SherlockFragment{
 		mapFragment.setBearingProvider(bearingSource);
 		//TODO: the bearing is messed up, fix bearing first
 		//if(hudFragment != null) hudFragment.setBearingProvider(bearingSource);
-	    
-		unregisterReceivers();
+		registerReceivers();
 		super.onResume();
 	}
 
@@ -191,7 +199,7 @@ public class GameFragment extends SherlockFragment{
 		if(hudIsShowing()) hudFragment.onTargetRangeChanged(tRange);
 		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
 		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 			Player p = model.getMyFocusedPlayer();
 			mapFragment.showTargetLocation(p.getTargetLatLng());
 		} else {
@@ -239,7 +247,7 @@ public class GameFragment extends SherlockFragment{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 			Player p = model.getMyFocusedPlayer();
 			
 			initIntentFilters(p);
@@ -260,7 +268,7 @@ public class GameFragment extends SherlockFragment{
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
         	
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 
         	User user = model.getUser();
         	
@@ -299,7 +307,7 @@ public class GameFragment extends SherlockFragment{
         	
         	Log.d(TAG, "broadcast received [" + action + "]");
     		
-        	Repository model = ((App)getActivity().getApplication()).getRepo();
+        	Repository model = ((App)(getActivity().getApplication())).getRepo();
         	
         	User user = model.getUser();
 

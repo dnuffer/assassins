@@ -44,7 +44,7 @@ public class Player {
 	@JsonProperty("target_range")
 	public String targetRange;
 	
-	@JsonProperty("my_life")
+	@JsonProperty("health")
 	public Integer health;
 	
 	@JsonProperty("enemy_range")
@@ -56,17 +56,14 @@ public class Player {
 	@JsonProperty("target_lng")
 	public Double targetLng;
 	
-	@JsonProperty("lastAttackTime")
+	@JsonProperty("lat")
+	public Double lat;
+	
+	@JsonProperty("lng")
+	public Double lng;
+	
+	@JsonProperty("last_attack")
 	public Long lastAttackTime;
-
-	@Override
-	public String toString() {
-		return "PlayerStateResponse [targetLife=" + targetHealth
-				+ ", targetbearing=" + targetBearing + ", targetRange="
-				+ targetRange + ", myLife=" + health + ", enemyRange="
-				+ enemyRange + ", targetLat=" + targetLat + ", targetLng="
-				+ targetLng + "]";
-	}
 
 	public LatLng getTargetLatLng() {
 		return targetLat != null && targetLng != null ?  new LatLng(targetLat, targetLng) : null;
@@ -77,11 +74,22 @@ public class Player {
 	}
 
 	public void setTargetLife(Integer targetLife) {
-		this.targetHealth = targetLife;
-		
+		this.targetHealth = targetLife;	
 	}
 
 	public Integer getTargetLife() {
 		return this.targetHealth;
+	}
+	
+	@Override
+	public String toString() {
+		return "Player [id=" + id + ", isMe=" + isMe + ", status=" + status
+				+ ", username=" + username + ", targetHealth=" + targetHealth
+				+ ", matchId=" + matchId + ", role=" + role + ", team=" + team
+				+ ", targetBearing=" + targetBearing + ", targetRange="
+				+ targetRange + ", health=" + health + ", enemyRange="
+				+ enemyRange + ", targetLat=" + targetLat + ", targetLng="
+				+ targetLng + ", lat=" + lat + ", lng=" + lng
+				+ ", lastAttackTime=" + lastAttackTime + "]";
 	}
 }

@@ -3,7 +3,7 @@ package com.nbs.client.assassins.services;
 public class PushNotifications {
 	
 	//player events
-	public static final Object PLAYER_EVENT = "player_event";
+	public static final String PLAYER_EVENT = "player_event";
 	
 	//match events
 	public static final String PLAYER_JOINED_MATCH = "player_joined_match";

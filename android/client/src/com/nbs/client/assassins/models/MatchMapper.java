@@ -16,7 +16,7 @@ public class MatchMapper {
 		Bundle b = new Bundle();
 		b.putString("id", m.id);
 		b.putString("name", m.name);
-		b.putLong("start_time", m.startTime);
+		if(m.startTime != null) b.putLong("start_time", m.startTime);
 		return b;
 	}
 

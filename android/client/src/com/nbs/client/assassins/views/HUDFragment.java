@@ -85,7 +85,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void refreshHUDData()
 	{
 		Log.d(TAG, "refreshHUDData()");
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		Player player  = model.getMyFocusedPlayer();
 		String tRange  = player.targetRange;
 		String eRange  = player.enemyRange;
@@ -126,13 +126,11 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	public long getRemainingEscapeTime() {
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		Match match = model.getFocusedMatch();
 		Player player = model.getMyFocusedPlayer();
-		Integer escapeTimeSeconds = match.escapeTime;
-		long lastAttackTime = player.lastAttackTime;
-		if(escapeTimeSeconds == null || lastAttackTime == -1) return 0;
-		else return (long)Math.floor(((lastAttackTime/1000) + escapeTimeSeconds) - (System.currentTimeMillis()/1000));
+		if(match.escapeTime == null || player.lastAttackTime == null) return 0;
+		else return (long)Math.floor(((player.lastAttackTime/1000) + match.escapeTime) - (System.currentTimeMillis()/1000));
 	}
 
 	private void initEscapeTimer(long seconds) {
@@ -233,7 +231,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		
 		Context c  = getSherlockActivity();
 		AttackResponse response = null;
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		User user = model.getUser();
 		Player player = model.getMyFocusedPlayer();
 		
@@ -258,13 +256,15 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void attackFinished(AttackResponse response)
 	{
 		Log.d(TAG, "attackFinished(" + response + ")");
-		Repository model = ((App)getActivity().getApplication()).getRepo();
-		Player player = model.getMyFocusedPlayer();
-		if(response != null && response.ok() && model.inActiveMatch()) {
-			player.setTargetLife(response.targetLife);
+		
+		if(response != null && response.ok()) {
 			Toast.makeText(getSherlockActivity(), response.message, Toast.LENGTH_SHORT).show();
-			if(response.targetLife > 0) {
-				initEscapeTimer(getRemainingEscapeTime());
+			if(response.player != null) {
+				if(response.player.targetHealth > 0) {
+					Repository model = ((App)(getActivity().getApplication())).getRepo();
+					model.updatePlayer(response.player);
+					initEscapeTimer(getRemainingEscapeTime());
+				}
 			}
 		}
 	}

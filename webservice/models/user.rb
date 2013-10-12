@@ -2,9 +2,12 @@ require 'mongoid'
 require 'pushmeup'
 require 'securerandom'
 require 'bcrypt'
+require 'mongoid_spacial'
 
 class User
   include Mongoid::Document
+  include Mongoid::Spacial::Document
+  
   field :push_id,  type: String
   field :install_id,  type: String
   field :username, type: String
@@ -13,8 +16,11 @@ class User
   field :token, type: String
   field :provisional, type: Boolean, default: false
 
-  has_one :player
+  has_many :players
   #has_many :achievements
+  
+  field :location, type: Array,   spacial: true
+  spacial_index :location
     
   validates :username, :password, presence: true, :if => :full_user?  
   validates_uniqueness_of :username, allow_nil: true
@@ -22,12 +28,21 @@ class User
     
   before_create :assign_token
 
+  def update_location lat, lng
+    self.location = { lat: lat, lng: lng }
+    save
+    players.each { |p| 
+      p.notify_target
+      p.notify_enemy
+    }
+  end
+
   def in_match?
-    not player.nil? and not player.match.nil?
+    players.select { |p| !p.match.has_begun? or p.match.in_progress? }.count > 0
   end
 
   def in_active_match?
-    in_match? and player.match.in_progress?
+    players.select { |p| p.match.has_begun? }.count > 0
   end
 
   def full_user?

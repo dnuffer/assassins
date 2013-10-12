@@ -181,7 +181,7 @@ public class NotificationService extends Service {
 			}
 			else if(action.equals(PushNotifications.MATCH_COUNTDOWN)) {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
-						"Hunted", "The match is about to begin.", intent.getExtras());
+						"Hunted", "A match is about to begin.", intent.getExtras());
 			}
 			//Match starts at specific time
 			else if(action.equals(NotificationService.SET_MATCH_REMINDER_ALARMS)) {

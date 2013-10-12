@@ -35,14 +35,16 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     private static final String KEY_ID = "id";
     private static final String KEY_CREATED_AT = "created_at";
     private static final String KEY_TYPE = "type";
+    private static final String KEY_STATUS = "status";
  
     // MATCHES Table - column names
-    private static final String KEY_STATUS = "status";
 	private static final String KEY_TOKEN = "token";
     private static final String KEY_CREATOR = "creator";
     private static final String KEY_NAME = "name";
     private static final String KEY_WINNER = "winner";
     private static final String KEY_START_TIME = "start_time";
+    private static final String KEY_CNTDWN_SEC = "cnt_dwn_sec";
+    private static final String KEY_END_TIME = "end_time";
     private static final String KEY_NW_CORNER_LAT = "nw_lat";
     private static final String KEY_NW_CORNER_LNG = "mw_lng";
     private static final String KEY_SE_CORNER_LAT = "se_lat";
@@ -77,8 +79,9 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 				KEY_TOKEN         + " TEXT," +
 				KEY_CREATOR       + " TEXT," +
 				KEY_NAME          + " TEXT," +
-				KEY_WINNER          + " TEXT," +
-				KEY_START_TIME    + " DATETIME," +
+				KEY_WINNER        + " TEXT," +
+				KEY_START_TIME    + " INT," +
+				KEY_CNTDWN_SEC    + " INT," +
 				KEY_NW_CORNER_LAT + " REAL," +
 				KEY_NW_CORNER_LNG + " REAL," +
 				KEY_SE_CORNER_LAT + " REAL," +
@@ -95,6 +98,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     		    KEY_MATCH_ID   + " TEXT," +
     			KEY_USERNAME   + " TEXT," + 
     			KEY_HEALTH     + " INT," + 
+    			KEY_STATUS     + " TEXT," +
     			KEY_TEAM       + " TEXT," +
     			KEY_ROLE       + " TEXT," +
     			KEY_LAT        + " REAL," + 
@@ -164,13 +168,31 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
  
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, m.name);
+        values.put(KEY_ID, m.id);           
+        //values.put(KEY_TYPE, "assassins", "bounty", "thieves");         
+        //values.put(KEY_STATUS, ?);        
+        values.put(KEY_TOKEN, m.token);       
+        values.put(KEY_CREATOR, m.creator);            
+		values.put(KEY_WINNER, m.winner);      
+		values.put(KEY_START_TIME, m.startTime);
+		values.put(KEY_END_TIME, m.endTime);
+		values.put(KEY_CNTDWN_SEC, m.countdownSec);   
+		values.put(KEY_NW_CORNER_LAT, m.nwCorner.lat);
+		values.put(KEY_NW_CORNER_LNG, m.nwCorner.lng);
+		values.put(KEY_SE_CORNER_LAT, m.seCorner.lat);
+		values.put(KEY_SE_CORNER_LNG, m.seCorner.lng);
+		values.put(KEY_ATTACK_RANGE, m.attackRange);
+		values.put(KEY_HUNT_RANGE, m.huntRange);
+		values.put(KEY_ESCAPE_TIME, m.escapeTime);
         values.put(KEY_CREATED_AT, getDateTime());
         //TODO: enumerate match fields
  
         long id = db.insert(TABLE_MATCHES, null, values);
  
-        for (Player p : m.players) {
-            createPlayer(m.id, p);
+        if(m.players != null) {
+	        for (Player p : m.players) {
+	            createPlayer(m.id, p);
+	        }
         }
  
         return id;
@@ -186,8 +208,18 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     	ContentValues values = new ContentValues();
         values.put(KEY_USERNAME,p.username);
         values.put(KEY_MATCH_ID, matchId);
+        values.put(KEY_HEALTH, p.health);
+		values.put(KEY_STATUS, p.status);
+        values.put(KEY_TEAM , p.team);         
+		values.put(KEY_ROLE,p.role);          
+		values.put(KEY_LAT,p.lat);              
+		values.put(KEY_LNG,p.lng);             
+		values.put(KEY_TARGET_LAT ,p.targetLat);      
+		values.put(KEY_TARGET_LNG ,p.targetLng);      
+		values.put(KEY_TARGET_BRG,p.targetBearing);       
+		values.put(KEY_TARGET_RNG ,p.targetRange);      
+		values.put(KEY_ENEMY_RNG ,p.enemyRange);       
         values.put(KEY_CREATED_AT, getDateTime());
-        //TODO: enumerate player fields
         
         long id = db.insert(TABLE_PLAYERS, null, values);
         return id;
@@ -269,8 +301,22 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
  
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, m.name);
-        //TODO: enumerate the match fields
- 
+        values.put(KEY_ID, m.id);           
+        //values.put(KEY_TYPE, "assassins", "bounty", "thieves");         
+        //values.put(KEY_STATUS, ?);        
+        values.put(KEY_TOKEN, m.token);       
+        values.put(KEY_CREATOR, m.creator);            
+		values.put(KEY_WINNER, m.winner);      
+		values.put(KEY_START_TIME, m.startTime);
+		values.put(KEY_END_TIME, m.endTime);
+		values.put(KEY_CNTDWN_SEC, m.countdownSec);   
+		values.put(KEY_NW_CORNER_LAT, m.nwCorner.lat);
+		values.put(KEY_NW_CORNER_LNG, m.nwCorner.lng);
+		values.put(KEY_SE_CORNER_LAT, m.seCorner.lat);
+		values.put(KEY_SE_CORNER_LNG, m.seCorner.lng);
+		values.put(KEY_ATTACK_RANGE, m.attackRange);
+		values.put(KEY_HUNT_RANGE, m.huntRange);
+		values.put(KEY_ESCAPE_TIME, m.escapeTime);
         // updating row
         return db.update(TABLE_MATCHES, values, KEY_ID + " = ?",
                 new String[] { m.id });
@@ -326,7 +372,18 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         SQLiteDatabase db = this.getWritableDatabase();
  
         ContentValues values = new ContentValues();
-        values.put(KEY_USERNAME, p.username);
+        values.put(KEY_USERNAME,p.username);
+        values.put(KEY_HEALTH, p.health);
+		values.put(KEY_STATUS, p.status);
+        values.put(KEY_TEAM , p.team);         
+		values.put(KEY_ROLE,p.role);          
+		values.put(KEY_LAT,p.lat);              
+		values.put(KEY_LNG,p.lng);             
+		values.put(KEY_TARGET_LAT ,p.targetLat);      
+		values.put(KEY_TARGET_LNG ,p.targetLng);      
+		values.put(KEY_TARGET_BRG,p.targetBearing);       
+		values.put(KEY_TARGET_RNG ,p.targetRange);      
+		values.put(KEY_ENEMY_RNG ,p.enemyRange);  
  
         // updating row
         return db.update(TABLE_PLAYERS, values, KEY_ID + " = ?",
@@ -370,7 +427,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 	public List<Player> getPlayers(String username) {
         List<Player> players = new ArrayList<Player>();
         String selectQuery = "SELECT  * FROM " + TABLE_PLAYERS + " WHERE "
-                + KEY_USERNAME + " = " + username;
+                + KEY_USERNAME + " = '" + username + "'";
  
         Log.e(TAG, selectQuery);
  
@@ -397,20 +454,25 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         SQLiteDatabase db = this.getReadableDatabase();
         
         String selectQuery = "SELECT  * FROM " + TABLE_PLAYERS + " WHERE "
-                + KEY_USERNAME + " = " + username + " and " + KEY_MATCH_ID + " = " + matchId;
+                + KEY_USERNAME + " = '" + username + "' and " + KEY_MATCH_ID + " = " + matchId;
  
         Log.e(TAG, selectQuery);
  
         Cursor c = db.rawQuery(selectQuery, null);
- 
-        if (c != null)
-            c.moveToFirst();
         
-        Player p = new Player();
-        p.id = c.getLong(c.getColumnIndex(KEY_ID));
-        p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
-        //TODO: enumerate match fields
- 
+        Player p = null;
+        
+        try {
+	        if (c != null && c.moveToFirst()) {
+		        p = new Player();
+		        p.id = c.getLong(c.getColumnIndex(KEY_ID));
+		        p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
+		        //TODO: enumerate player fields
+	        }
+        } catch (Exception e) {
+        	Log.e(TAG, e.getMessage());
+        }
+        
         return p;
 	}
 

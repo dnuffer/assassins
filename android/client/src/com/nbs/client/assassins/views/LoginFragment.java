@@ -22,6 +22,7 @@ import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.Repository;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
@@ -80,7 +81,7 @@ public class LoginFragment extends SherlockFragment {
 				      Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
 
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 			User user = model.getUser();
 			btnLogin.setEnabled(false);
 			
@@ -126,7 +127,7 @@ public class LoginFragment extends SherlockFragment {
 	void loginResult(LoginResponse response) {
 		
 		asyncProgress.dismiss();
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		User user = model.getUser();
 		
 		if(response != null) {
@@ -140,6 +141,12 @@ public class LoginFragment extends SherlockFragment {
 				user.setUsername(username.getText().toString());
 				user.setToken(response.token);
 				
+				if(response.matches != null) {
+					for(Match m : response.matches) {
+						model.addMatch(m);
+					}
+				}
+
 				Log.d(TAG, model.getUser().toString());
 				
 				mListener.onLogin(true);

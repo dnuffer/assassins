@@ -105,7 +105,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		Location lastLocation = getBestLastKnownLocation();
 		LatLng lastLatLng;
 		
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		User user = model.getUser();
 		Player player = model.getMyFocusedPlayer();
 		
@@ -162,7 +162,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		if(getCompassMode() == MODE_BEARING) {
 			MODE = MODE_NORTH;
 			stopSensorUpdates();
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 			User user = model.getUser();
 			this.moveMapPositionTo(user.getLocation(), true, 800);
 			map.getUiSettings().setZoomControlsEnabled(true);
@@ -187,7 +187,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		if(model.inActiveMatch()) {
 			showRangeCircles(location);
 			showDirectionToTarget(tBearing);
@@ -263,7 +263,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	public void showTargetLocation(LatLng tLatLng) {
 		if(tLatLng != null) {
 			if(targetLocationMarker == null) {
-				Repository model = ((App)getActivity().getApplication()).getRepo();
+				Repository model = ((App)(getActivity().getApplication())).getRepo();
 				Player player = model.getMyFocusedPlayer();
 				targetLocationMarker = getMap().addMarker(
 			    		new MarkerOptions()
@@ -295,7 +295,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 
 	public void showRangeCircles(LatLng location) {
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		Match match = model.getFocusedMatch();
 		Double aRange = match.getAttackRange();
 		
@@ -337,7 +337,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 
 	private void showDirectionToTarget(Float tBearing) {
 		
-		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Repository model = ((App)(getActivity().getApplication())).getRepo();
 		Match match = model.getFocusedMatch();
 		Double aRange = match.getAttackRange();
 		

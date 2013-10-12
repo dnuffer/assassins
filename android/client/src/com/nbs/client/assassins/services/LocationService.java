@@ -44,9 +44,6 @@ import android.widget.Toast;
 public class LocationService extends Service {
 
 	private static final String TAG = "LocationService";
-
-	private static final int TWO_MINUTES = 1000 * 60 * 2;
-
 	public static final String LOCATION_UPDATED = "com.nbs.android.client.LOCATION_UPDATED";
 	public static final String STOP_UPDATES = "com.nbs.android.client.STOP_LOCATION_UPDATES";
 	public static final String START_UPDATES = "com.nbs.android.client.START_LOCATION_UPDATES";
@@ -130,21 +127,22 @@ public class LocationService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand("+intent+")");
 		String action = intent != null ? intent.getAction() : null;
-		
-		if(locationClient.isConnected()) {
-			if(action != null && action.equals(LocationService.STOP_UPDATES)) {
-				locationClient.removeLocationUpdates(locationListener);
-			} else if(action != null && action.equals(LocationService.START_UPDATES)) {
-				requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-			} else if(action != null && action.equals(PushNotifications.MATCH_COUNTDOWN)) {
-    			sendLocationToServer(locationClient.getLastLocation());
-    		}
-			Bus.register(this,intentReceiver, intentFilter);	
-		} else if (locationClient.isConnecting() && action != null && action.equals(LocationService.STOP_UPDATES)) {
-			try {
-				locationClient.disconnect();
-			} catch(Exception e) {
-				Log.d(TAG, e.getMessage());
+		if(action != null) {
+			if(locationClient.isConnected()) {
+				if(action.equals(LocationService.STOP_UPDATES)) {
+					locationClient.removeLocationUpdates(locationListener);
+				} else if(action.equals(LocationService.START_UPDATES)) {
+					requestLocationUpdates(10000, 5.0f, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+				} else if(action.equals(PushNotifications.MATCH_COUNTDOWN)) {
+	    			sendLocationToServer(locationClient.getLastLocation());
+	    		}
+				Bus.register(this,intentReceiver, intentFilter);	
+			} else if (locationClient.isConnecting() && action.equals(LocationService.STOP_UPDATES)) {
+				try {
+					locationClient.disconnect();
+				} catch(Exception e) {
+					Log.d(TAG, e.getMessage());
+				}
 			}
 		}
 		return super.onStartCommand(intent, flags, startId);
@@ -266,17 +264,20 @@ public class LocationService extends Service {
 						showToastOnUiThread(response.message);
 					}
 					
+					Player[] players = response.players;
+					
 					//even if the location response is not 'ok' (i.e. out of bounds)
 					//there will be a player state if in an active match
-					for(Player p : response.players) {
-						model.updatePlayer(p);
+					if(players != null) {
+						for(Player p : players) {
+							model.updatePlayer(p);
+						}
 					}
 				}
 			}
 		} else {
 			//no token yet, but still broadcast for provisional-user functionality
 			user.setLocation(l.getLatitude(), l.getLongitude());
-			Bus.post(this,LocationService.LOCATION_UPDATED);
 		}
 
 	}

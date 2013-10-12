@@ -85,7 +85,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			hideKeyboard();
 			
 			btnJoin.setEnabled(false);
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = ((App)(getActivity().getApplication())).getRepo();
 			User user = model.getUser();
 			
 			JoinMatchRequest msg = new JoinMatchRequest(
@@ -148,13 +148,13 @@ public class JoinMatchFragment extends SherlockFragment {
 	
 	@UiThread
 	void matchJoinedResult(MatchResponse response, ProgressDialog progress) {
-		progress.dismiss();
+		
 		if(response != null) {
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				Repository model = ((App)getActivity().getApplication()).getRepo();
+				Repository model = ((App)(getActivity().getApplication())).getRepo();
 				model.addMatch(response.match);
 				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
 				
@@ -169,6 +169,9 @@ public class JoinMatchFragment extends SherlockFragment {
 								.setAction(NotificationService.WAIT_FOR_MATCH_START));
 				}
 				
+				
+				
+				
 				mListener.onMatchJoined(true);
 				return;
 			}
@@ -176,6 +179,7 @@ public class JoinMatchFragment extends SherlockFragment {
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
 		}
 		
+		progress.dismiss();
 		btnJoin.setEnabled(true);
 	}
     

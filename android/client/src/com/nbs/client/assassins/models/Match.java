@@ -9,8 +9,8 @@ import com.google.android.gms.maps.model.LatLng;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
-	
-	@JsonProperty("id")
+
+	@JsonProperty("_id")
 	public String id;
 	
 	@JsonProperty("token")
@@ -24,6 +24,9 @@ public class Match {
 	
 	@JsonProperty("winner")
 	public String winner;
+	
+	@JsonProperty("countdown_sec")
+	public Integer countdownSec;
 	
 	@JsonProperty("start_time")
 	public Long startTime;
@@ -48,16 +51,19 @@ public class Match {
 	
 	@JsonProperty("escape_time")
 	public Integer escapeTime;
+
+	@JsonProperty("end_time")
+	public String endTime;
 	
 	public Match() {}
 	
-	public Match(String token, String name, String pw, String creator, long tStart, 
+	public Match(String token, String name, String pw, String creator, Long tStart, 
 			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
 		this(name, pw, creator, tStart, nw, se, aRange, hRange, tEscape);
 		this.token = token;
 	}
 	
-	public Match(String name, String pw, String creator, long tStart, 
+	public Match(String name, String pw, String creator, Long tStart, 
 			LatLng nw, LatLng se, double aRange, double hRange, int tEscape) {
 		this.name = name; 
 		this.creator = creator;
@@ -75,15 +81,6 @@ public class Match {
 		return nwCorner != null ? nwCorner.toLatLng() : null;
 	}
 
-	@Override
-	public String toString() {
-		return "Match [token=" + token + ", name=" + name + ", startTime="
-				+ startTime + ", players=" + Arrays.toString(players)
-				+ ", password=" + password + ", nwCorner=" + nwCorner
-				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
-				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
-				+ "]";
-	}
 
 	public Double getAttackRange() {
 		return this.attackRange;
@@ -91,5 +88,16 @@ public class Match {
 
 	public Double getHuntRange() {
 		return this.huntRange;
+	}
+	
+	@Override
+	public String toString() {
+		return "Match [id=" + id + ", token=" + token + ", creator=" + creator
+				+ ", name=" + name + ", winner=" + winner + ", countdownSec="
+				+ countdownSec + ", startTime=" + startTime + ", players="
+				+ Arrays.toString(players) + ", password=" + password
+				+ ", nwCorner=" + nwCorner + ", seCorner=" + seCorner
+				+ ", attackRange=" + attackRange + ", huntRange=" + huntRange
+				+ ", escapeTime=" + escapeTime + ", endTime=" + endTime + "]";
 	}
 }

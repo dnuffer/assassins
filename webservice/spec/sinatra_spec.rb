@@ -30,10 +30,10 @@ FactoryGirl.define do
     password              { User.hash_password('password', salt) }
     sequence(:token)      { |n| "token#{n}" }
     provisional           false
+    location({ lat: 3, lng: 3 })
   end
   
   factory :player do
-    location({ lat: 3, lng: 3 })
     life       3
     user { association(:user) }
   end

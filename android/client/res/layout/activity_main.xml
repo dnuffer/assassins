@@ -23,7 +23,7 @@
 	</FrameLayout>
 	
 	<!-- The navigation drawer -->
-	<com.nbs.assassins.client.views.SideMenu
+	<com.nbs.client.assassins.views.SideMenu
 	    android:id="@+id/left_drawer" 
 	    android:layout_width="240dp"
 		android:layout_height="match_parent" 

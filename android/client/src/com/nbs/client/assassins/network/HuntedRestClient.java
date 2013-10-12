@@ -55,7 +55,7 @@ public interface HuntedRestClient {
 
 	@Post("/matches/{matchId}/user/{userToken}/ready")
 	@Accept(MediaType.APPLICATION_JSON)
-	MatchResponse readyForMatch(String matchId, String userToken);
+	PlayerResponse readyForMatch(String matchId, String userToken);
 	
 	//need access to RestTemplate to subvert a bug in HttpUrlConnection
 	//See: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/

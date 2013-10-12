@@ -41,6 +41,7 @@ import com.nbs.client.assassins.models.Repository;
 import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.MatchResponse;
+import com.nbs.client.assassins.network.PlayerResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService;
@@ -434,17 +435,14 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
 
 	@Background
 	public void sendPlayerReadyStatusToServer(PlayerStatus view, String matchId) {
-		MatchResponse response = null;
+		PlayerResponse response = null;
 		try {
 			Repository model = ((App)getApplication()).getRepo();
 			String userToken = model.getUser().getToken();
 			response = restClient.readyForMatch(matchId, userToken);
 			
 			if(response.ok()) {
-				model.updateMatch(response.match);
-				for(Player p : response.match.players) {
-					model.updatePlayer(p);
-				}
+				model.updatePlayer(response.player);
 			}
 		} catch(Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -453,7 +451,7 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
 	}
 	
 	@UiThread
-	public void onSendPlayerStatusComplete(PlayerStatus view, MatchResponse response) {
+	public void onSendPlayerStatusComplete(PlayerStatus view, PlayerResponse response) {
 		if(response == null || !response.ok()) {
 			view.enableReadyListener();
 			Toast.makeText(this, (response != null ? response.message : "request failed. try again."), 1000).show();

@@ -9,6 +9,7 @@ class Match
   
   field :creator, type: String
   field :name, type: String
+  
   field :salt, type: String
   field :password, type: String
   field :token, type: String
@@ -20,9 +21,10 @@ class Match
   # as players are eliminated, they are removed
   field :player_ids, type: Array, default: []
   
-  #field :type, String
-  
-  field :start_time, type: Integer
+  field :start_time, type: Integer, default: nil
+  field :countdown_sec, type: Integer, default: 30
+  field :end_time,   type: Integer, default: nil
+  field :winner,     type: String, default: nil
   
   field :nw_corner, type: Array, spacial: true
   field :se_corner, type: Array, spacial: true
@@ -36,6 +38,14 @@ class Match
   validates_uniqueness_of :name
   before_create :assign_token
 
+  def sanitized_with_players
+    self.as_json({ include: [ :players ], except: [:salt, :password, :player_ids] })
+  end
+  
+  def sanitized
+    self.as_json(except: [:salt, :password, :player_ids])
+  end
+ 
   #this will break if match bounds span hemispheres on the high-degrees
   def in_bounds? lat, lng
     #if no bounds specified, in bounds always returns true
@@ -81,53 +91,42 @@ class Match
   end
   
   def end_if_insufficient_players
-    if in_progress? and players.length < 2
-      the_winner = winner
-      Thread.new do 
-        players.each do |player|    
-          unless the_winner.nil?
-            player.user.send_push_notification({
-              type:  :match_end,
-              match: self.name,
-              winner: the_winner.user.username
-            })
-          end
-        end
-      end 
-    end
+    try_end_match
   end
   
   def add_user new_user
     unless in_progress? or new_user.nil? or new_user.in_match?
-      new_user.create_player
-      players << new_user.player
-      player_ids << new_user.player.id.to_s
+      new_player = new_user.players.create!(match_id: self.id)
+      players << new_player
+      player_ids << new_player.id.to_s
       player_ids.shuffle
       save
       
       #TODO this may still block in which case try: $gem install delayed_job
-      Thread.new do
-        players[0...-1].each do |player|
-          player.user.send_push_notification({
-            type: :player_joined_match,
-            match: name,
-            player: new_user.username
-          })
-        end
+      Thread.new {
         
-        #if in_progress?
-        #  players.each do |player|
-          #TODO this is only valid if it starts when a minimum number of players
-          # is reached.  For a timed start, it may have to be a timer on the client
-          # that fires off and intiates all clients reporting their location to begin
-          
-        #   player.user.send_push_notification({
-        #      type: :match_start,
-        #      match: name
-        #    }.merge!(player.state))
-        #  end
-        #end
-      end 
+        new_player_state = {
+            type: :player_joined_match
+        }.merge!(new_player.public_state)
+        
+        #send to all but newest player (note player_ids are shuffled, NOT players)
+        players[0...-1].each { |player|
+          player.user.send_push_notification(new_player_state)
+        }
+        
+        #this match was created to start when all players are ready 
+        #instead of at a specific state time
+        if start_time.nil? and all_players_ready?
+          self.start_time = Time.now.utc.to_i*1000 + self.countdown_sec*1000
+          self.save
+          players.each {|p|
+           p.user.send_push_notification({
+              type: :match_start,
+              match_id: id,
+            }.merge!(p.state))
+          }
+        end
+      } 
     end
   end
   
@@ -136,14 +135,14 @@ class Match
   end
   
   def has_begun?
-    Time.now.utc.to_i*1000 > start_time
+    start_time != nil and Time.now.utc.to_i*1000 > start_time
   end
   
   def is_public?
     password.nil?
   end
   
-  def winner
+  def get_winner
     if player_ids.length == 1
       return Player.find(player_ids[0])
     end
@@ -151,46 +150,40 @@ class Match
   end
   
   def eliminate target
-    self.player_ids.delete target.id.to_s
-    self.save
-    
-    if in_progress? or has_begun?
-      the_winner = winner
+    if in_progress?
+      self.player_ids.delete target.id.to_s
+      self.save
       
       #TODO this may still block in which case try: $gem install delayed_job
-      Thread.new do 
-        players.each do |player|    
-          player.user.send_push_notification({
-            type: :player_eliminated,
-            match: self.name,
-            player: target.user.username
-          })
-          
-          unless the_winner.nil?
-            player.user.send_push_notification({
-              type:  :match_end,
-              match: self.name,
-              winner: the_winner.user.username
-            })
-          end
-        end
-      end 
+      target_state = target.state
+      Thread.new {  
+        players.each { |player|    
+          player.user.send_push_notification(target_state)
+        }
+      }
+      
+      try_end_match
     end 
   end
   
-  def start
-    self.start_time = (Time.now.utc.to_i)*1000
-    save
-    Thread.new do 
-      players.each do |player|    
-        player.user.send_push_notification({
-          type: :match_countdown,
-          match: name,
-          time:  start_time,
-          countdown_sec: 30
-        })
+  def try_end_match
+      the_winner = get_winner
+      if not the_winner.nil?
+        self.winner = the_winner.user.username
+        self.end_time = Time.now.utc.to_i*1000
+        self.save
       end
-    end 
+      
+      unless winner.nil?
+        match_end = { 
+          type: :match_end 
+        }.merge!(self.sanitized)
+        Thread.new {
+          players.each { |player|    
+            player.user.send_push_notification(match_end)
+          }
+        }
+      end
   end
   
   def target_of player
@@ -235,24 +228,14 @@ class Match
         Time.now.utc.to_i  >= (attacker.last_attack + escape_time)) and
        attacker.distance_to(target) < attack_range
 
-      target.take_hit 1
-      attacker.notify_target
+      target.adjust_health(-1)
+      target.push_state
       
       if target.life < 1
         eliminate target    
         attacker.last_attack = nil
-        #TODO: for efficiency, just return this in http attack request
-        Thread.new do
-          if winner.nil?
-            new_target_notif = {
-              type: :new_target,
-              match: self.name
-            }.merge!(attacker.state)
-            attacker.user.send_push_notification(new_target_notif)
-          end
-        end
       else
-        attacker.last_attack = Time.now.utc.to_i
+        attacker.last_attack = Time.now.utc.to_i*1000
       end
       attacker.save
       return true

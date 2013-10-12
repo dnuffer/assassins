@@ -8,21 +8,14 @@ import com.nbs.client.assassins.models.Player;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-public class LocationResponse extends Response {
+public class PlayerResponse extends Response {
 
-	@JsonProperty("lat")
-	public double latitude;
+	@JsonProperty("player")
+	public Player player;
 	
-	@JsonProperty("lng")
-	public double longitude;
-	
-	@JsonProperty("players")
-	public Player[] players;
-
 	@Override
 	public String toString() {
-		return "LocationResponse [latitude=" + latitude + ", longitude="
-				+ longitude + ", players=" + players + ", status="
-				+ status + ", message=" + message + ", ok()=" + ok() + "]";
+		return "PlayerResponse [player=" + player + ", status=" + status
+				+ ", message=" + message + ", time=" + time + "]";
 	}
 }

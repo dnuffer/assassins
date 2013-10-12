@@ -209,7 +209,7 @@ public class CreateMatchFragment extends SherlockFragment
 					new Match(matchName.getText().toString(), 
 						passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null, 
 					    user.getUsername(),
-						(startTime != null ? startTime.toMillis(false) : null), 
+						((startTime != null) ? startTime.toMillis(false) : null), 
 						nwCorner, seCorner, 
 						aRange, hRange, tEscape));			
 			

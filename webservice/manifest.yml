@@ -1,13 +1,13 @@
---- 
-applications: 
+---
+applications:
 - name: hunted
   memory: 256M
   instances: 1
   host: hunted
   domain: cfapps.io
   path: .
-  services: 
-    hunted_mongo_service: 
+  services:
+    mongolab-d2bc8:
       label: mongolab
       provider: mongolab
       version: n/a

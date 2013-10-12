@@ -154,16 +154,10 @@ post '/api/matches' do
   
   if match.persisted?
     if data['join_on_create'] == true    
-      # currently can only be in one match at a time
-      if user.in_match?
-        user.player.match.eliminate user.player
-      end
       match.add_user user
     end
     message = "match created #{data['join_on_create'] == true ? 'and joined' : ''}"
-    return make_response('ok', message, {
-              match: match.as_json(except: [:salt, :password, :player_ids])
-           }).to_json 
+    return make_response('ok', message, { match: match.sanitized_with_players }).to_json 
   end
   
   make_response('error', 'failed to create match').to_json
@@ -179,14 +173,9 @@ post '/api/matches/:name/players' do
 
   unless user.provisional?
     match = Match.authenticate params[:name], data['password']
-    
-    if user.in_match?
-      user.player.match.eliminate user.player
-    end
-    
     match.add_user user
     return make_response('ok', 'joined match',
-      { match: match.as_json(except: [:salt, :password, :player_ids]) }).to_json
+      { match: match.sanitized_with_players }).to_json
   end
   
   make_response('error', 'create an account to join a match').to_json
@@ -194,14 +183,27 @@ end
 
 
 
-post '/api/matches/:name/start' do
+post '/api/matches/:match_id/user/:user_token/ready' do
   data = JSON.parse(request.body.read)
-  user = User.authenticate data['token']
-  match = Match.where(name: :name)
+  user = User.authenticate(params[:user_token])
+  match = Match.where(id: params[:match_id])
   
-  if not match.nil? and user.username == match.creator
-    match.start
-    return make_response('ok', 'match started').to_json
+  if not match.nil? and not user.nil?
+    player = user.players.where(match_id: match.id).first
+    player.status = :ready
+    player.save
+    player.reload
+    p_state = player.public_state.merge({ type: :player_event })
+    
+    #alert other players that this player is ready
+    Thread.new {
+      match.players.each { |p|
+        p.user.send_push_notification(p_state)
+      }
+    }
+    
+    return make_response('ok', 'status changed to ready',
+     { player: player.state }).to_json
   end
   make_response('error', 'failed to start match').to_json
 end
@@ -211,32 +213,12 @@ end
 post '/api/users/:token/location' do
   content_type :json
   data = JSON.parse(request.body.read)  
-  
   user = User.authenticate params[:token]
   
   if user.in_match?
-    player = user.player
-   
-    player.match.end_if_insufficient_players
-    
-    if not user.in_active_match? or player.match.in_bounds? data['latitude'], data['longitude']
-      player.update_location data['latitude'], data['longitude']
-      message = 'location updated'
-      status = :ok
-    else
-      message = 'out of bounds'
-      status = :error
-    end
-    
-    response = make_response(status, message,
-    {
-       latitude:  player.location[:lat], 
-       longitude: player.location[:lng]
-    })
-    
-    if user.in_active_match?
-      response.merge!({ player_state: player.state })
-    end
+    user.update_location(data['lat'], data['lng'])
+    response = make_response(:ok, 'location updated', 
+      user.location.merge({ players: user.players.map { |p| p.state } }))
     return response.to_json
   end
     
@@ -246,11 +228,8 @@ post '/api/users/:token/location' do
     
   #TODO query for loot, traps, etc.
   
-  make_response('ok', 'not in a match.', 
-  { 
-    latitude:   data['latitude'], 
-    longitude:  data['longitude'] 
-  }).to_json
+  make_response('ok', 'location updated (not in match).', 
+    { players: nil, lat: data['lat'], lng: data['lng'] }).to_json
 end
 
 
@@ -266,7 +245,10 @@ post '/api/login' do
   
   user = User.login(data)
     
-  make_response('ok', 'log in successful.', { token:    user.token }).to_json 
+  make_response('ok', 'log in successful.', { 
+    token:  user.token, 
+    matches: user.players.map { |p| p.match.sanitized_with_players }  
+  }).to_json 
 end
 
 
@@ -308,25 +290,29 @@ end
 
 #Accepts: LocationMessage
 #Returns: AttackResponse
-post '/api/users/:token/attack' do
+post '/api/match/:match_id/users/:token/attack' do
   content_type :json
   data = JSON.parse(request.body.read)  
   user = User.authenticate params[:token]
   
-  if user.in_active_match?
-    player = user.player
-    target = player.get_target
-
-    if player.attack_target
-      target.reload
-      return make_response('ok', 'attack successful', {
-        hit: true,
-        target_life: target.life
-      }).to_json 
-    end
-  end
+  state = nil
+  result = false
+  msg = 'attack failed'
+  status = :error
   
-  make_response('error', 'attack failed', { hit: false }).to_json 
+  user.update_location(data['latitude'], data['longitude'])
+  player = user.players.where(match_id: params[:match_id]).first
+  
+  unless player.nil? 
+    result = player.attack_target
+    target = player.get_target
+    player.reload
+    state = player.state
+    msg = 'attack successful'
+    status = :ok
+  end
+
+  make_response(status, msg, { player: state, hit: result }).to_json 
 end
 
 

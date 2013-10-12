@@ -12,10 +12,10 @@ public class UpdateLocationRequest {
 	@JsonProperty("install_id")
 	public String installId;
 	
-	@JsonProperty("latitude")
+	@JsonProperty("lat")
 	public Double latitude;
 	
-	@JsonProperty("longitude")
+	@JsonProperty("lng")
 	public Double longitude;
 	
 	public UpdateLocationRequest(LatLng location, String installId) {

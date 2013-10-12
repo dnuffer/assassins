@@ -9,8 +9,12 @@
        android:id="@+id/event_icon"
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
+       android:src="@drawable/ic_launcher"
        android:paddingRight="8dp"/>
-    
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">  
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,5 +38,28 @@
             android:textAppearance="?android:attr/textAppearanceSmall" />
         
     </LinearLayout>
-
+    
+    <TextView
+            android:id="@+id/health"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:maxLines="3"
+            android:text="health"
+            android:textAlignment="textEnd"
+            android:textColor="?android:attr/textColorSecondaryInverse"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    
+        <TextView
+            android:id="@+id/primary_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:maxLines="3"
+            android:text="health"
+            android:textAlignment="textEnd"
+            android:textColor="?android:attr/textColorSecondaryInverse"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    
+</LinearLayout>
 </LinearLayout>

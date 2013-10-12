@@ -49,16 +49,16 @@ public interface HuntedRestClient {
 	@Accept(MediaType.APPLICATION_JSON)
 	LocationResponse updateLocation(String token, UpdateLocationRequest msg);	
 	
-	@Post("/users/{token}/attack")
+	@Post("/match/{matchId}/users/{token}/attack")
 	@Accept(MediaType.APPLICATION_JSON)
-	AttackResponse attack(String token, UpdateLocationRequest msg);
+	AttackResponse attack(String matchId, String token, UpdateLocationRequest msg);
+
+	@Post("/matches/{matchId}/user/{userToken}/ready")
+	@Accept(MediaType.APPLICATION_JSON)
+	MatchResponse readyForMatch(String matchId, String userToken);
 	
 	//need access to RestTemplate to subvert a bug in HttpUrlConnection
 	//See: http://www.sapandiwakar.in/technical/eofexception-with-spring-rest-template-android/
-	public RestTemplate getRestTemplate();
-
-	
-
-	
+	public RestTemplate getRestTemplate();	
 }
 

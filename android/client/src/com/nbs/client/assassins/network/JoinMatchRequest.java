@@ -9,6 +9,10 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class JoinMatchRequest {
 
+	public JoinMatchRequest(String token, String pw, String match) {
+		userToken = token; matchPassword = pw; matchName = match;
+	}
+
 	@JsonProperty("token")
 	public String userToken;
 

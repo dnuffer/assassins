@@ -9,7 +9,10 @@ import com.google.android.gms.maps.model.LatLng;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class Match {
-
+	
+	@JsonProperty("id")
+	public String id;
+	
 	@JsonProperty("token")
 	public String token;
 
@@ -18,6 +21,9 @@ public class Match {
 	
 	@JsonProperty("name")
 	public String name;
+	
+	@JsonProperty("winner")
+	public String winner;
 	
 	@JsonProperty("start_time")
 	public Long startTime;
@@ -77,5 +83,13 @@ public class Match {
 				+ ", seCorner=" + seCorner + ", attackRange=" + attackRange
 				+ ", huntRange=" + huntRange + ", escapeTime=" + escapeTime
 				+ "]";
+	}
+
+	public Double getAttackRange() {
+		return this.attackRange;
+	}
+
+	public Double getHuntRange() {
+		return this.huntRange;
 	}
 }

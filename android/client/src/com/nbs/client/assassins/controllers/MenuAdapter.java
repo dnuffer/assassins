@@ -22,19 +22,20 @@ import android.widget.BaseAdapter;
 public class MenuAdapter extends BaseAdapter {
 
     private List<MenuListItem> rows;
-
-	public MenuAdapter(Context context, MenuRowData[] items) {
+    private Context context;
+    
+    
+    public MenuAdapter(Context context) {
+    	this.context = context;
+    	rows = new ArrayList<MenuListItem>();
+    }
+    
+    public MenuAdapter(Context context, MenuRowData[] items) {
+    	this.context = context;
         rows = new ArrayList<MenuListItem>();
         for (MenuRowData item : items) {
-            if(item instanceof MenuNavData)
-            	rows.add(new MenuNavItem(LayoutInflater.from(context), (MenuNavData)item));
-            else if(item instanceof MenuHeaderData)
-            	rows.add(new MenuHeaderItem(LayoutInflater.from(context), (MenuHeaderData)item));
-            else if(item instanceof MenuEventData)
-            	rows.add(new MenuEventItem(LayoutInflater.from(context), (MenuEventData)item));
-        }
-        
-        
+        	add(item);
+        } 
 	}
 
     @Override
@@ -51,10 +52,9 @@ public class MenuAdapter extends BaseAdapter {
         return rows.size();
     }
 
- 
     public Object getItem(int position) {
         return rows.get(position);
-    }
+    }                                   
 
     public long getItemId(int position) {
         return position;
@@ -63,5 +63,27 @@ public class MenuAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         return rows.get(position).getView(convertView);
     }
+    
+    public void add(MenuRowData item) {
+    	rows.add(inflate(item));
+    }
+    
+    public void add(MenuRowData item, int index) {
+    	rows.add(index, inflate(item));
+    }
+    
+    private MenuListItem inflate(MenuRowData item) {
+        MenuListItem inflated = null;
+    	if(item instanceof MenuNavData)
+        	inflated = new MenuNavItem(LayoutInflater.from(context), (MenuNavData)item);
+        else if(item instanceof MenuHeaderData)
+        	inflated = new MenuHeaderItem(LayoutInflater.from(context), (MenuHeaderData)item);
+        else if(item instanceof MenuEventData)
+        	inflated = new MenuEventItem(LayoutInflater.from(context), (MenuEventData)item);
+        return inflated;
+    }
 
+	public void clear() {
+		rows = new ArrayList<MenuListItem>();
+	}
 }

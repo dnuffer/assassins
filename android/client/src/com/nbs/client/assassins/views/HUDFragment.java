@@ -22,9 +22,12 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.MatchModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
+import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.AttackResponse;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.UpdateLocationRequest;
@@ -82,10 +85,12 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void refreshHUDData()
 	{
 		Log.d(TAG, "refreshHUDData()");
-		String tRange = PlayerModel.getTargetProximity(getActivity());
-		String eRange = PlayerModel.getEnemyProximity(getActivity());
-		Integer myLife = PlayerModel.getMyLife(getActivity());
-		Integer tLife = PlayerModel.getTargetLife(getActivity());
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Player player  = model.getMyFocusedPlayer();
+		String tRange  = player.targetRange;
+		String eRange  = player.enemyRange;
+		Integer myLife = player.health;
+		Integer tLife  = player.targetHealth;
 
 		targetRange.setText((tRange != null ? getRangeString(tRange) : "UNKNOWN"));
 		enemyRange.setText((eRange != null ? getRangeString(eRange) : "UNKNOWN"));
@@ -121,8 +126,11 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	public long getRemainingEscapeTime() {
-		Integer escapeTimeSeconds = MatchModel.getEscapeTime(getActivity());
-		long lastAttackTime = PlayerModel.getLastSuccessfulAttackTime(getActivity());
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Match match = model.getFocusedMatch();
+		Player player = model.getMyFocusedPlayer();
+		Integer escapeTimeSeconds = match.escapeTime;
+		long lastAttackTime = player.lastAttackTime;
 		if(escapeTimeSeconds == null || lastAttackTime == -1) return 0;
 		else return (long)Math.floor(((lastAttackTime/1000) + escapeTimeSeconds) - (System.currentTimeMillis()/1000));
 	}
@@ -193,8 +201,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		enemyRange.setText(getRangeString(eRange));
 	}
 	
-	private static String getRangeString(String range)
-	{
+	private static String getRangeString(String range) {
 		if(range.equals(PlayerModel.ATTACK_RANGE))
 			return "ATTACK";
 		else if (range.equals(PlayerModel.HUNT_RANGE))
@@ -226,14 +233,17 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		
 		Context c  = getSherlockActivity();
 		AttackResponse response = null;
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		User user = model.getUser();
+		Player player = model.getMyFocusedPlayer();
 		
 		try {
-			response = restClient.attack(UserModel.getToken(c),
-				new UpdateLocationRequest(UserModel.getLocation(c),
-						UserModel.getInstallId(c)));
+			response = restClient.attack(user.getFocusedMatch(), user.getToken(),
+				new UpdateLocationRequest(user.getLocation(),
+						user.getInstallId()));
 			
 			if(response != null && response.hit) {
-				PlayerModel.setLastSuccessfulAttackTime(getActivity(), System.currentTimeMillis());
+				player.setLastSuccessfulAttackTime(System.currentTimeMillis());
 			}
 			
 		}
@@ -248,9 +258,10 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void attackFinished(AttackResponse response)
 	{
 		Log.d(TAG, "attackFinished(" + response + ")");
-		
-		if(response != null && response.ok() && MatchModel.inActiveMatch(getSherlockActivity())) {
-			PlayerModel.setTargetLife(getSherlockActivity(), response.targetLife);
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Player player = model.getMyFocusedPlayer();
+		if(response != null && response.ok() && model.inActiveMatch()) {
+			player.setTargetLife(response.targetLife);
 			Toast.makeText(getSherlockActivity(), response.message, Toast.LENGTH_SHORT).show();
 			if(response.targetLife > 0) {
 				initEscapeTimer(getRemainingEscapeTime());

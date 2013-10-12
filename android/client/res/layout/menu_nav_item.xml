@@ -13,11 +13,11 @@
         android:src="@+drawable/ic_launcher" />
 
     <TextView
-        
         android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="#EEE"
+        android:text="hi"
         android:layout_gravity="center_vertical"
         android:paddingLeft="10dp"
         android:textAppearance="?android:attr/textAppearanceLarge" />

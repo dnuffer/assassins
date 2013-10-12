@@ -7,8 +7,6 @@ import android.view.ViewGroup;
 
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.R.drawable;
-import com.nbs.client.assassins.R.layout;
 import com.nbs.client.assassins.controllers.MenuAdapter;
 import com.nbs.client.assassins.navigation.MenuEventData;
 import com.nbs.client.assassins.navigation.MenuHeaderData;

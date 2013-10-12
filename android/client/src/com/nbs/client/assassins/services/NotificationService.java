@@ -2,12 +2,12 @@ package com.nbs.client.assassins.services;
 
 import java.util.UUID;
 
-import com.google.android.gms.location.LocationRequest;
 import com.googlecode.androidannotations.annotations.EService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.MainActivity_;
-import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
+import com.nbs.client.assassins.models.Repository;
 import com.nbs.client.assassins.utils.Bus;
 
 import android.app.AlarmManager;
@@ -18,13 +18,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.text.format.Time;
 import android.util.Log;
-import android.widget.Toast;
 
 @EService
 public class NotificationService extends Service {
@@ -57,7 +55,8 @@ public class NotificationService extends Service {
 	    		}
 	    		else if(type.equals(PushNotifications.MATCH_END)) {
 	    			String winner = intent.getStringExtra("winner");
-	    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
+	    			Repository model = ((App)getApplication()).getRepo();
+	    			if(winner != null && winner.equals(model.getUser().getUsername())) {
 	    				winner = "you";
 	    			}
 	    			String msg = "The hunt is over. " + winner  + " won.";
@@ -173,7 +172,9 @@ public class NotificationService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "onStartCommand("+intent+")");	
 		String action = intent != null ? intent.getAction() : null;
-
+		
+		Repository model = ((App)getApplication()).getRepo();
+		
 		if(action != null) {
 			if(action.equals(PushNotifications.MATCH_START)) {
 				Bus.post(this, PushNotifications.MATCH_START);
@@ -182,9 +183,13 @@ public class NotificationService extends Service {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 						"Hunted", "The match is about to begin.", intent.getExtras());
 			}
+			//Match starts at specific time
 			else if(action.equals(NotificationService.SET_MATCH_REMINDER_ALARMS)) {
-				setMatchReminderAlarms(this, intent.getLongExtra("start_time", -1));
+				for (Match m : model.getPendingMatches()) {
+					setMatchReminderAlarms(this, m.startTime);
+				}			
 			}
+			//Manually started match
 			else if(action.equals(NotificationService.WAIT_FOR_MATCH_START)) {
 				postNotification(this, UUID.randomUUID().hashCode(), R.drawable.crosshairs, 
 						"Hunted", "Waiting for match to begin...", intent.getExtras());

@@ -7,8 +7,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -34,9 +35,12 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.MatchModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Player;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
+import com.nbs.client.assassins.network.MatchResponse;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.services.GCMUtilities;
 import com.nbs.client.assassins.services.LocationService;
@@ -49,6 +53,9 @@ import com.nbs.client.assassins.views.GameFragment;
 import com.nbs.client.assassins.views.GameFragment_;
 import com.nbs.client.assassins.views.MenuFragment;
 import com.nbs.client.assassins.views.NotificationFragment;
+import com.nbs.client.assassins.views.PlayerStatus;
+import com.nbs.client.assassins.views.PlayerStatus.PlayerReadyListener;
+import com.nbs.client.assassins.views.SideMenu;
 
 /* other phone hardware info that may be relevant to make cheating/abuse difficult
 String serial = android.os.Build.SERIAL;
@@ -63,7 +70,7 @@ String macAddress = wInfo.getMacAddress(); */
  */
 
 @EActivity
-public class MainActivity extends SherlockFragmentActivity {
+public class MainActivity extends SherlockFragmentActivity implements PlayerReadyListener {
 	
 	private final String TAG = "MainActivity";
 	
@@ -75,10 +82,10 @@ public class MainActivity extends SherlockFragmentActivity {
 	GameFragment gameFragment;
 	
 	@ViewById(R.id.left_drawer)
-	View mNavDrawer;
+	SideMenu mNavDrawer;
 	
 	@ViewById(R.id.right_drawer)
-	View mEventDrawer;
+	ListView mEventDrawer;
 	
 	private final String mEventDrawerTitle = "notifications";
 	private String mTitle;
@@ -106,18 +113,35 @@ public class MainActivity extends SherlockFragmentActivity {
     		
     		Log.d(TAG, "onReceive("+intent+")");
     		
-        	if(action != null && action.equals(PushNotifications.MATCH_END)) {
-    			supportInvalidateOptionsMenu();
-    		}
+//    		if(action != null) {
+//    			Repository model = ((App)getApplication()).getRepo();
+//    			if(action.equals(Repository.PLAYER_UPDATED)) {
+//    				Player player = model.getPlayer(intent.getLongExtra("player_id", -1));
+//	    			mNavDrawer.updatePlayer(player);
+//	    		} else if(action.equals(Repository.MATCH_UPDATED)) {
+//	    			Match match = model.getMatch(intent.getStringExtra("match_id"));
+//	    			mNavDrawer.updateMatch(match);
+//	    			supportInvalidateOptionsMenu();
+//	    		} else if(action.equals(Repository.NEW_PLAYER)) {
+//	    			Player player = model.getPlayer(intent.getLongExtra("player_id", -1));
+//	    			mNavDrawer.addPlayer(player);
+//	    		} else if(action.equals(Repository.NEW_MATCH)) {
+//	    			Match match = model.getMatch(intent.getStringExtra("match_id"));
+//	    			mNavDrawer.addMatch(match);
+//	    			supportInvalidateOptionsMenu();
+//	    		}
+//    		}
 	    }
 	};
 	
+	/*
 	private class NavDrawerItemClickListener implements OnItemClickListener {
 	    @Override
 	    public void onItemClick(AdapterView parent, View view, int position, long id) {
 	        Log.d("NavDrawerItemClickListener", "OnItemClick("+position+")");
 	    }
 	}
+	*/
 	
 	private class EventDrawerItemClickListener implements OnItemClickListener {
 	    @Override
@@ -135,8 +159,6 @@ public class MainActivity extends SherlockFragmentActivity {
         super.onCreate(savedInstanceState);
 
     	ProgressDialog progress = ProgressDialog.show(this, "Please wait...", "Waiting for GPS...");
-
-        Log.d(TAG, "onCreate() UserModel" + UserModel._toString(this));
         
         registerForPushNotifications();
 
@@ -154,17 +176,20 @@ public class MainActivity extends SherlockFragmentActivity {
             /** Called when a drawer has settled in a completely closed state. */
             public void onDrawerClosed(View view) {
                 getSupportActionBar().setTitle(mTitle);
-                invalidateOptionsMenu();
+                supportInvalidateOptionsMenu();
             }
 
             /** Called when a drawer has settled in a completely open state. */
             public void onDrawerOpened(View drawerView) {
             	getSupportActionBar().setTitle(drawerView.equals(mNavDrawer) ? 
             			mTitle : mEventDrawerTitle);
-                invalidateOptionsMenu();
- 
+                supportInvalidateOptionsMenu();
             }
         });
+        
+        
+        Repository model = ((App)getApplication()).getRepo();
+        mNavDrawer.setMatches(model.getMatches());
         
     	FragmentTransaction ft;
     	gameFragment = new GameFragment_();
@@ -216,8 +241,8 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	protected void onPause() {
 		Bus.unregister(this,intentReceiver);
-		
-		if(!MatchModel.inMatch(this)) {
+		Repository model = ((App)getApplication()).getRepo();
+		if(!model.inMatch()) {
 			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
 		}
 		
@@ -227,9 +252,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	protected void onResume()  {
 	    Bus.register(this,intentReceiver, intentFilter);
-	    
 	    startService(new Intent(this, LocationService_.class).setAction(LocationService.START_UPDATES));
-	    
 	    super.onResume();
 	}
 
@@ -280,12 +303,13 @@ public class MainActivity extends SherlockFragmentActivity {
         boolean eventDrawerOpen = mDrawerLayout.isDrawerOpen(mEventDrawer);
         //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
 		
-		
-		if(UserModel.loggedIn(this)) {
+        Repository model = ((App)getApplication()).getRepo();
+        User user = model.getUser();
+		if(user.isLoggedIn()) {
 			addLoggedInOptionsMenuItems(menu);
 			menu.removeGroup(NEW_USER_ITEMS);
-			if(MatchModel.inMatch(this)) {
-				Log.d(TAG, MatchModel.getMatch(this).toString());
+			if(model.inMatch()) {
+				Log.d(TAG, model.getFocusedMatch().toString());
 				addInMatchOptionsMenuItems(menu);
 				menu.removeGroup(NOT_IN_MATCH_ITEMS);
 				//menu.add(Menu.NONE, NOTIF_ID, 1, "Messages").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -339,11 +363,13 @@ public class MainActivity extends SherlockFragmentActivity {
 		Response response = null;
 		
 		try {
-			response = restClient.logout(UserModel.getToken(this));
+			Repository model = ((App)getApplication()).getRepo();
+			User user = model.getUser();
+			response = restClient.logout(user.getToken());
 			
 			Log.d(TAG, response.toString());
 
-			UserModel.signOut(this);
+			model.onLogout();
 			this.startService(new Intent(this, NotificationService_.class)
 									.setAction(NotificationService.CANCEL_MATCH_ALARMS));
 			GCMRegistrar.setRegisteredOnServer(this, false);
@@ -365,23 +391,19 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	
 	private void showCreateMatchFragment() {
-		Intent createMatchIntent = new Intent(this, CreateMatchActivity_.class);
-        startActivityForResult(createMatchIntent, CREATE_MATCH_ID);
+        startActivityForResult(new Intent(this, CreateMatchActivity_.class), CREATE_MATCH_ID);
 	}
 
 	private void showJoinMatchFragment() {
-		Intent joinMatchIntent = new Intent(this, JoinMatchActivity_.class);
-		startActivityForResult(joinMatchIntent, JOIN_ID);
+		startActivityForResult(new Intent(this, JoinMatchActivity_.class), JOIN_ID);
 	}
 
 	private void showCreateAccountFragment() {
-		Intent createAccountIntent = new Intent(this, CreateAccountActivity_.class);
-		startActivityForResult(createAccountIntent, CREATE_ACCOUNT_ID);
+		startActivityForResult(new Intent(this, CreateAccountActivity_.class), CREATE_ACCOUNT_ID);
 	}
 	
 	private void showSignInFragment() {
-		Intent loginIntent = new Intent(this, LoginActivity_.class);
-		startActivityForResult(loginIntent, SIGN_IN_ID);
+		startActivityForResult(new Intent(this, LoginActivity_.class), SIGN_IN_ID);
 	}
 	    
 	@AfterInject
@@ -396,6 +418,46 @@ public class MainActivity extends SherlockFragmentActivity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent arg2) {
 		Log.i(TAG, "onActivityResult");
 		supportInvalidateOptionsMenu();
+		
+		if((requestCode == JOIN_ID || requestCode == CREATE_MATCH_ID) && 
+			resultCode == Activity.RESULT_OK) {
+
+			mDrawerLayout.openDrawer(mNavDrawer);
+		}
 		super.onActivityResult(requestCode, resultCode, arg2);
 	}
+
+	@Override
+	public void ready(PlayerStatus view, String matchToken) {
+		sendPlayerReadyStatusToServer(view, matchToken);
+	}
+
+	@Background
+	public void sendPlayerReadyStatusToServer(PlayerStatus view, String matchId) {
+		MatchResponse response = null;
+		try {
+			Repository model = ((App)getApplication()).getRepo();
+			String userToken = model.getUser().getToken();
+			response = restClient.readyForMatch(matchId, userToken);
+			
+			if(response.ok()) {
+				model.updateMatch(response.match);
+				for(Player p : response.match.players) {
+					model.updatePlayer(p);
+				}
+			}
+		} catch(Exception e) {
+			Log.e(TAG, e.getMessage());
+		}
+		onSendPlayerStatusComplete(view, response);
+	}
+	
+	@UiThread
+	public void onSendPlayerStatusComplete(PlayerStatus view, MatchResponse response) {
+		if(response == null || !response.ok()) {
+			view.enableReadyListener();
+			Toast.makeText(this, (response != null ? response.message : "request failed. try again."), 1000).show();
+		}
+	}
+	
 }

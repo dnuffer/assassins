@@ -4,7 +4,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import com.nbs.client.assassins.models.PlayerState;
+import com.nbs.client.assassins.models.Player;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
@@ -16,13 +16,13 @@ public class LocationResponse extends Response {
 	@JsonProperty("longitude")
 	public double longitude;
 	
-	@JsonProperty("player_state")
-	public PlayerState playerState;
+	@JsonProperty("players")
+	public Player[] players;
 
 	@Override
 	public String toString() {
 		return "LocationResponse [latitude=" + latitude + ", longitude="
-				+ longitude + ", playerState=" + playerState + ", status="
+				+ longitude + ", players=" + players + ", status="
 				+ status + ", message=" + message + ", ok()=" + ok() + "]";
 	}
 }

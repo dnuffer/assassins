@@ -7,7 +7,6 @@ import java.util.List;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;

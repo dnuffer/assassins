@@ -30,9 +30,10 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.controllers.CustomizeMatchActivity;
 import com.nbs.client.assassins.controllers.MatchBoundsActivity;
+import com.nbs.client.assassins.models.App;
 import com.nbs.client.assassins.models.Match;
-import com.nbs.client.assassins.models.MatchModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.CreateMatchRequest;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.MatchResponse;
@@ -201,11 +202,13 @@ public class CreateMatchFragment extends SherlockFragment
 			}
 			String passwordStr = password.getText().toString();
 			
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			User user = model.getUser();
 			CreateMatchRequest request = 
-				new CreateMatchRequest(UserModel.getToken(getActivity()),
+				new CreateMatchRequest(user.getToken(),
 					new Match(matchName.getText().toString(), 
 						passwordStr.length() >= MIN_PASSWORD_LEN ? passwordStr : null, 
-					    UserModel.getUsername(getActivity()),
+					    user.getUsername(),
 						(startTime != null ? startTime.toMillis(false) : null), 
 						nwCorner, seCorner, 
 						aRange, hRange, tEscape));			
@@ -269,16 +272,15 @@ public class CreateMatchFragment extends SherlockFragment
 	
 	@UiThread
 	void matchCreatedResult(MatchResponse response, ProgressDialog progress) {
-
 		progress.dismiss();
-		
 		if(response != null) {
 			Toast.makeText(getActivity(), response.message, Toast.LENGTH_SHORT).show();
 			
 			Log.d(TAG, response.toString());
 			
 			if(response.ok() && joinOnCreate.isChecked()) {
-				MatchModel.setMatch(getActivity(), response.match);
+				Repository model = ((App)getActivity().getApplication()).getRepo();
+				model.addMatch(response.match);
 			}
 			
 			mListener.onMatchCreated(response.ok());

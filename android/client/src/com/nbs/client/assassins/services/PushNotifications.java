@@ -1,11 +1,9 @@
 package com.nbs.client.assassins.services;
 
 public class PushNotifications {
+	
 	//player events
-	public static final String TARGET_EVENT = "target_event";
-	public static final String ENEMY_EVENT  = "enemy_event";
-	public static final String NEW_TARGET   = "new_target";
-	public static final String NEW_ENEMY   = "new_enemy";
+	public static final Object PLAYER_EVENT = "player_event";
 	
 	//match events
 	public static final String PLAYER_JOINED_MATCH = "player_joined_match";

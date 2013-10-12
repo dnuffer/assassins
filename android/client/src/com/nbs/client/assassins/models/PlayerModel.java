@@ -14,14 +14,19 @@ import android.util.Log;
 public class PlayerModel extends KeyValueStore {
 	
 	private static final String TAG = "PlayerState";
-	
-	public static final String TARGET_LIFE_CHANGED     = "com.nbs.android.client.TARGET_LIFE_CHANGED";
-	public static final String TARGET_LOCATION_CHANGED = "com.nbs.android.client.TARGET_LOCATION_CHANGED";
-	public static final String TARGET_BEARING_CHANGED  = "com.nbs.android.client.TARGET_BEARING_CHANGED";
-	public static final String TARGET_RANGE_CHANGED    = "com.nbs.android.client.TARGET_RANGE_CHANGED";
+	private static final String PACKAGE = "com.nbs.android.client.";
+	public static final String TARGET_LIFE_CHANGED     = PACKAGE + "TARGET_LIFE_CHANGED";
+	public static final String TARGET_LOCATION_CHANGED = PACKAGE + "TARGET_LOCATION_CHANGED";
+	public static final String TARGET_BEARING_CHANGED  = PACKAGE + "TARGET_BEARING_CHANGED";
+	public static final String TARGET_RANGE_CHANGED    = PACKAGE + "TARGET_RANGE_CHANGED";
 
-	public static final String ENEMY_RANGE_CHANGED     = "com.nbs.android.client.ENEMY_RANGE_CHANGED";
-	public static final String ATTACKED                = "com.nbs.android.client.ATTACKED";
+	public static final String ENEMY_RANGE_CHANGED     = PACKAGE + "ENEMY_RANGE_CHANGED";
+	public static final String ATTACKED                = PACKAGE + "ATTACKED";
+	
+	public static final String TARGET_EVENT = "target_event";
+	public static final String ENEMY_EVENT  = "enemy_event";
+	public static final String NEW_TARGET   = "new_target";
+	public static final String NEW_ENEMY   = "new_enemy";
 	
 	public static final String  HUNT_RANGE = "hunt_range";
 	public static final String  ATTACK_RANGE = "attack_range";
@@ -116,11 +121,11 @@ public class PlayerModel extends KeyValueStore {
 	}
 	
 	//TODO the model should not know about a PlayerStateResponse...  try to combine PlayerState and PlayerStateResponse
-	public static void setPlayerState(Context c, PlayerState state) {
-		if(state == null) { state = new PlayerState(); }
-		PlayerModel.setMyLife(c, state.myLife);
+	public static void setPlayerState(Context c, Player state) {
+		if(state == null) { state = new Player(); }
+		PlayerModel.setMyLife(c, state.health);
 		PlayerModel.setEnemyProximity(c, state.enemyRange);
-		PlayerModel.setTargetLife(c, state.targetLife);
+		PlayerModel.setTargetLife(c, state.targetHealth);
 		PlayerModel.setTargetLocation(c, (state.targetLat == null ? null : new LatLng(state.targetLat, state.targetLng)));
 		PlayerModel.setTargetBearing(c, state.targetBearing);
 		PlayerModel.setTargetProximity(c, state.targetRange);
@@ -146,7 +151,7 @@ public class PlayerModel extends KeyValueStore {
 	public static synchronized void onNewTarget(Context c, Bundle extras) {
 		clearTarget(c);
 		onTargetEvent(c, extras);
-		Bus.post(c,PushNotifications.NEW_TARGET);
+		Bus.post(c,PlayerModel.NEW_TARGET);
 	}
 
 	public static synchronized void onTargetEvent(Context c, Bundle extras) {
@@ -179,7 +184,7 @@ public class PlayerModel extends KeyValueStore {
 		}
 		
 		Log.d(TAG, "onTargetEvent");
-		Bus.post(c,PushNotifications.TARGET_EVENT);
+		Bus.post(c,PlayerModel.TARGET_EVENT);
 	}
 
 	public static void onEnemyEvent(Context c, Bundle extras) {

@@ -21,7 +21,9 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.network.LoginRequest;
@@ -80,14 +82,17 @@ public class CreateAccountFragment extends SherlockFragment {
 			btnCreate.setEnabled(false);
 			
 			LoginRequest msg = new LoginRequest();
+			
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			User user = model.getUser();
 			//TODO: what if they do not have a registrationId yet?
 			msg.gcmRegId = GCMRegistrar.getRegistrationId(getActivity());
-			msg.installId = UserModel.getInstallId(getActivity());		
+			msg.installId = user.getInstallId();		
 			
 			msg.password = password.getText().toString();
 			msg.username = username.getText().toString();
 
-			createAccountInBackground(UserModel.getToken(getActivity()), msg, 
+			createAccountInBackground(user.getToken(), msg, 
 				ProgressDialog.show(getActivity(), 
 					"Please Wait", "Creating account...", true, false));
 		}
@@ -131,10 +136,12 @@ public class CreateAccountFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				UserModel.setUsername(getActivity(), username.getText().toString());
-				UserModel.setToken(getActivity(), response.token);
+				Repository model = ((App)getActivity().getApplication()).getRepo();
+				User user = model.getUser();
+				user.setUsername(username.getText().toString());
+				user.setToken(response.token);
 				
-				Log.d(TAG, UserModel._toString(getActivity()));
+				Log.d(TAG, model.getUser().toString());
 				
 				mListener.onAccountCreated(true);
 				return;

@@ -1,0 +1,44 @@
+
+1) creator auto-joins
+2) on create -> open side menu
+
+
+side menu structure - 
+
+MATCH_NAME  
+ready? / started_at / waiting for all players to be ready... / starting in... / ended: ... winner: ...
+v (expand)
+player/status
+...
+
+Push Notifications
+
+player_joined
+ match_id
+ username
+player_ready
+ match_id
+ username
+ team
+player_status
+ match_id
+ username
+ message
+ lat
+ lng
+ range
+ is_target
+ is_enemy
+ health 
+match_countdown
+ match_id
+ start_time
+match_started
+ match_id
+match_over
+ match_id
+ winner (team or player) 
+
+
+
+

@@ -19,9 +19,14 @@ import com.googlecode.androidannotations.annotations.Click;
 import com.googlecode.androidannotations.annotations.EFragment;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.MatchModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
+import com.nbs.client.assassins.models.MatchMapper;
+import com.nbs.client.assassins.models.Player;
+import com.nbs.client.assassins.models.PlayerMapper;
 import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingProviderImpl;
 import com.nbs.client.assassins.services.LocationService;
@@ -33,6 +38,7 @@ public class GameFragment extends SherlockFragment{
 
 	private static final String TAG = "GameFragment";
 	private static final String HUD_FRAGMENT = "HUDFragment";
+	private static final String MAP_FRAG_ID = null;
 	MapFragment_ mapFragment;
 	HUDFragment_ hudFragment;
 
@@ -40,50 +46,75 @@ public class GameFragment extends SherlockFragment{
 	ImageView toggleCompass;
 	
 	private BearingProvider bearingSource;
-	private IntentFilter intentFilter;
 	
 	public GameFragment() { }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		initMapFragment();
+		registerReceivers();
+	}
 
+	private void initIntentFilters(Player player) {
+		
+		Context context = getActivity();
+
+		unregisterReceivers();
+		
+		IntentFilter playerFilter = new IntentFilter();
+		playerFilter.addAction(player.matchId + "." + player.username);
+		Bus.register(context, focusedPlayerRcvr, playerFilter);
+		
+		IntentFilter gameFilter = new IntentFilter();
+		gameFilter.addAction(player.matchId);
+		Bus.register(context, focusedGameRcvr, gameFilter);
+		
+		IntentFilter userFilter = new IntentFilter();
+        userFilter.addAction(LocationService.LOCATION_UPDATED);
+        userFilter.addAction(User.LOGOUT_COMPLETE);
+        Bus.register(context, userRcvr, userFilter);
+        
+		IntentFilter focusFilter = new IntentFilter();
+        focusFilter.addAction(User.FOCUSED_GAME_CHANGED);
+        Bus.register(context, focusedGameChanged, focusFilter);
+	}
+	
+	private void registerReceivers() {
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+        initIntentFilters(model.getMyFocusedPlayer());
+	}
+	
+	private void unregisterReceivers() {
+		Context context = getActivity();
+		Bus.unregister(context, focusedPlayerRcvr);
+		Bus.unregister(context, focusedGameRcvr);
+		Bus.unregister(context, userRcvr);
+		Bus.unregister(context, focusedGameChanged);
+	}
+
+	private void initMapFragment() {
 		FragmentTransaction ft;
 		mapFragment = new MapFragment_();
 		ft = getActivity().getSupportFragmentManager().beginTransaction();
-		ft.replace(R.id.game_fragment_container, mapFragment);
+		ft.replace(R.id.game_fragment_container, mapFragment, MAP_FRAG_ID);
 		ft.commit();
 		
 		bearingSource = new BearingProviderImpl(getActivity());
 		mapFragment.setBearingProvider(bearingSource);
-		
-        intentFilter = new IntentFilter();
-        
-        intentFilter.addAction(PushNotifications.NEW_TARGET);   
-        intentFilter.addAction(PushNotifications.TARGET_EVENT);
-        intentFilter.addAction(PushNotifications.MATCH_END);
-        
-        intentFilter.addAction(LocationService.LOCATION_UPDATED);
-
-        intentFilter.addAction(PlayerModel.ATTACKED); 
-        intentFilter.addAction(PlayerModel.TARGET_BEARING_CHANGED); 
-        intentFilter.addAction(PlayerModel.TARGET_LIFE_CHANGED); 
-        intentFilter.addAction(PlayerModel.TARGET_LOCATION_CHANGED); 
-        intentFilter.addAction(PlayerModel.TARGET_RANGE_CHANGED);
-        intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED);
-        
-        intentFilter.addAction(UserModel.LOGOUT_COMPLETE);
-
 	}
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		if(MatchModel.inActiveMatch(getSherlockActivity())) {
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		
+		if(model.inActiveMatch()) {
 			showHUD();
-		} else if(MatchModel.inMatch(getSherlockActivity()) && 
-                !MatchModel.inActiveMatch(getSherlockActivity())) {
-			scheduleMatchStartTimeAlarm();
-        }
+		} 
+		
+		schedulePendingMatchStartTimeAlarms();
+		
 		super.onViewCreated(view, savedInstanceState);
 	}
 
@@ -115,20 +146,25 @@ public class GameFragment extends SherlockFragment{
 		}
 	}
 	
-	public void scheduleMatchStartTimeAlarm() {
+	public void schedulePendingMatchStartTimeAlarms() {
 		
 		Context context = getActivity();
-		Log.d(TAG, "schedulingMatchStartTimeAlarm() " + MatchModel.getStartTime(context));
-		AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		//if the match has already begun,  it will fire immediately
-		alarmMngr.set(AlarmManager.RTC_WAKEUP, MatchModel.getStartTime(context), 
-			PendingIntent.getBroadcast(context, 0, new Intent(PushNotifications.MATCH_START), 
-					PendingIntent.FLAG_UPDATE_CURRENT));
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		
+		for (Match m : model.getPendingMatches()) {
+			Log.d(TAG, "schedulingMatchStartTimeAlarm() " + m.startTime);
+			AlarmManager alarmMngr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+			//if the match has already begun,  it will fire immediately
+			alarmMngr.set(AlarmManager.RTC_WAKEUP, m.startTime, 
+				PendingIntent.getBroadcast(context, 0, 
+						new Intent(PushNotifications.MATCH_START).putExtra("match_id", m.id), 
+						PendingIntent.FLAG_UPDATE_CURRENT));
+		}
 	}
 	
 	@Override
 	public void onPause() {
-		Bus.unregister(getSherlockActivity(),getBroadcastReceiver());
+		registerReceivers();
 		super.onPause();
 	}
 
@@ -138,10 +174,11 @@ public class GameFragment extends SherlockFragment{
 		mapFragment.setBearingProvider(bearingSource);
 		//TODO: the bearing is messed up, fix bearing first
 		//if(hudFragment != null) hudFragment.setBearingProvider(bearingSource);
-	    Bus.register(getSherlockActivity(),getBroadcastReceiver(), getIntentFilter());
+	    
+		unregisterReceivers();
 		super.onResume();
 	}
-	
+
 	@Click(R.id.toggle_compass)
 	public void onToggleCompass() {
 		mapFragment.toggleCompassMode();
@@ -150,21 +187,19 @@ public class GameFragment extends SherlockFragment{
 					R.drawable.north : R.drawable.compass);
 	}
 	
-	public void onTargetRangeChanged(Context c, String tRange) {
-		Toast.makeText(c, "your target is in " + tRange
-				 + ".", Toast.LENGTH_SHORT).show();
+	public void onTargetRangeChanged(String tRange) {
 		if(hudIsShowing()) hudFragment.onTargetRangeChanged(tRange);
 		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
 		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
-			mapFragment.showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Player p = model.getMyFocusedPlayer();
+			mapFragment.showTargetLocation(p.getTargetLatLng());
 		} else {
 			mapFragment.hideTargetLocation();
 		}
 	}
 	
-	public void onEnemyRangeChanged(Context c, String eRange) {
-		Toast.makeText(c, "your enemy is within " + eRange
-				 + ".", Toast.LENGTH_SHORT).show();
+	public void onEnemyRangeChanged(String eRange) {
 		if(hudIsShowing()) hudFragment.onEnemyRangeChanged(eRange);
 	}
 	
@@ -181,64 +216,104 @@ public class GameFragment extends SherlockFragment{
 		if(hudIsShowing()) hudFragment.onMyLifeChanged(life);
 	}
 	
+	public void updatePlayer(Player player) {
+		onTargetBearingChanged(Math.round(player.targetBearing));
+
+		mapFragment.onTargetLocationChanged(player.getTargetLatLng());
+		
+		onTargetLifeChanged(player.targetHealth);
+		
+		onTargetRangeChanged(player.targetRange);
+		
+		onMyLifeChanged(player.health);
+		
+		onEnemyRangeChanged(player.enemyRange);
+	}
+	
 	public void onLocationChanged(LatLng location) {
 		mapFragment.onLocationChanged(location);
 	}
 	
-	public BroadcastReceiver getBroadcastReceiver() {
-		return gameBroadcastReceiver;
-	}
+	private BroadcastReceiver focusedGameChanged = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Player p = model.getMyFocusedPlayer();
+			
+			initIntentFilters(p);
+
+			hideHUD();
+			initMapFragment();
+			showHUD();
+			
+			updatePlayer(p);
+			
+		}
+		
+	};
 	
-	public IntentFilter getIntentFilter() {
-		return intentFilter;
-	}
+	private BroadcastReceiver userRcvr = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+        	
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+
+        	User user = model.getUser();
+        	
+			if(action.equals(LocationService.LOCATION_UPDATED)) {
+    			if(model.inActiveMatch()) { 
+    				initIntentFilters(model.getMyFocusedPlayer());
+    			}
+    			onLocationChanged(user.getLocation());
+    		} else if(action.equals(User.LOGOUT_COMPLETE)) {
+    			hideHUD();
+    			mapFragment.onMatchEnd();
+    		}
+		}
+		
+	};
 	
-	private BroadcastReceiver gameBroadcastReceiver = new BroadcastReceiver() {
+	private BroadcastReceiver focusedPlayerRcvr = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+        	String action = intent.getAction();
+        	
+        	Log.d(TAG, "broadcast received [" + action + "]");
+
+        	Player player = PlayerMapper.fromExtras(intent.getExtras());
+        	
+        	updatePlayer(player);
+
+		}
+	};
+	
+	private BroadcastReceiver focusedGameRcvr = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
         	String action = intent.getAction();
         	
         	Log.d(TAG, "broadcast received [" + action + "]");
     		
-    		if(action.equals(PushNotifications.NEW_TARGET)) {
-    			Toast.makeText(context, "you have a new target.", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.TARGET_BEARING_CHANGED)) {
-    			float tBearing = PlayerModel.getTargetBearing(context);
-    			onTargetBearingChanged(Math.round(tBearing));
-    		}
-    		else if(action.equals(PlayerModel.TARGET_LOCATION_CHANGED)) {
-    			LatLng tLoc = PlayerModel.getTargetLocation(context);
-    			mapFragment.onTargetLocationChanged(tLoc);
-    		}
-    		else if(action.equals(PlayerModel.TARGET_LIFE_CHANGED)) {
-    			onTargetLifeChanged(PlayerModel.getTargetLife(context));
-    		}
-    		else if(action.equals(PlayerModel.TARGET_RANGE_CHANGED)) {
-    			onTargetRangeChanged(context, PlayerModel.getTargetProximity(context));
-    		}
-    		else if(action.equals(PlayerModel.ATTACKED)) {
-    			onMyLifeChanged(PlayerModel.getMyLife(context));
-    			Toast.makeText(context, "you were attacked.", Toast.LENGTH_SHORT).show();
-    		}
-    		else if(action.equals(PlayerModel.ENEMY_RANGE_CHANGED)) {
-    			onEnemyRangeChanged(context, PlayerModel.getEnemyProximity(context));
-    		}
-    		else if(action.equals(PushNotifications.MATCH_END)) {
-    			hideHUD();
-    			String winner = intent.getStringExtra("winner");
-    			if(winner != null && winner.equals(UserModel.getUsername(context))) {
+        	Repository model = ((App)getActivity().getApplication()).getRepo();
+        	
+        	User user = model.getUser();
+
+        	Match m = MatchMapper.fromExtras(intent.getExtras());
+        	
+        	if(m.winner != null) {
+        		String winner = m.winner;
+        		hideHUD();
+        		if(m.winner.equals(user.getUsername())) {
     				winner = "you";
     			}
-    			Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
+        		Toast.makeText(context, "The hunt is over. " + winner  + " won.", Toast.LENGTH_LONG).show();
     			mapFragment.onMatchEnd();
-    		} else if(action.equals(LocationService.LOCATION_UPDATED)) {
-    			if(MatchModel.inActiveMatch(context)) { showHUD(); }
-    			onLocationChanged(UserModel.getLocation(context));
-    		} else if(action.equals(UserModel.LOGOUT_COMPLETE)) {
-    			hideHUD();
-    			mapFragment.onMatchEnd();
-    		}
+        	}
         }
 	};
 }

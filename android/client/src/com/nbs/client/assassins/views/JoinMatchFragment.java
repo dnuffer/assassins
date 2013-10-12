@@ -24,8 +24,9 @@ import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.R.id;
 import com.nbs.client.assassins.R.layout;
-import com.nbs.client.assassins.models.MatchModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.JoinMatchRequest;
 import com.nbs.client.assassins.network.MatchResponse;
@@ -84,11 +85,14 @@ public class JoinMatchFragment extends SherlockFragment {
 			hideKeyboard();
 			
 			btnJoin.setEnabled(false);
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			User user = model.getUser();
 			
-			JoinMatchRequest msg = new JoinMatchRequest();
-			msg.userToken = UserModel.getToken(getActivity());
-			msg.matchPassword = passwordStr.length() > 0 ? passwordStr : null;
-			msg.matchName = matchName.getText().toString();
+			JoinMatchRequest msg = new JoinMatchRequest(
+				user.getToken(),
+				(passwordStr.length() > 0 ? passwordStr : null),
+				matchName.getText().toString()
+			);
 			
 			joinMatchInBackground(msg, 
 				ProgressDialog.show(getActivity(),"Please Wait","Joining match...", true, false));
@@ -150,7 +154,8 @@ public class JoinMatchFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				MatchModel.setMatch(getActivity(), response.match);
+				Repository model = ((App)getActivity().getApplication()).getRepo();
+				model.addMatch(response.match);
 				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
 				
 				if(response.match.startTime != null) {

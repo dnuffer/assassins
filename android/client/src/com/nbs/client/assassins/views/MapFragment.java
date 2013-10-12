@@ -30,9 +30,11 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.androidannotations.annotations.EFragment;
-import com.nbs.client.assassins.models.MatchModel;
-import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
+import com.nbs.client.assassins.models.Player;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.sensors.BearingProvider;
 import com.nbs.client.assassins.sensors.BearingReceiver;
 
@@ -103,24 +105,28 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 		Location lastLocation = getBestLastKnownLocation();
 		LatLng lastLatLng;
 		
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		User user = model.getUser();
+		Player player = model.getMyFocusedPlayer();
+		
 		if(lastLocation == null) {
-			lastLatLng = UserModel.getLocation(getSherlockActivity());
+			lastLatLng = user.getLocation();
 		} else {
-			lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+			lastLatLng = new LatLng(lastLocation.getLatitude(), 
+					lastLocation.getLongitude());
 			
-			if(UserModel.getLocation(getSherlockActivity()) == null)
-			{
-				UserModel.setLocation(getSherlockActivity(), lastLocation);
+			if(user.getLocation() == null) {
+				user.setLocation(lastLocation);
 			}	
 		}
 		
 		if(lastLatLng != null) showMyLocation(lastLatLng); 
 		
-		if(MatchModel.inActiveMatch(getSherlockActivity())) {
+		if(model.inActiveMatch()) {
 			showGameBoundary();
 			showRangeCircles(lastLatLng);
 			showDirectionToTarget(tBearing);
-			showTargetLocation(PlayerModel.getTargetLocation(getSherlockActivity()));
+			showTargetLocation(player.getTargetLatLng());
 		}
 		
 		moveMapPositionTo(lastLatLng, DEFAULT_ZOOM, DEFAULT_TILT, true, 2000);
@@ -152,10 +158,13 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	
 	public void toggleCompassMode() {
+		
 		if(getCompassMode() == MODE_BEARING) {
 			MODE = MODE_NORTH;
 			stopSensorUpdates();
-			this.moveMapPositionTo(UserModel.getLocation(getSherlockActivity()), true, 800);
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			User user = model.getUser();
+			this.moveMapPositionTo(user.getLocation(), true, 800);
 			map.getUiSettings().setZoomControlsEnabled(true);
 		} else  {
 			MODE = MODE_BEARING;
@@ -178,8 +187,8 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 	public void onLocationChanged(LatLng location) {
 		showMyLocation(location); 
-		
-		if(MatchModel.inActiveMatch(getActivity())) {
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		if(model.inActiveMatch()) {
 			showRangeCircles(location);
 			showDirectionToTarget(tBearing);
 		} else {
@@ -254,11 +263,13 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	public void showTargetLocation(LatLng tLatLng) {
 		if(tLatLng != null) {
 			if(targetLocationMarker == null) {
+				Repository model = ((App)getActivity().getApplication()).getRepo();
+				Player player = model.getMyFocusedPlayer();
 				targetLocationMarker = getMap().addMarker(
 			    		new MarkerOptions()
 			    		.position(tLatLng)
 			    		.title("target")
-			    		.snippet(PlayerModel.getTargetLife(getActivity()).toString())
+			    		.snippet(String.valueOf(player.getTargetLife()))
 			    		.icon(BitmapDescriptorFactory
 			    				.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 				targetLocationMarker.showInfoWindow();
@@ -284,7 +295,9 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 	}
 
 	public void showRangeCircles(LatLng location) {
-		Double aRange = MatchModel.getAttackRange(getActivity());
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Match match = model.getFocusedMatch();
+		Double aRange = match.getAttackRange();
 		
 		//if in match with attack range, draw/update the circle position
 		if(aRange != null) {
@@ -303,7 +316,7 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 			aRangeCircle.remove();
 		}
 		
-		Double hRange = MatchModel.getHuntRange(getActivity());
+		Double hRange = match.getHuntRange();
 		
 		if(hRange != null) {
 			if(hRangeCircle == null) {
@@ -324,7 +337,9 @@ public class MapFragment extends SherlockMapFragment implements BearingReceiver 
 
 	private void showDirectionToTarget(Float tBearing) {
 		
-		Double aRange = MatchModel.getAttackRange(this.getActivity());
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		Match match = model.getFocusedMatch();
+		Double aRange = match.getAttackRange();
 		
 		if(tBearing != null && myLocationMarker != null && aRange != null) {
 		

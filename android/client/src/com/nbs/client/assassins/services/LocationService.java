@@ -16,9 +16,11 @@ import com.googlecode.androidannotations.annotations.EService;
 import com.googlecode.androidannotations.annotations.SystemService;
 import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.rest.RestService;
-import com.nbs.client.assassins.models.MatchModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.PlayerModel;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
 import com.nbs.client.assassins.network.UpdateLocationRequest;
 import com.nbs.client.assassins.network.LocationResponse;
@@ -77,7 +79,7 @@ public class LocationService extends Service {
         	Log.d(TAG, "received intent [" + action + "]");
         	
         	if(action.equals(PushNotifications.MATCH_COUNTDOWN) || 
-    		   action.equals(UserModel.USER_TOKEN_RECEIVED) || 
+    		   action.equals(User.LOGIN_COMPLETE) || 
     		   action.equals(PushNotifications.MATCH_START)) {
 				sendLocationToServer(locationClient.getLastLocation());
     		}
@@ -164,7 +166,7 @@ public class LocationService extends Service {
         intentFilter.addAction(PlayerModel.ENEMY_RANGE_CHANGED); 
         intentFilter.addAction(PushNotifications.MATCH_END);
         intentFilter.addAction(PushNotifications.MATCH_START);
-        intentFilter.addAction(UserModel.USER_TOKEN_RECEIVED);
+        intentFilter.addAction(User.LOGIN_COMPLETE);
 		
 		locationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
@@ -234,7 +236,10 @@ public class LocationService extends Service {
 
 		if(l == null) return;
 		
-		if(UserModel.hasToken(this))
+		Repository model = ((App)getApplication()).getRepo();
+		User user = model.getUser();
+		
+		if(user.hasToken())
 		{
 			final String regId = GCMRegistrar.getRegistrationId(this);
 			if (regId.equals("")) {
@@ -244,19 +249,18 @@ public class LocationService extends Service {
 
 				UpdateLocationRequest msg = 
 					new UpdateLocationRequest(LocationUtils.locationToLatLng(l), 
-						UserModel.getInstallId(this));
+							user.getInstallId());
 				
 				Log.v(TAG, msg.toString());
 				
-				LocationResponse response = restClient.updateLocation(
-												UserModel.getToken(this), msg);
+				LocationResponse response = restClient.updateLocation(user.getToken(), msg);
 				
 				Log.i(TAG, response.toString());
 				
 				if(response != null) { 
 					if(response.ok()) {
 						Log.i(TAG,"location successfully sent to server.");
-						UserModel.setLocation(this, response.latitude, response.longitude);
+						user.setLocation(response.latitude, response.longitude);
 					}
 					else {
 						showToastOnUiThread(response.message);
@@ -264,14 +268,14 @@ public class LocationService extends Service {
 					
 					//even if the location response is not 'ok' (i.e. out of bounds)
 					//there will be a player state if in an active match
-					if(MatchModel.inActiveMatch(this)) {
-						PlayerModel.setPlayerState(this, response.playerState);
+					for(Player p : response.players) {
+						model.updatePlayer(p);
 					}
 				}
 			}
 		} else {
 			//no token yet, but still broadcast for provisional-user functionality
-			UserModel.setLocation(this, l.getLatitude(), l.getLongitude());
+			user.setLocation(l.getLatitude(), l.getLongitude());
 			Bus.post(this,LocationService.LOCATION_UPDATED);
 		}
 

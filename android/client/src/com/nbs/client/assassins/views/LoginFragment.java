@@ -21,9 +21,10 @@ import com.googlecode.androidannotations.annotations.UiThread;
 import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
-import com.nbs.client.assassins.models.UserModel;
+import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Repository;
+import com.nbs.client.assassins.models.User;
 import com.nbs.client.assassins.network.HuntedRestClient;
-import com.nbs.client.assassins.network.Response;
 import com.nbs.client.assassins.network.LoginRequest;
 import com.nbs.client.assassins.network.LoginResponse;
 
@@ -79,12 +80,14 @@ public class LoginFragment extends SherlockFragment {
 				      Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
 
+			Repository model = ((App)getActivity().getApplication()).getRepo();
+			User user = model.getUser();
 			btnLogin.setEnabled(false);
 			
 			LoginRequest msg = new LoginRequest();
 			//TODO: what if they do not have a registrationId yet?
 			msg.gcmRegId = GCMRegistrar.getRegistrationId(getActivity());
-			msg.installId = UserModel.getInstallId(getActivity());		
+			msg.installId = user.getInstallId();		
 			
 			msg.password = password.getText().toString();
 			msg.username = username.getText().toString();
@@ -123,6 +126,8 @@ public class LoginFragment extends SherlockFragment {
 	void loginResult(LoginResponse response) {
 		
 		asyncProgress.dismiss();
+		Repository model = ((App)getActivity().getApplication()).getRepo();
+		User user = model.getUser();
 		
 		if(response != null) {
 			
@@ -132,18 +137,18 @@ public class LoginFragment extends SherlockFragment {
 			
 			if(response.ok()) {
 				
-				UserModel.setUsername(getActivity(), username.getText().toString());
-				UserModel.setToken(getActivity(), response.token);
+				user.setUsername(username.getText().toString());
+				user.setToken(response.token);
 				
-				Log.d(TAG, UserModel._toString(getActivity()));
+				Log.d(TAG, model.getUser().toString());
 				
 				mListener.onLogin(true);
 				return;
 			}
 		} else {
 			Toast.makeText(getActivity(), "Network error.", Toast.LENGTH_LONG).show();
-			UserModel.setUsername(getActivity(), null);
-			UserModel.setToken(getActivity(), null);
+			user.setUsername(null);
+			user.setToken( null);
 		}
 		
 		btnLogin.setEnabled(true);	

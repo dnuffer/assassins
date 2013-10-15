@@ -78,13 +78,13 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		String type = extras.getString("type");
 		
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		
 		if(type.equals(PushNotifications.PLAYER_EVENT)) {
-			model.updatePlayer(PlayerMapper.fromExtras(extras));
+			model.createOrUpdatePlayer(PlayerMapper.fromExtras(extras));
 		} 
 		else if(type.equals(PushNotifications.PLAYER_JOINED_MATCH)) {
-			model.addPlayer(PlayerMapper.fromExtras(extras));
+			model.createOrUpdatePlayer(PlayerMapper.fromExtras(extras));
 		} 
 		else if(type.equals(PushNotifications.MATCH_END)) {
 			model.onMatchEnd(MatchMapper.fromExtras(extras));
@@ -100,7 +100,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	protected void onRegistered(Context context, String registrationId) {
 		Log.i(TAG, "OnRegistered() received: " + registrationId);
 		
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		User user = model.getUser();
 		
 		//only send the new id if the user already has created an account
@@ -146,7 +146,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	@Override
 	protected void onUnregistered(Context context, String registrationId) {
         
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		if(model.getUser().hasToken()) {
 			GCMRegistrationRequest msg = new GCMRegistrationRequest();
 			msg.installId = model.getUser().getInstallId();

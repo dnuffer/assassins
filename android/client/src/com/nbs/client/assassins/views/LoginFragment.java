@@ -127,7 +127,7 @@ public class LoginFragment extends SherlockFragment {
 	void loginResult(LoginResponse response) {
 		
 		asyncProgress.dismiss();
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
 		User user = model.getUser();
 		
 		if(response != null) {
@@ -143,7 +143,7 @@ public class LoginFragment extends SherlockFragment {
 				
 				if(response.matches != null) {
 					for(Match m : response.matches) {
-						model.addMatch(m);
+						model.createOrUpdateMatch(m);
 					}
 				}
 

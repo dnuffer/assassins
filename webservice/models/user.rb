@@ -37,6 +37,10 @@ class User
     }
   end
 
+  def in_match_with_id? id
+    players.where(match_id: id).length > 0
+  end
+
   def in_match?
     players.select { |p| !p.match.has_begun? or p.match.in_progress? }.count > 0
   end
@@ -119,14 +123,12 @@ class User
     unless name.nil? or pass.nil?
       salt = User.gen_salt
       
-      update_attributes!({
-        salt:        salt,
-        password:    User.hash_password(pass, salt),
-        username:    name,
-        provisional: false
-      })
-      
-      if not persisted?
+      if(not update_attributes({
+          salt:        salt,
+          password:    User.hash_password(pass, salt),
+          username:    name,
+          provisional: false
+        }))
         throw :halt, {
           status: 'error',
           message: 'failed to update user'

@@ -136,7 +136,7 @@ public class CreateAccountFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				Repository model = ((App)(getActivity().getApplication())).getRepo();
+				Repository model = App.getRepo();
 				User user = model.getUser();
 				user.setUsername(username.getText().toString());
 				user.setToken(response.token);

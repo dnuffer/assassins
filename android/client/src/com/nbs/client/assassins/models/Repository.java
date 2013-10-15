@@ -31,13 +31,13 @@ public interface Repository {
 	
 	List<Player> getActivePlayers(String username);
 	
-	void addPlayer(Player player);
+	void createOrUpdatePlayer(Player player);
 	void updatePlayer(Player p);
 	
 	//MATCH
 	Match getFocusedMatch();
 	void setFocusedMatch(String matchId);
-	void addMatch(Match match);
+	void createOrUpdateMatch(Match match);
 	Match getMatch(String matchId);
 	List<Match> getPendingMatches();
 	List<Match> getActiveMatches();

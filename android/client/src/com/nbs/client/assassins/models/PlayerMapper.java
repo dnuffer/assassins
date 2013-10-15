@@ -1,27 +1,28 @@
 package com.nbs.client.assassins.models;
 
+import com.nbs.client.assassins.utils.Extras;
+
 import android.os.Bundle;
 
 public class PlayerMapper {
 
-	public static Player fromExtras(Bundle extras) {
+	public static Player fromExtras(Bundle b) {
 		Player p = new Player();
-		p.id = extras.getLong("id");
-		p.matchId = extras.getString("match_id");
-		p.username = extras.getString("username");
-		p.status = extras.getString("status");
-		p.health = extras.getInt("health");
+		p.id = Extras.getLong(b, "id");
+		p.matchId = b.getString("match_id");
+		p.username = b.getString("username");
+		p.status = b.getString("status");
+		p.health = Extras.getInt(b,"health");
 		return p;
 	}
 
-	public static Bundle toExtras(Player player) {
+	public static Bundle toExtras(Player p) {
 		Bundle b = new Bundle();
-		b.putLong("id", player.id);
-		b.putString("username", player.username);
-		b.putString("status", player.status);
-		b.putInt("health",  player.health);
-		b.putString("match_id", player.matchId);
+		b.putLong("id", p.id);
+		b.putString("username", p.username);
+		b.putString("status", p.status);
+		if(p.health != null) b.putInt("health",  p.health);
+		b.putString("match_id", p.matchId);
 		return b;
 	}
-
 }

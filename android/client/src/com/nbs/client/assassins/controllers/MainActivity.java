@@ -3,6 +3,8 @@
  */
 package com.nbs.client.assassins.controllers;
 
+import java.util.List;
+
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -36,6 +38,7 @@ import com.googlecode.androidannotations.annotations.ViewById;
 import com.googlecode.androidannotations.annotations.rest.RestService;
 import com.nbs.client.assassins.R;
 import com.nbs.client.assassins.models.App;
+import com.nbs.client.assassins.models.Match;
 import com.nbs.client.assassins.models.Player;
 import com.nbs.client.assassins.models.Repository;
 import com.nbs.client.assassins.models.User;
@@ -184,13 +187,10 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
             public void onDrawerOpened(View drawerView) {
             	getSupportActionBar().setTitle(drawerView.equals(mNavDrawer) ? 
             			mTitle : mEventDrawerTitle);
+            	refreshSideMenu();
                 supportInvalidateOptionsMenu();
             }
         });
-        
-        
-        Repository model = ((App)getApplication()).getRepo();
-        mNavDrawer.setMatches(model.getMatches());
         
     	FragmentTransaction ft;
     	gameFragment = new GameFragment_();
@@ -198,9 +198,22 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
     	ft.replace(R.id.fragment_container, gameFragment);
     	ft.commit();
  		
+    	refreshSideMenu();
+    	
  		progress.dismiss();
     }
     
+    @Background
+	public void refreshSideMenu() {
+    	Repository model = App.getRepo();
+    	setSideMenuMatches(model.getMatches());	
+	}
+    
+    @UiThread
+	public void setSideMenuMatches(List<Match> matches) {
+		mNavDrawer.setMatches(matches);
+	}
+
 	private void registerForPushNotifications() {
     	GCMRegistrar.checkDevice(this);
         GCMRegistrar.checkManifest(this);
@@ -242,7 +255,7 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
 	@Override
 	protected void onPause() {
 		Bus.unregister(this,intentReceiver);
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		if(!model.inMatch()) {
 			startService(new Intent(this, LocationService_.class).setAction(LocationService.STOP_UPDATES));
 		}
@@ -304,7 +317,7 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
         boolean eventDrawerOpen = mDrawerLayout.isDrawerOpen(mEventDrawer);
         //menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
 		
-        Repository model = ((App)getApplication()).getRepo();
+        Repository model = App.getRepo();
         User user = model.getUser();
 		if(user.isLoggedIn()) {
 			addLoggedInOptionsMenuItems(menu);
@@ -437,7 +450,7 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
 	public void sendPlayerReadyStatusToServer(PlayerStatus view, String matchId) {
 		PlayerResponse response = null;
 		try {
-			Repository model = ((App)getApplication()).getRepo();
+			Repository model = App.getRepo();
 			String userToken = model.getUser().getToken();
 			response = restClient.readyForMatch(matchId, userToken);
 			
@@ -455,6 +468,8 @@ public class MainActivity extends SherlockFragmentActivity implements PlayerRead
 		if(response == null || !response.ok()) {
 			view.enableReadyListener();
 			Toast.makeText(this, (response != null ? response.message : "request failed. try again."), 1000).show();
+		} else {
+			Toast.makeText(this, "status changed to " + response.player.status, 1000).show();
 		}
 	}
 	

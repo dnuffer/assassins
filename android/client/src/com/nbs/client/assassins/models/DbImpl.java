@@ -7,12 +7,15 @@ import java.util.List;
 import java.util.Locale;
 
 import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.google.android.gms.maps.model.LatLng;
  
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Bundle;
 import android.util.Log;
  
 public class DbImpl extends SQLiteOpenHelper implements Db {
@@ -81,6 +84,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 				KEY_NAME          + " TEXT," +
 				KEY_WINNER        + " TEXT," +
 				KEY_START_TIME    + " INT," +
+				KEY_END_TIME      + " INT," +
 				KEY_CNTDWN_SEC    + " INT," +
 				KEY_NW_CORNER_LAT + " REAL," +
 				KEY_NW_CORNER_LNG + " REAL," +
@@ -118,6 +122,14 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     			KEY_MESSAGE    + " TEXT," + 
     			KEY_CREATED_AT + " DATETIME" + 
     		")";
+
+	private static final Integer INT_NULL_VALUE = Integer.MIN_VALUE;
+
+	private static final Long LONG_NULL_VALUE = Long.MIN_VALUE;
+
+	private static final Double DOUBLE_NULL_VALUE = Double.MIN_VALUE;
+
+	private static final Float FLOAT_NULL_VALUE = Float.MIN_VALUE;
     
     public DbImpl(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -150,13 +162,128 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
             db.close();
     }
  
-    private String getDateTime() {
+	private ContentValues matchToContentValues(Match m) {
+		ContentValues values = new ContentValues();
+        values.put(KEY_NAME, m.name);
+        values.put(KEY_ID, m.id);           
+        //values.put(KEY_TYPE, "assassins", "bounty", "thieves");         
+        //values.put(KEY_STATUS, ?);        
+        values.put(KEY_TOKEN,   m.token);       
+        values.put(KEY_CREATOR, m.creator);            
+		values.put(KEY_WINNER,  m.winner);      
+		values.put(KEY_START_TIME,    toDbLong(m.startTime));
+		values.put(KEY_END_TIME,      toDbLong(m.endTime));
+		values.put(KEY_CNTDWN_SEC,    toDbInt(m.countdownSec));   
+		values.put(KEY_NW_CORNER_LAT, toDbDouble(m.nwCorner.lat));
+		values.put(KEY_NW_CORNER_LNG, toDbDouble(m.nwCorner.lng));
+		values.put(KEY_SE_CORNER_LAT, toDbDouble(m.seCorner.lat));
+		values.put(KEY_SE_CORNER_LNG, toDbDouble(m.seCorner.lng));
+		values.put(KEY_ATTACK_RANGE,  toDbDouble(m.attackRange));
+		values.put(KEY_HUNT_RANGE,    toDbDouble(m.huntRange));
+		values.put(KEY_ESCAPE_TIME,   toDbInt(m.escapeTime));
+        values.put(KEY_CREATED_AT,    getDateTime());
+		return values;
+	}
+
+	private Match matchFromCursor(Cursor c) {
+		Match m = new Match();
+		m.id = c.getString(c.getColumnIndex(KEY_ID));
+		m.name = c.getString(c.getColumnIndex(KEY_NAME));
+		m.startTime = fromDbLong(c,KEY_START_TIME);
+		m.endTime = fromDbLong(c,KEY_END_TIME);
+		m.winner = c.getString(c.getColumnIndex(KEY_WINNER));
+		m.creator = c.getString(c.getColumnIndex(KEY_CREATOR));
+		m.countdownSec = fromDbInt(c,KEY_CNTDWN_SEC);
+		m.attackRange = fromDbDouble(c,KEY_ATTACK_RANGE);
+		m.huntRange = fromDbDouble(c,KEY_HUNT_RANGE);
+		m.escapeTime = fromDbInt(c,KEY_ESCAPE_TIME);
+		m.token = c.getString(c.getColumnIndex(KEY_TOKEN));
+		m.players = getPlayersInMatch(m.id); 
+		m.nwCorner = new LatLngData(fromDbDouble(c,KEY_NW_CORNER_LAT), 
+				fromDbDouble(c,KEY_NW_CORNER_LNG));
+		m.seCorner = new LatLngData(fromDbDouble(c,KEY_SE_CORNER_LAT), 
+				fromDbDouble(c,KEY_SE_CORNER_LNG));
+		return m;
+	}
+	
+	private synchronized Integer toDbInt(Integer v) {
+		return v == null ? INT_NULL_VALUE : v;
+	}
+	
+	private synchronized Float toDbFloat(Float v) {
+		return v == null ? FLOAT_NULL_VALUE : v;
+	}
+
+	private synchronized Double toDbDouble(Double v) {
+		return v == null ? DOUBLE_NULL_VALUE : v;
+	}
+
+	private synchronized Long toDbLong(Long v) {
+		return v == null ? LONG_NULL_VALUE : v;
+	}
+	
+	private Double fromDbDouble(Cursor c, String key) {
+		double v = c.getDouble(c.getColumnIndex(key));
+		return v == DOUBLE_NULL_VALUE ? null : v;
+	}
+
+	private Integer fromDbInt(Cursor c, String key) {
+		int v = c.getInt(c.getColumnIndex(key));
+		return v == INT_NULL_VALUE ? null : v;
+	}
+
+	private Long fromDbLong(Cursor c, String key) {
+		long v = c.getLong(c.getColumnIndex(key));
+		return v == LONG_NULL_VALUE ? null : v;
+	}
+	
+    private synchronized Float fromDbFloat(Cursor c, String key) {
+		float v = c.getFloat(c.getColumnIndex(key));
+		return v == FLOAT_NULL_VALUE ? null : v;
+	}
+
+	private ContentValues playerToContentValues(Player p) {
+		ContentValues values = new ContentValues();
+		values.put(KEY_USERNAME, p.username);
+		values.put(KEY_MATCH_ID, p.matchId);
+        values.put(KEY_HEALTH, toDbInt(p.health));
+		values.put(KEY_STATUS, p.status);
+        values.put(KEY_TEAM , p.team);         
+		values.put(KEY_ROLE, p.role);          
+		values.put(KEY_LAT, toDbDouble(p.lat));              
+		values.put(KEY_LNG, toDbDouble(p.lng));             
+		values.put(KEY_TARGET_LAT, toDbDouble(p.targetLat));      
+		values.put(KEY_TARGET_LNG, toDbDouble(p.targetLng));      
+		values.put(KEY_TARGET_BRG, toDbFloat(p.targetBearing));       
+		values.put(KEY_TARGET_RNG, p.targetRange);      
+		values.put(KEY_ENEMY_RNG, p.enemyRange);
+		return values;
+	}
+	
+	private Player playerFromCursor(Cursor c) {
+		Player p = new Player();
+		p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
+		p.id = fromDbLong(c,(KEY_ID));
+		p.matchId = c.getString(c.getColumnIndex(KEY_MATCH_ID));
+		p.health = fromDbInt(c,(KEY_HEALTH));
+		p.status = c.getString(c.getColumnIndex(KEY_STATUS));
+		p.team = c.getString(c.getColumnIndex(KEY_TEAM));
+		p.role = c.getString(c.getColumnIndex(KEY_ROLE));
+		p.targetLat = fromDbDouble(c,(KEY_TARGET_LAT));
+		p.targetLng = fromDbDouble(c,(KEY_TARGET_LNG));
+		p.targetBearing = fromDbFloat(c,(KEY_TARGET_BRG));
+		p.targetRange = c.getString(c.getColumnIndex(KEY_TARGET_RNG));
+		p.enemyRange = c.getString(c.getColumnIndex(KEY_ENEMY_RNG));
+		return p;
+	}
+
+	private String getDateTime() {
         SimpleDateFormat dateFormat = new SimpleDateFormat(
                 "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         Date date = new Date();
         return dateFormat.format(date);
     }
- 
+
     // ------------------------ "matches" table methods ----------------//
  
     /* (non-Javadoc)
@@ -166,34 +293,8 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 	public long createMatch(Match m) {
         SQLiteDatabase db = this.getWritableDatabase();
  
-        ContentValues values = new ContentValues();
-        values.put(KEY_NAME, m.name);
-        values.put(KEY_ID, m.id);           
-        //values.put(KEY_TYPE, "assassins", "bounty", "thieves");         
-        //values.put(KEY_STATUS, ?);        
-        values.put(KEY_TOKEN, m.token);       
-        values.put(KEY_CREATOR, m.creator);            
-		values.put(KEY_WINNER, m.winner);      
-		values.put(KEY_START_TIME, m.startTime);
-		values.put(KEY_END_TIME, m.endTime);
-		values.put(KEY_CNTDWN_SEC, m.countdownSec);   
-		values.put(KEY_NW_CORNER_LAT, m.nwCorner.lat);
-		values.put(KEY_NW_CORNER_LNG, m.nwCorner.lng);
-		values.put(KEY_SE_CORNER_LAT, m.seCorner.lat);
-		values.put(KEY_SE_CORNER_LNG, m.seCorner.lng);
-		values.put(KEY_ATTACK_RANGE, m.attackRange);
-		values.put(KEY_HUNT_RANGE, m.huntRange);
-		values.put(KEY_ESCAPE_TIME, m.escapeTime);
-        values.put(KEY_CREATED_AT, getDateTime());
-        //TODO: enumerate match fields
- 
+        ContentValues values = matchToContentValues(m);
         long id = db.insert(TABLE_MATCHES, null, values);
- 
-        if(m.players != null) {
-	        for (Player p : m.players) {
-	            createPlayer(m.id, p);
-	        }
-        }
  
         return id;
     }
@@ -205,25 +306,13 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 	public long createPlayer(String matchId, Player p) {
     	SQLiteDatabase db = this.getWritableDatabase();
     	
-    	ContentValues values = new ContentValues();
-        values.put(KEY_USERNAME,p.username);
-        values.put(KEY_MATCH_ID, matchId);
-        values.put(KEY_HEALTH, p.health);
-		values.put(KEY_STATUS, p.status);
-        values.put(KEY_TEAM , p.team);         
-		values.put(KEY_ROLE,p.role);          
-		values.put(KEY_LAT,p.lat);              
-		values.put(KEY_LNG,p.lng);             
-		values.put(KEY_TARGET_LAT ,p.targetLat);      
-		values.put(KEY_TARGET_LNG ,p.targetLng);      
-		values.put(KEY_TARGET_BRG,p.targetBearing);       
-		values.put(KEY_TARGET_RNG ,p.targetRange);      
-		values.put(KEY_ENEMY_RNG ,p.enemyRange);       
-        values.put(KEY_CREATED_AT, getDateTime());
+    	p.matchId = matchId;
+    	ContentValues values = playerToContentValues(p);
         
         long id = db.insert(TABLE_PLAYERS, null, values);
         return id;
     }
+
  
     /* (non-Javadoc)
 	 * @see com.nbs.client.assassins.models.Db2#getMatch(java.lang.String)
@@ -233,19 +322,23 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         SQLiteDatabase db = this.getReadableDatabase();
  
         String selectQuery = "SELECT  * FROM " + TABLE_MATCHES + " WHERE "
-                + KEY_ID + " = " + matchId;
+                + KEY_ID + " = '" + matchId + "'";
  
         Log.e(TAG, selectQuery);
  
         Cursor c = db.rawQuery(selectQuery, null);
- 
-        if (c != null)
-            c.moveToFirst();
+
+        Match m = null;
         
-        Match m = new Match();
-        m.id = c.getString(c.getColumnIndex(KEY_ID));
-        m.name = c.getString(c.getColumnIndex(KEY_NAME));
-        //TODO: enumerate match fields
+        if (c != null && c.moveToFirst()) {
+        	Bundle b = c.getExtras();
+        	for(String key : b.keySet()) {
+        		Log.d(TAG, "match cursor as extras");
+        		Log.d(TAG, key + " : " + b.get(key));
+        	}
+        	
+        	m = matchFromCursor(c);
+        }
  
         return m;
     }
@@ -266,12 +359,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         // looping through all rows and adding to list
         if (c.moveToFirst()) {
             do {
-            	Match m = new Match();
-                m.id = c.getString(c.getColumnIndex(KEY_ID));
-            	m.name = c.getString(c.getColumnIndex(KEY_NAME));
-                m.players = getPlayersInMatch(m.id); 
-                //TODO: enumerate match fields
-                
+            	Match m = matchFromCursor(c);
                 matches.add(m);
             } while (c.moveToNext());
         }
@@ -299,24 +387,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
 	public int updateMatch(Match m) {
         SQLiteDatabase db = this.getWritableDatabase();
  
-        ContentValues values = new ContentValues();
-        values.put(KEY_NAME, m.name);
-        values.put(KEY_ID, m.id);           
-        //values.put(KEY_TYPE, "assassins", "bounty", "thieves");         
-        //values.put(KEY_STATUS, ?);        
-        values.put(KEY_TOKEN, m.token);       
-        values.put(KEY_CREATOR, m.creator);            
-		values.put(KEY_WINNER, m.winner);      
-		values.put(KEY_START_TIME, m.startTime);
-		values.put(KEY_END_TIME, m.endTime);
-		values.put(KEY_CNTDWN_SEC, m.countdownSec);   
-		values.put(KEY_NW_CORNER_LAT, m.nwCorner.lat);
-		values.put(KEY_NW_CORNER_LNG, m.nwCorner.lng);
-		values.put(KEY_SE_CORNER_LAT, m.seCorner.lat);
-		values.put(KEY_SE_CORNER_LNG, m.seCorner.lng);
-		values.put(KEY_ATTACK_RANGE, m.attackRange);
-		values.put(KEY_HUNT_RANGE, m.huntRange);
-		values.put(KEY_ESCAPE_TIME, m.escapeTime);
+        ContentValues values = matchToContentValues(m);
         // updating row
         return db.update(TABLE_MATCHES, values, KEY_ID + " = ?",
                 new String[] { m.id });
@@ -342,7 +413,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     	
         List<Player> players = new ArrayList<Player>();
         String selectQuery = "SELECT  * FROM " + TABLE_PLAYERS + " WHERE "
-                + KEY_MATCH_ID + " = " + matchId;
+                + KEY_MATCH_ID + " = '" + matchId + "'";
  
         Log.e(TAG, selectQuery);
  
@@ -352,11 +423,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         // looping through all rows and adding to list
         if (c.moveToFirst()) {
             do {
-            	Player p = new Player();
-                p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
-                p.id = c.getLong(c.getColumnIndex(KEY_ID));
-                //TODO: enumerate player fields
-                
+            	Player p = playerFromCursor(c);
                 players.add(p);
             } while (c.moveToNext());
         }
@@ -370,25 +437,12 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
     @Override
 	public int updatePlayer(Player p) {
         SQLiteDatabase db = this.getWritableDatabase();
- 
-        ContentValues values = new ContentValues();
-        values.put(KEY_USERNAME,p.username);
-        values.put(KEY_HEALTH, p.health);
-		values.put(KEY_STATUS, p.status);
-        values.put(KEY_TEAM , p.team);         
-		values.put(KEY_ROLE,p.role);          
-		values.put(KEY_LAT,p.lat);              
-		values.put(KEY_LNG,p.lng);             
-		values.put(KEY_TARGET_LAT ,p.targetLat);      
-		values.put(KEY_TARGET_LNG ,p.targetLng);      
-		values.put(KEY_TARGET_BRG,p.targetBearing);       
-		values.put(KEY_TARGET_RNG ,p.targetRange);      
-		values.put(KEY_ENEMY_RNG ,p.enemyRange);  
- 
-        // updating row
-        return db.update(TABLE_PLAYERS, values, KEY_ID + " = ?",
-                new String[] { String.valueOf(p.id) });
+        ContentValues values = playerToContentValues(p);  
+        return db.update(TABLE_PLAYERS, values, KEY_MATCH_ID + " = ? AND " + KEY_USERNAME + " = ?",
+                new String[] { p.matchId,  p.username });
     }
+
+
     
     /* (non-Javadoc)
 	 * @see com.nbs.client.assassins.models.Db2#deletePlayer(long)
@@ -411,14 +465,12 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
  
         Cursor c = db.rawQuery(selectQuery, null);
  
-        if (c != null)
-            c.moveToFirst();
+        Player p = null;
         
-        Player p = new Player();
-        p.id = c.getLong(c.getColumnIndex(KEY_ID));
-        p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
-        //TODO: enumerate match fields
- 
+        if (c != null && c.moveToFirst()) {
+        	p = playerFromCursor(c);
+        }
+        if(p != null) Log.d(TAG, p.toString());
         return p;
 		
 	}
@@ -437,11 +489,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         // looping through all rows and adding to list
         if (c.moveToFirst()) {
             do {
-            	Player p = new Player();
-                p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
-                p.id = c.getLong(c.getColumnIndex(KEY_ID));
-                //TODO: enumerate player fields
-                
+            	Player p = playerFromCursor(c);
                 players.add(p);
             } while (c.moveToNext());
         }
@@ -454,7 +502,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         SQLiteDatabase db = this.getReadableDatabase();
         
         String selectQuery = "SELECT  * FROM " + TABLE_PLAYERS + " WHERE "
-                + KEY_USERNAME + " = '" + username + "' and " + KEY_MATCH_ID + " = " + matchId;
+                + KEY_USERNAME + " = '" + username + "' AND " + KEY_MATCH_ID + " = '" + matchId + "'";
  
         Log.e(TAG, selectQuery);
  
@@ -464,10 +512,7 @@ public class DbImpl extends SQLiteOpenHelper implements Db {
         
         try {
 	        if (c != null && c.moveToFirst()) {
-		        p = new Player();
-		        p.id = c.getLong(c.getColumnIndex(KEY_ID));
-		        p.username = c.getString(c.getColumnIndex(KEY_USERNAME));
-		        //TODO: enumerate player fields
+		        p = playerFromCursor(c);
 	        }
         } catch (Exception e) {
         	Log.e(TAG, e.getMessage());

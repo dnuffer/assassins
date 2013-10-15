@@ -85,15 +85,15 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	public void refreshHUDData()
 	{
 		Log.d(TAG, "refreshHUDData()");
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
-		Player player  = model.getMyFocusedPlayer();
-		String tRange  = player.targetRange;
-		String eRange  = player.enemyRange;
-		Integer myLife = player.health;
-		Integer tLife  = player.targetHealth;
+		Repository model = App.getRepo();
+		Player p  = model.getMyFocusedPlayer();
+		String tRange  = p.targetRange;
+		String eRange  = p.enemyRange;
+		Integer myLife = p.health;
+		Integer tLife  = p.targetHealth;
 
-		targetRange.setText((tRange != null ? getRangeString(tRange) : "UNKNOWN"));
-		enemyRange.setText((eRange != null ? getRangeString(eRange) : "UNKNOWN"));
+		targetRange.setText(getRangeString(tRange));
+		enemyRange.setText(getRangeString(eRange));
 		lifeView.setProgress((myLife != null ? myLife : 0));
 		tLifeView.setProgress((tLife != null ? tLife : 0));
 		
@@ -126,7 +126,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	public long getRemainingEscapeTime() {
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
 		Match match = model.getFocusedMatch();
 		Player player = model.getMyFocusedPlayer();
 		if(match.escapeTime == null || player.lastAttackTime == null) return 0;
@@ -173,21 +173,21 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 
 	@Override
-	public void onBearingChanged(float bearing) {
+	public void onBearingChanged(Float bearing) {
 		Log.d(TAG, Float.toString(bearing));
 	}
 	
-	public void onTargetBearingChanged(float tBearing) {
+	public void onTargetBearingChanged(Float tBearing) {
 		Log.d(TAG, "onTargetBearingChanged("+tBearing+")");
-		tBearingView.setText(Float.toString(tBearing));
+		if(tBearing != null) tBearingView.setText(Float.toString(tBearing));
 	}
 	
-	public void onMyLifeChanged(int life) {
-		lifeView.setProgress(life);
+	public void onMyLifeChanged(Integer life) {
+		if(life != null) lifeView.setProgress(life);
 	}
 	
-	public void onTargetLifeChanged(int tLife) {
-		tLifeView.setProgress(tLife);
+	public void onTargetLifeChanged(Integer tLife) {
+		if(tLife != null) tLifeView.setProgress(tLife);
 	}
 	
 	public void onTargetRangeChanged(String tRange) {
@@ -200,7 +200,10 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 	}
 	
 	private static String getRangeString(String range) {
-		if(range.equals(PlayerModel.ATTACK_RANGE))
+		if(range == null) {
+			return "?";
+		}
+		else if(range.equals(PlayerModel.ATTACK_RANGE))
 			return "ATTACK";
 		else if (range.equals(PlayerModel.HUNT_RANGE))
 			return "HUNT";
@@ -231,7 +234,7 @@ public class HUDFragment extends SherlockFragment implements BearingReceiver {
 		
 		Context c  = getSherlockActivity();
 		AttackResponse response = null;
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
 		User user = model.getUser();
 		Player player = model.getMyFocusedPlayer();
 		

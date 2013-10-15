@@ -8,13 +8,13 @@ import android.app.Application;
 mailTo = "camsoupa@gmail.com")
 public class App extends Application {
   
-	private Repository repo;
+	private static Repository repo;
 	
 	@Override
     public void onCreate() {
         super.onCreate();
-
         ACRA.init(this);
+        repo = new RepositoryImpl(this.getApplicationContext());
     }
     
 	//for mocking
@@ -24,12 +24,7 @@ public class App extends Application {
 		this.repo = db;
 	}
 	
-    public synchronized Repository getRepo() {
-    	if (repo == null) {
-    		repo = new RepositoryImpl(this.getApplicationContext());
-    	}
-    	
+    public static synchronized Repository getRepo() {
     	return repo;
     }
-    
 }

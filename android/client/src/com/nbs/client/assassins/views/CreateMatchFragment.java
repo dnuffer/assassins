@@ -57,59 +57,44 @@ public class CreateMatchFragment extends SherlockFragment
 
 	private static final int GAMEPLAY_ACTIVITY_REQUEST = 0;
 	private static final int BOUNDS_ACTIVITY_REQUEST = 1;
-	
-    OnMatchCreatedListener mListener;
-	
-	@ViewById(R.id.create_match)
-	Button btnCreate;
-	
-	@ViewById(R.id.edit_match_name)
-	EditText matchName;
 
+	public OnMatchCreatedListener mListener;
+	@ViewById(R.id.create_match)
+	public Button btnCreate;
+	@ViewById(R.id.edit_match_name)
+	public EditText matchName;
 	@ViewById(R.id.manual_start)
-	CheckBox manualStart;
-	
+	public CheckBox manualStart;
 	@ViewById(R.id.join_on_create)
-	CheckBox joinOnCreate;
-	
+	public CheckBox joinOnCreate;
 	@ViewById(R.id.edit_match_password)
-	EditText password;
-	
+	public EditText password;
 	@ViewById(R.id.boundaries)
-	Button selectBoundaries;
-	
+	public Button selectBoundaries;
 	@ViewById(R.id.gameplay)
-	Button gameplaySettings;
-	
+	public Button gameplaySettings;
 	@ViewById(R.id.start_date)
-	Button startDate;
-	
+	public Button startDate;
 	@ViewById(R.id.start_time)
-	Button startTime;
-	
-	//@ViewById(R.id.join_when_create_match)
-	//Switch join;
+	public Button startTime;
 	
 	@RestService
-	HuntedRestClient restClient;
+	public HuntedRestClient restClient;
+	
+	public Integer minute;
+	public Integer hourOfDay;
+	public Integer monthDay;
+	public Integer month;
+	public Integer year;
+	public LatLng nwCorner;
+	public LatLng seCorner;
+	public Double aRange;
+	public Double hRange;
+	public Integer tEscape;
+	//@ViewById(R.id.join_when_create_match)
+	//Switch join;
 
 	//match parameters
-	
-	//start time
-	private Integer minute;
-	private Integer hourOfDay;
-	private Integer monthDay;
-	private Integer month;
-	private Integer year;
-
-	//bounds
-	private LatLng nwCorner;
-	private LatLng seCorner;
-
-	//gameplay settings
-	private Double aRange;
-	private Double hRange;
-	private Integer tEscape;
 
 	public CreateMatchFragment() {}
 	
@@ -202,7 +187,7 @@ public class CreateMatchFragment extends SherlockFragment
 			}
 			String passwordStr = password.getText().toString();
 			
-			Repository model = ((App)getActivity().getApplication()).getRepo();
+			Repository model = App.getRepo();
 			User user = model.getUser();
 			CreateMatchRequest request = 
 				new CreateMatchRequest(user.getToken(),
@@ -279,8 +264,10 @@ public class CreateMatchFragment extends SherlockFragment
 			Log.d(TAG, response.toString());
 			
 			if(response.ok() && joinOnCreate.isChecked()) {
-				Repository model = ((App)getActivity().getApplication()).getRepo();
-				model.addMatch(response.match);
+				Repository model = App.getRepo();
+				model.createOrUpdateMatch(response.match);
+				Log.d(TAG, "player from match: " + model.getMyPlayer(response.match.id));
+				
 			}
 			
 			mListener.onMatchCreated(response.ok());
@@ -339,7 +326,7 @@ public class CreateMatchFragment extends SherlockFragment
 
 	@Override
 	public void onDatePicked(int year, int monthOfYear, int dayOfMonth) {
-		startDate.setText(monthOfYear + "/" + dayOfMonth + "/" + year);
+		startDate.setText(TimeUtils.formatDate(year, monthOfYear, dayOfMonth));
 		startDate.setTextColor(getResources()
 				.getColor(R.color.abs__bright_foreground_holo_light));
 		this.year = year;
@@ -347,14 +334,17 @@ public class CreateMatchFragment extends SherlockFragment
 		this.month = monthOfYear;
 	}
 
+
 	@Override
 	public void onTimePicked(int hourOfDay, int minute) {
-		startTime.setText(hourOfDay%12 + ":" + minute + (hourOfDay >= 12 ? " pm" : " am"));
+		startTime.setText(TimeUtils.formatTime(hourOfDay, minute));
 		startTime.setTextColor(getResources()
 				.getColor(R.color.abs__bright_foreground_holo_light));
 		this.hourOfDay = hourOfDay;
 		this.minute = minute;
 	}
+
+
 	
 	@AfterInject
 	public void afterInjection() {

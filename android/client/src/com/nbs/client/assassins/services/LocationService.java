@@ -234,7 +234,7 @@ public class LocationService extends Service {
 
 		if(l == null) return;
 		
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		User user = model.getUser();
 		
 		if(user.hasToken())

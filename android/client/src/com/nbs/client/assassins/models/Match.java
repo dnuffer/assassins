@@ -31,6 +31,9 @@ public class Match {
 	@JsonProperty("start_time")
 	public Long startTime;
 	
+	@JsonProperty("end_time")
+	public Long endTime;
+	
 	@JsonProperty("players")
 	public Player[] players;
 	
@@ -51,9 +54,6 @@ public class Match {
 	
 	@JsonProperty("escape_time")
 	public Integer escapeTime;
-
-	@JsonProperty("end_time")
-	public String endTime;
 	
 	public Match() {}
 	

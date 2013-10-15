@@ -86,7 +86,7 @@ public class GameFragment extends SherlockFragment{
 	}
 	
 	private void registerReceivers() {
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
         initIntentFilters(model.getMyFocusedPlayer());
 	}
 	
@@ -111,7 +111,7 @@ public class GameFragment extends SherlockFragment{
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
 		
 		if(model.inActiveMatch()) {
 			showHUD();
@@ -153,7 +153,7 @@ public class GameFragment extends SherlockFragment{
 	public void schedulePendingMatchStartTimeAlarms() {
 		
 		Context context = getActivity();
-		Repository model = ((App)(getActivity().getApplication())).getRepo();
+		Repository model = App.getRepo();
 		
 		List<Match> matches = model.getPendingMatches();
 		
@@ -197,9 +197,10 @@ public class GameFragment extends SherlockFragment{
 	
 	public void onTargetRangeChanged(String tRange) {
 		if(hudIsShowing()) hudFragment.onTargetRangeChanged(tRange);
-		if(tRange.equals(PlayerModel.HUNT_RANGE) || 
-		   tRange.equals(PlayerModel.ATTACK_RANGE)) {
-			Repository model = ((App)(getActivity().getApplication())).getRepo();
+		if(tRange != null && 
+		   (tRange.equals(PlayerModel.HUNT_RANGE) || 
+		    tRange.equals(PlayerModel.ATTACK_RANGE))) {
+			Repository model = App.getRepo();
 			Player p = model.getMyFocusedPlayer();
 			mapFragment.showTargetLocation(p.getTargetLatLng());
 		} else {
@@ -211,21 +212,21 @@ public class GameFragment extends SherlockFragment{
 		if(hudIsShowing()) hudFragment.onEnemyRangeChanged(eRange);
 	}
 	
-	public void onTargetBearingChanged(float tBearing) {
+	public void onTargetBearingChanged(Float tBearing) {
 		mapFragment.onTargetBearingChanged(tBearing);
 		if(hudIsShowing()) hudFragment.onTargetBearingChanged(tBearing);
 	}
 	
-	public void onTargetLifeChanged(int tLife) {
+	public void onTargetLifeChanged(Integer tLife) {
 		if(hudIsShowing()) hudFragment.onTargetLifeChanged(tLife);
 	}
 	
-	public void onMyLifeChanged(int life) {
+	public void onMyLifeChanged(Integer life) {
 		if(hudIsShowing()) hudFragment.onMyLifeChanged(life);
 	}
 	
 	public void updatePlayer(Player player) {
-		onTargetBearingChanged(Math.round(player.targetBearing));
+		onTargetBearingChanged(player.targetBearing);
 
 		mapFragment.onTargetLocationChanged(player.getTargetLatLng());
 		
@@ -247,17 +248,21 @@ public class GameFragment extends SherlockFragment{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
-			Repository model = ((App)(getActivity().getApplication())).getRepo();
+			Repository model = App.getRepo();
 			Player p = model.getMyFocusedPlayer();
-			
+			Match m = model.getFocusedMatch();
 			initIntentFilters(p);
 
-			hideHUD();
 			initMapFragment();
-			showHUD();
+			if(m.startTime != null && 
+			   m.startTime > System.currentTimeMillis() && 
+			   m.endTime == null) {
+				showHUD();
+			} else {
+				hideHUD();
+			}
 			
-			updatePlayer(p);
-			
+			updatePlayer(p != null ? p : new Player());
 		}
 		
 	};
@@ -268,7 +273,7 @@ public class GameFragment extends SherlockFragment{
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
         	
-			Repository model = ((App)(getActivity().getApplication())).getRepo();
+			Repository model = App.getRepo();
 
         	User user = model.getUser();
         	
@@ -307,7 +312,7 @@ public class GameFragment extends SherlockFragment{
         	
         	Log.d(TAG, "broadcast received [" + action + "]");
     		
-        	Repository model = ((App)(getActivity().getApplication())).getRepo();
+        	Repository model = App.getRepo();
         	
         	User user = model.getUser();
 

@@ -11,6 +11,11 @@ import com.nbs.client.assassins.models.Match;
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class CreateMatchRequest {
 	
+	@Override
+	public String toString() {
+		return "CreateMatchRequest [token=" + token + ", joinOnCreate="
+				+ joinOnCreate + ", match=" + match + "]";
+	}
 	@JsonProperty("token")
 	public String token;
 	
@@ -24,12 +29,6 @@ public class CreateMatchRequest {
 	public CreateMatchRequest(String token, Match match) {
 		this.token = token; this.match = match;
 	}
-
-	@Override
-	public String toString() {
-		return "CreateMatchRequest [token=" + token + ", match=" + match + "]";
-	}
-	
 	
 }
 

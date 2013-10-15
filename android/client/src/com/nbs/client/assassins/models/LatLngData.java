@@ -23,6 +23,11 @@ public class LatLngData{
 		lng = latLng.longitude;
 	}
 	
+	public LatLngData(double lat, double lng) {
+		this.lat = lat;
+		this.lng = lng;
+	}
+
 	public LatLng toLatLng() {
 		return new LatLng(lat, lng);
 	}

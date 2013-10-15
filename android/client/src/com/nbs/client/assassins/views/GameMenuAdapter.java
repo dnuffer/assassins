@@ -55,11 +55,14 @@ public class GameMenuAdapter extends BaseAdapter implements ListAdapter {
 		
 		public MatchWrapper(Match match) {
 			this.match = match;
+			getView();
+			view.update(this.match);
 		}
 
 		public View getView() {
 			if(view == null) {
-				view = (GameStatus) LayoutInflater.from(context).inflate(R.layout.game_status, null);
+				view = (GameStatus) LayoutInflater
+						.from(context).inflate(R.layout.game_status, null);
 				view.update(this.match);
 			}
 			return view;

@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.google.android.gms.internal.m;
 import com.googlecode.androidannotations.annotations.AfterInject;
 import com.googlecode.androidannotations.annotations.Background;
 import com.googlecode.androidannotations.annotations.Click;
@@ -154,8 +155,10 @@ public class JoinMatchFragment extends SherlockFragment {
 			Log.d(TAG, response.toString());
 			
 			if(response.ok()) {
-				Repository model = ((App)(getActivity().getApplication())).getRepo();
-				model.addMatch(response.match);
+				Repository model = App.getRepo();
+				
+				model.createOrUpdateMatch(response.match);
+
 				Log.d(TAG, "starting notification service with start time ["+response.match.startTime+"]");
 				
 				if(response.match.startTime != null) {
@@ -168,9 +171,6 @@ public class JoinMatchFragment extends SherlockFragment {
 							new Intent(getActivity(), NotificationService_.class)
 								.setAction(NotificationService.WAIT_FOR_MATCH_START));
 				}
-				
-				
-				
 				
 				mListener.onMatchJoined(true);
 				return;

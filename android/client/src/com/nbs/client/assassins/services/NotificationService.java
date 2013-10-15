@@ -55,7 +55,7 @@ public class NotificationService extends Service {
 	    		}
 	    		else if(type.equals(PushNotifications.MATCH_END)) {
 	    			String winner = intent.getStringExtra("winner");
-	    			Repository model = ((App)getApplication()).getRepo();
+	    			Repository model = App.getRepo();
 	    			if(winner != null && winner.equals(model.getUser().getUsername())) {
 	    				winner = "you";
 	    			}
@@ -87,7 +87,6 @@ public class NotificationService extends Service {
 		Log.d(TAG, "onCreate");
 		intentFilter = new IntentFilter();
 		intentFilter.addAction(PushNotifications.PLAYER_JOINED_MATCH);
-		intentFilter.addAction(PushNotifications.MATCH_START);
 		intentFilter.addAction(PushNotifications.MATCH_START);
 		intentFilter.addAction(PushNotifications.MATCH_END);
 		intentFilter.addAction(PushNotifications.PLAYER_ELIMINATED);
@@ -147,7 +146,7 @@ public class NotificationService extends Service {
 		    Intent notificationIntent = new Intent(c, MainActivity_.class);
 		    //TODO why does this not start the app on notification pressed?
 		    
-		    notificationIntent.putExtras(extras);
+		    if(extras != null) notificationIntent.putExtras(extras);
 		    
 		    NotificationCompat.Builder builder = 
 		    		new NotificationCompat.Builder(c)  
@@ -173,7 +172,7 @@ public class NotificationService extends Service {
 		Log.d(TAG, "onStartCommand("+intent+")");	
 		String action = intent != null ? intent.getAction() : null;
 		
-		Repository model = ((App)getApplication()).getRepo();
+		Repository model = App.getRepo();
 		
 		if(action != null) {
 			if(action.equals(PushNotifications.MATCH_START)) {

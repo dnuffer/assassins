@@ -39,7 +39,7 @@ class Match
   before_create :assign_token
 
   def sanitized_with_players
-    self.as_json({ include: [ :players ], except: [:salt, :password, :player_ids] })
+    self.as_json(except: [:salt, :password, :player_ids]).merge({ players: players.map { |p| p.public_state }})
   end
   
   def sanitized
@@ -95,9 +95,19 @@ class Match
   end
   
   def add_user new_user
-    unless in_progress? or new_user.nil? or new_user.in_match?
-      new_player = new_user.players.create!(match_id: self.id)
-      players << new_player
+    unless in_progress? or new_user.nil?
+      
+      if new_user.in_match_with_id? id
+        throw :halt, {
+          status:  'error',
+          message: 'already in match'
+        }.to_json
+      end
+      
+      new_player = new_user.players.create { |p|
+        p.match = self
+      }
+      self.players << new_player
       player_ids << new_player.id.to_s
       player_ids.shuffle
       save
@@ -122,7 +132,6 @@ class Match
           players.each {|p|
            p.user.send_push_notification({
               type: :match_start,
-              match_id: id,
             }.merge!(p.state))
           }
         end

@@ -184,9 +184,9 @@ end
 
 
 post '/api/matches/:match_id/user/:user_token/ready' do
-  data = JSON.parse(request.body.read)
+  content_type :json
   user = User.authenticate(params[:user_token])
-  match = Match.where(id: params[:match_id])
+  match = Match.find(params[:match_id])
   
   if not match.nil? and not user.nil?
     player = user.players.where(match_id: match.id).first
@@ -205,7 +205,7 @@ post '/api/matches/:match_id/user/:user_token/ready' do
     return make_response('ok', 'status changed to ready',
      { player: player.state }).to_json
   end
-  make_response('error', 'failed to start match').to_json
+  make_response('error', 'failed to change status to ready').to_json
 end
 
 #Accepts: LocationMessage
